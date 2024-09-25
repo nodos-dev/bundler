@@ -1,0 +1,188 @@
+{
+	"bundles": {
+		"default_1.2":{
+			"module_index_urls": [
+				{
+					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
+					"name": "nodos",
+					"is_active": false 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
+					"name": "nodos-without-ai",
+					"is_active": true 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
+					"name": "nodos-ai",
+					"is_active": false 
+				}
+			],
+			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
+			"local_modules_folder": "D:/Builds/Nodos-Modules",
+			"nodos_version": "1.2.0.b3495",
+			"bundled_modules": [
+				{
+					"name":"nos.reflect",
+					"version": "1.1.0.b615"
+				}
+			]
+		},
+		"full_1.3": {
+			"module_index_urls": [
+				{
+					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
+					"name": "nodos",
+					"is_active": true 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
+					"name": "nodos-without-ai",
+					"is_active": false 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
+					"name": "nodos-ai",
+					"is_active": false 
+				}
+			],
+			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
+			"local_modules_folder": "D:/Builds/Nodos-Modules",
+			"bundled_modules": [
+				{
+					"name": "nos.sys.ai",
+					"version": "3.1.0.b247"
+				},
+				{
+					"name:":"nos.sys.cuda",
+					"version":"2.1.0.b247"
+				},
+				{
+					"name": "nos.sys.tensor",
+					"version": "2.1.0.b247"
+				},
+				{
+					"name": "nos.ai.model_nodes",
+					"version": "2.1.0.b247"
+				},
+				{
+					"name": "nos.interop",
+					"version": "2.1.0.b247"
+				},
+				{
+					"name": "nos.ml.onnx",
+					"version": "2.2.0.b247"
+				},
+				{
+					"name": "nos.ml.tensors",
+					"version": "2.2.0.b247"
+				}
+			],
+			"includes": ["broadcast_1.2"]
+		},
+		"standard_1.2": {
+			"module_index_urls": [
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
+					"name": "nodos-standard",
+					"is_active": true 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
+					"name": "nodos",
+					"is_active": false
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
+					"name": "nodos-without-ai",
+					"is_active": false
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
+					"name": "nodos-ai",
+					"is_active": false
+				}
+			],
+			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
+			"local_modules_folder": "D:/Builds/Nodos-Modules",
+			"nodos_version": "1.2.0.b3495",
+			"bundled_modules": [
+				{
+					"name": "nos.sys.shaderc",
+					"version": "1.0.0.b615"
+				},
+				{
+					"name": "nos.sys.vulkan",
+					"version": "5.8.0.b503"
+				},
+				{
+					"name": "nos.filters",
+					"version": "1.1.0.b615"
+				},
+				{
+					"name": "nos.math",
+					"version": "1.3.0.b615"
+				},
+				{
+					"name": "nos.utilities",
+					"version": "2.8.0.b615"
+				},
+				{
+					"name": "nos.mediaio",
+					"version": "1.4.0.b572"
+				},
+				{
+					"name": "nos.webcam",
+					"version": "1.1.0.b575"
+				},
+				{
+					"name": "nos.sys.animation",
+					"version": "1.1.0.b615"
+				}
+			],
+			"includes": ["default_1.2"]
+		},
+		"broadcast_1.2": {
+			"module_index_urls": [
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
+					"name": "nodos-standard",
+					"is_active": true 
+				},
+				{
+					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
+					"name": "nodos",
+					"is_active": false
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
+					"name": "nodos-without-ai",
+					"is_active": false
+				},
+				{
+					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
+					"name": "nodos-ai",
+					"is_active": false
+				}
+			],
+			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
+			"local_modules_folder": "D:/Builds/Nodos-Modules",
+			"nodos_version": "1.2.0.b3495",
+			"bundled_modules": [
+				{
+					"name": "nos.aja",
+					"version": "2.1.0.b611"
+				},
+				{
+					"name": "nos.bluefish",
+					"version": "1.0.2.b20"
+				},
+				{
+					"name": "nos.track",
+					"version": "1.6.0.b615"
+				}
+			],
+			"includes": ["standard_1.2"]
+		}
+	}
+}

@@ -11,10 +11,6 @@ on:
         description: 'Bundle Name'
         required: true
         default: "default_1.2"
-      test_release:
-        description: 'Publish to test repo'
-        required: false
-        default: "false"
 
 env:
   SYSTEM_NOSMAN_PATH: "C:/Tools/nosman.exe" 
@@ -124,5 +120,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" 
         working-directory: ./bundler-${{ github.ref_name }}/

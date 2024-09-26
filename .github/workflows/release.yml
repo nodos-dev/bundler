@@ -17,6 +17,7 @@ on:
         default: "false"
 
 env:
+  SYSTEM_NOSMAN_PATH: "C:/Tools/nosman.exe" 
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
@@ -58,10 +59,23 @@ jobs:
           token: ${{ env.GH_TOKEN }}
           path: ./bundler-${{ github.ref_name }}
 
+  copy-nosman:
+    name: Copy Nosman
+    runs-on: self-hosted
+    needs: [checkout]
+    steps:
+        - name: Copy Nosman
+          shell: pwsh
+          run: |
+              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./nosman.exe"
+              ./nosman.exe update
+          working-directory: ./bundler-${{ github.ref_name }}
+
+
   package-bundle:
     name: Download and Package Bundle
     runs-on: self-hosted
-    needs: [set-build-number, checkout]
+    needs: [set-build-number, copy-nosman]
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     steps:

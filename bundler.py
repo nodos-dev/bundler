@@ -139,8 +139,8 @@ def download_modules(bundle_info, bundles):
 def package(bundle_key, bundle_info):
 	logger.info("Packaging Nodos")
 	shutil.rmtree(ARTIFACTS_FOLDER, ignore_errors=True)
-	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman/remote", ignore_errors=True)
-	run(["nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman", ignore_errors=True)
+	run(["nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{bundle_info["nodos_version"]}"
 	engine_settigns_path = f"{engine_folder}/Config/EngineSettings.json"
 	with open(engine_settigns_path, "r") as f:

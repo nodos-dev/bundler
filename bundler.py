@@ -104,6 +104,9 @@ def get_bundled_modules(bundle_info, bundles):
 	return modules_map
 
 def download_modules(bundle_info, bundles):
+	logger.info("Deleting old modules")
+	shutil.rmtree(f"{WORKSPACE_FOLDER}/Module/", ignore_errors=True)
+	os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
 	logger.info("Collecting module information from bundle")
 	
 	modules_map = get_bundled_modules(bundle_info, bundles)
@@ -193,8 +196,6 @@ def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_t
 
 	artifacts_abspath = [os.path.abspath(path) for path in artifacts]
 	
-	cwd = os.getcwd()
-	os.chdir(WORKSPACE_FOLDER)
 	for path in artifacts_abspath:
 		abspath = os.path.abspath(path)
 		file_name = os.path.basename(path)
@@ -216,7 +217,6 @@ def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_t
 		if result.returncode != 0:
 			logger.error(f"nosman publish returned with {result.returncode}")
 			exit(result.returncode)
-	os.chdir(cwd)
 
 if __name__ == "__main__":
 	logger.remove()

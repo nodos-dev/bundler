@@ -72,7 +72,7 @@ jobs:
               cd ./__nosman_staging__
               ./nodos.exe update
               cd ..
-              Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./bundler-${{ github.ref_name }}/nodos.exe"
+              Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./nodos.exe"
               Remove-Item -Path "./__nosman_staging__" -Recurse
           working-directory: ./bundler-${{ github.ref_name }}
 

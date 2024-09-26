@@ -170,16 +170,20 @@ def package(bundle_key, bundle_info, nodos_version):
 	# Zip everything under workspace_folder
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", 'zip', f"{WORKSPACE_FOLDER}")
 
-def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):
+	short_name = bundle_info.get("short_name")
+	if short_name is None:
+		logger.info("Missing short name in bundle info, choosing short name as bundle key")
+		short_name = bundle_key
 	release_repo, target_branch = gh_release_repo, gh_release_target_branch
 	artifacts = get_release_artifacts(ARTIFACTS_FOLDER)
 	for path in artifacts:
 		logger.info(f"Release artifact: {path}")
 	major, minor, patch = get_semver_from_version(nodos_version)
 	build_number = get_build_number()
-	tag = f"v{major}.{minor}.{patch}.b{build_number}"
+	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}"
 	title = f"{tag}"
-	#TODO: Release notes = nodos version & modules
+	
 	modules = get_bundled_modules(bundle_info, bundles)
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Modules\n"
@@ -214,8 +218,8 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	artifacts_abspath = [os.path.abspath(path) for path in artifacts]
 	package_name = bundle_info.get("package_name")
 	if package_name is None:
-		logger.error("Missing package name in bundle info")
-		exit(1)
+		logger.error(f"Missing package name in bundle info, setting it to 'nodos.bundle.{short_name}'")
+		package_name = f"nodos.bundle.{short_name}"
 
 	for path in artifacts_abspath:
 		abspath = os.path.abspath(path)
@@ -327,4 +331,4 @@ if __name__ == "__main__":
 		package(args.bundle_key, bundle_info, nodos_version)
 
 	if args.gh_release:
-		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version)
+		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, bundle_key)

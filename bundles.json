@@ -19,7 +19,7 @@
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
-			"package_name": "nodos.bundle.minimal",
+			"short_name": "minimal",
 			"nodos_version": "1.2.0.b3495",
 			"bundled_modules": [
 				{
@@ -47,7 +47,7 @@
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
-			"package_name": "nodos.bundle.full",
+			"short_name": "full",
 			"bundled_modules": [
 				{
 					"name": "nos.sys.ai",
@@ -104,7 +104,7 @@
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
-			"package_name": "nodos.bundle.standard",
+			"short_name": "standard",
 			"bundled_modules": [
 				{
 					"name": "nos.sys.shaderc",
@@ -169,7 +169,7 @@
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
-			"package_name": "nodos.bundle.broadcast",
+			"short_name": "broadcast",
 			"bundled_modules": [
 				{
 					"name": "nos.aja",

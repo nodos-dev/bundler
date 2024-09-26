@@ -37,11 +37,30 @@ def get_build_number():
 		exit(1)
 	return build_number
 
-def get_bundle_info(bindle_key, bundles):
-	if bundles.get(bindle_key) is None:
-		logger.error(f"Bundle key {bindle_key} not found in bundle.json")
+def get_bundle_info(bundle_key, bundles):
+	if bundles.get(bundle_key) is None:
+		logger.error(f"Bundle key {bundle_key} not found in bundle.json")
 		return None
-	return bundles[bindle_key]
+	return bundles[bundle_key]
+
+def get_nodos_version(bundle_info, bundles):
+	nodos_version = bundle_info.get("nodos_version")
+	if nodos_version is not None:
+		return nodos_version
+# Try to get nodos_version from the bundle's includes
+	if "includes" in bundle_info:
+		queue = list(bundle_info["includes"])
+		while len(queue) > 0:
+			current = queue.pop(0)
+			other_conf = bundles.get(current)
+			if other_conf is None:
+				logger.error(f"Depending bundle key {current} not found in bundles.json")
+				exit(1)
+			nodos_version = other_conf.get("nodos_version")
+			if nodos_version is not None:
+				return nodos_version
+			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
+	return nodos_version
 
 def get_semver_from_version(version):
 	if version is None:
@@ -61,13 +80,9 @@ def get_release_artifacts(dir):
 	files = glob.glob(f"{dir}/*.zip")
 	return files
 
-def download_nodos(bundle_info):
+def download_nodos(bundle_info, nodos_version):
 	shutil.rmtree(WORKSPACE_FOLDER, ignore_errors=True)
 	logger.info("Reading Nodos version from bundle")
-	nodos_version = bundle_info.get("nodos_version")
-	if nodos_version is None:
-		logger.error("Missing nodos_version in bundle_info")
-		exit(1)
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
 	# Download Nodos
@@ -79,7 +94,7 @@ def download_nodos(bundle_info):
 def get_bundled_modules(bundle_info, bundles):
 	bundled_modules = list(bundle_info["bundled_modules"] if "bundled_modules" in bundle_info else [])
 	if "includes" in bundle_info:
-		queue = bundle_info["includes"]
+		queue = list(bundle_info["includes"])
 		includes = set([])
 		while len(queue) > 0:
 			current = queue.pop(0)
@@ -103,7 +118,7 @@ def get_bundled_modules(bundle_info, bundles):
 		modules_map[module["name"]] = module
 	return modules_map
 
-def download_modules(bundle_info, bundles):
+def download_modules(bundle_info, bundles, nodos_version):
 	logger.info("Deleting old modules")
 	shutil.rmtree(f"{WORKSPACE_FOLDER}/Module/", ignore_errors=True)
 	os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
@@ -117,7 +132,6 @@ def download_modules(bundle_info, bundles):
 	logger.info(f"Downloading modules: {downloading_modules_str}")
 	
 	included_modules = []
-
 	for module in modules_map.values():
 		module_name = module["name"]
 		module_version = module["version"]
@@ -129,7 +143,6 @@ def download_modules(bundle_info, bundles):
 		included_modules.append({"name": module_name, "version": module_version})
 
 	# Write included modules to Profile.json
-	nodos_version = bundle_info.get("nodos_version")
 	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
 	profile = {}
 	if "loaded_modules" not in profile:
@@ -138,12 +151,12 @@ def download_modules(bundle_info, bundles):
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)
 
-def package(bundle_key, bundle_info):
+def package(bundle_key, bundle_info, nodos_version):
 	logger.info("Packaging Nodos")
 	shutil.rmtree(ARTIFACTS_FOLDER, ignore_errors=True)
 	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman", ignore_errors=True)
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
-	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{bundle_info["nodos_version"]}"
+	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
 	engine_settigns_path = f"{engine_folder}/Config/EngineSettings.json"
 	with open(engine_settigns_path, "r") as f:
 		engine_settings = json.load(f)
@@ -153,16 +166,16 @@ def package(bundle_key, bundle_info):
 	with open(engine_settigns_path, "w") as f:
 		json.dump(engine_settings, f, indent=2)
 
-	major, minor, patch = get_semver_from_version(bundle_info["nodos_version"])
+	major, minor, patch = get_semver_from_version(nodos_version)
 	# Zip everything under workspace_folder
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", 'zip', f"{WORKSPACE_FOLDER}")
 
-def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info):
+def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version):
 	release_repo, title_postfix, target_branch = gh_release_repo, gh_release_title_postfix, gh_release_target_branch
 	artifacts = get_release_artifacts(ARTIFACTS_FOLDER)
 	for path in artifacts:
 		logger.info(f"Release artifact: {path}")
-	major, minor, patch = get_semver_from_version(bundle_info["nodos_version"])
+	major, minor, patch = get_semver_from_version(nodos_version)
 	build_number = get_build_number()
 	tag = f"v{major}.{minor}.{patch}.b{build_number}"
 	title = f"{tag}{title_postfix}"
@@ -192,10 +205,13 @@ def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_t
 
 	version = f"{major}.{minor}.{patch}.b{build_number}"
 	nodos_zip_prefix = f"Nodos-{version}"
-	sdk_zip_prefix = f"Nodos-SDK-{version}"
 
 	artifacts_abspath = [os.path.abspath(path) for path in artifacts]
-	
+	package_name = bundle_info.get("package_name")
+	if package_name is None:
+		logger.error("Missing package name in bundle info")
+		exit(1)
+
 	for path in artifacts_abspath:
 		abspath = os.path.abspath(path)
 		file_name = os.path.basename(path)
@@ -207,8 +223,7 @@ def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_t
 			dist_key = file_name.split("-bundle-")[1].split(".zip")[0]
 		# Use nosman to publish Nodos:
 		logger.info("Running nosman publish")
-		nodos_package_name = f"nodos{f'.bundle.{dist_key}' if dist_key is not None else ''}"
-		nosman_args = [f"nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", nodos_package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
+		nosman_args = [f"nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
 					"bot@nodos.dev"]
 		if dry_run_release:
 			nosman_args.append("--dry-run")
@@ -292,6 +307,8 @@ if __name__ == "__main__":
 		bundles = bundles_json.get("bundles")
 		bundle_info = get_bundle_info(args.bundle_key, bundles)
 
+	nodos_version = get_nodos_version(bundle_info, bundles)
+
 	if bundles is None:
 		logger.error("Failed to read bundles.json. Missing 'bundles' key")
 		exit(1)
@@ -301,13 +318,13 @@ if __name__ == "__main__":
 		exit(1)
 
 	if args.download_nodos:
-		download_nodos(bundle_info)
+		download_nodos(bundle_info, nodos_version)
 
 	if args.download_modules:
-		download_modules(bundle_info, bundles)
+		download_modules(bundle_info, bundles, nodos_version)
 
 	if args.pack:
-		package(args.bundle_key, bundle_info)
+		package(args.bundle_key, bundle_info, nodos_version)
 
 	if args.gh_release:
-		create_nodos_release(args.gh_release_repo, args.gh_release_title_postfix, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info)
+		create_nodos_release(args.gh_release_repo, args.gh_release_title_postfix, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version)

@@ -70,7 +70,7 @@ jobs:
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
               Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/nodos.exe"
               cd ./__nosman_staging__
-              ./__nosman_staging__/nodos.exe update
+              ./nodos.exe update
               cd ..
               Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./bundler-${{ github.ref_name }}/nodos.exe"
               Remove-Item -Path "./__nosman_staging__" -Recurse

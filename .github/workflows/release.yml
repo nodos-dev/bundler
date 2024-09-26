@@ -114,9 +114,11 @@ jobs:
         working-directory: ./bundler-${{ github.ref_name }}/
 
   deploy_github:
-    name: "Deploy (GitHub: nodos)"
+    name: "Deploy (GitHub)"
     runs-on: self-hosted
-    needs: package-bundle
+    needs: [package-bundle, set-build-number]
+    env:
+        BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     steps:
       - name: Create Release
         id: release_nos_main_repo

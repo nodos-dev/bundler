@@ -44,29 +44,25 @@ jobs:
   checkout:
     name: Checkout
     runs-on: self-hosted
+    needs: set-build-number
     steps:
       - name: Update Git Credentials
         continue-on-error: true
         shell: bash
         run: |
           git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
-
-      - name: Setup Work Folder
-        shell: pwsh
-        run: |
-          if (-not (Test-Path -Path ./bunlder)) { New-Item -Path ./bunlder -ItemType Directory -Force }
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
           repository: nodos-dev/bundler
           ref: ${{ github.ref }}
           token: ${{ env.GH_TOKEN }}
-          path: ./bundler/bundler-${{ github.ref_name }}
+          path: ./bundler-${{ github.ref_name }}
 
   package-bundle:
     name: Download and Package Bundle
     runs-on: self-hosted
-    needs: set-build-number
+    needs: [set-build-number, checkout]
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     steps:
@@ -74,17 +70,17 @@ jobs:
         id: create_installer
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
-        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+        working-directory: ./bundler-${{ github.ref_name }}/
       - name: Download Modules
         id: download_modules
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-modules
-        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+        working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
-        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+        working-directory: ./bundler-${{ github.ref_name }}/
   deploy-dist-machine:
     name: "Deploy (Distribution Machine)"
     runs-on: self-hosted
@@ -95,7 +91,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}"
           copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}
-        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+        working-directory: ./bundler-${{ github.ref_name }}/
 
   deploy_github:
     name: "Deploy (GitHub: nodos)"
@@ -107,4 +103,4 @@ jobs:
         shell: pwsh
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="Release notes" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
-        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+        working-directory: ./bundler-${{ github.ref_name }}/

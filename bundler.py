@@ -71,7 +71,7 @@ def download_nodos(bundle_info):
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
 	# Download Nodos
-	result = run(["nosman", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	result = run(["nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	if result.returncode != 0:
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
@@ -119,7 +119,7 @@ def download_modules(bundle_info, bundles):
 		module_name = module["name"]
 		module_version = module["version"]
 		logger.info(f"Downloading module {module_name} version {module_version} using nosman")
-		result = run(["nosman", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
+		result = run(["nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
@@ -140,7 +140,7 @@ def package(bundle_key, bundle_info):
 	logger.info("Packaging Nodos")
 	shutil.rmtree(ARTIFACTS_FOLDER, ignore_errors=True)
 	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman/remote", ignore_errors=True)
-	run(["nosman", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	run(["nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{bundle_info["nodos_version"]}"
 	engine_settigns_path = f"{engine_folder}/Config/EngineSettings.json"
 	with open(engine_settigns_path, "r") as f:
@@ -208,7 +208,7 @@ def create_nodos_release(gh_release_repo, gh_release_title_postfix, gh_release_t
 		# Use nosman to publish Nodos:
 		logger.info("Running nosman publish")
 		nodos_package_name = f"nodos{f'.bundle.{dist_key}' if dist_key is not None else ''}"
-		nosman_args = [f"nosman", "publish", "--path", path, "--name", nodos_package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "nosman", "--publisher-email",
+		nosman_args = [f"nodos", "publish", "--path", path, "--name", nodos_package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
 					"bot@nodos.dev"]
 		if dry_run_release:
 			nosman_args.append("--dry-run")

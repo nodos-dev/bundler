@@ -67,8 +67,11 @@ jobs:
         - name: Copy Nosman
           shell: pwsh
           run: |
-              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./nosman.exe"
-              ./nosman.exe update
+              New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
+              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/nodos.exe"
+              ./__nosman_staging__/nodos.exe update
+              Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./bundler-${{ github.ref_name }}/nodos.exe"
+              Remove-Item -Path "./__nosman_staging__" -Recurse
           working-directory: ./bundler-${{ github.ref_name }}
 
 

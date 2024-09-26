@@ -17,9 +17,9 @@ on:
         default: "false"
 
 env:
-  BUILD_NUMBER: ${{ github.run_number }}
   DIST_TARGET_DIR: "D:/Builds/Bundler/${{ github.run_number }}"
   GH_USERNAME: "nodos-bot"
+  GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
 
 # TODO: Support parallel runs
@@ -41,54 +41,70 @@ jobs:
         run: |
           BUILD_NUMBER=$(( ${{ github.run_number }} + 3527 ))
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-  package_bundle:
+  checkout:
+    name: Checkout
+    runs-on: self-hosted
+    steps:
+      - name: Update Git Credentials
+        continue-on-error: true
+        shell: bash
+        run: |
+          git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
+
+      - name: Setup Work Folder
+        shell: pwsh
+        run: |
+          if (-not (Test-Path -Path ./bunlder)) { New-Item -Path ./bunlder -ItemType Directory -Force }
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          repository: nodos-dev/bundler
+          ref: ${{ github.ref }}
+          token: ${{ env.GH_TOKEN }}
+          path: ./bundler/bundler-${{ github.ref_name }}
+
+  package-bundle:
     name: Download and Package Bundle
     runs-on: self-hosted
+    needs: set-build-number
+    env:
+        BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     steps:
       - name: Download Nodos
         id: create_installer
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
-        working-directory: ./nodos-workspace-${{ github.ref_name }}/
+        working-directory: ./bundler/bundler-${{ github.ref_name }}/
       - name: Download Modules
         id: download_modules
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-modules
-        working-directory: ./nodos-workspace-${{ github.ref_name }}/
+        working-directory: ./bundler/bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package
         run: |
           python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
-        working-directory: ./nodos-workspace-${{ github.ref_name }}/
-  deploy_dist_machine:
+        working-directory: ./bundler/bundler-${{ github.ref_name }}/
+  deploy-dist-machine:
     name: "Deploy (Distribution Machine)"
     runs-on: self-hosted
-    needs: package_bundle
+    needs: package-bundle
     steps:
       - name: Copy Bundle to Distribution Machine
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}"
           copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}
-        working-directory: ./nodos-workspace-${{ github.ref_name }}/
-
-      # - name: Copy Debug Installer to Distribution Machine
-      #   shell: pwsh
-      #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_installer_with_debug_symbols == 'true'
-      #   run: |
-      #     copy ./Setup/Nodos-${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }}.b${{ env.BUILD_NUMBER }}-WithDebugSymbols.exe ${{ env.DIST_TARGET_DIR }}
-      #   working-directory: ./nodos-${{ github.ref_name }}
+        working-directory: ./bundler/bundler-${{ github.ref_name }}/
 
   deploy_github:
     name: "Deploy (GitHub: nodos)"
     runs-on: self-hosted
-    needs: package_bundle
+    needs: package-bundle
     steps:
       - name: Create Release
         id: release_nos_main_repo
-        env:
-          GH_TOKEN: ${{ secrets.CI_TOKEN }}
         shell: pwsh
         run: |
-          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="${{ github.events.input.body }}" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
-        working-directory: ./nodos-workspace-${{ github.ref_name }}/
+          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="Release notes" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
+        working-directory: ./bundler/bundler-${{ github.ref_name }}/

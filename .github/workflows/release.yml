@@ -10,7 +10,7 @@ on:
       bundle_key:
         description: 'Bundle Name'
         required: true
-        default: "default"
+        default: "default_1.2"
       test_release:
         description: 'Publish to test repo'
         required: false
@@ -69,7 +69,9 @@ jobs:
           run: |
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
               Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/nodos.exe"
+              cd ./__nosman_staging__
               ./__nosman_staging__/nodos.exe update
+              cd ..
               Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./bundler-${{ github.ref_name }}/nodos.exe"
               Remove-Item -Path "./__nosman_staging__" -Recurse
           working-directory: ./bundler-${{ github.ref_name }}
@@ -78,7 +80,7 @@ jobs:
   package-bundle:
     name: Download and Package Bundle
     runs-on: self-hosted
-    needs: [set-build-number, copy-nosman]
+    needs: copy-nosman
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     steps:

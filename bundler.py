@@ -183,7 +183,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	build_number = get_build_number()
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}"
 	title = f"{tag}"
-	
+
 	modules = get_bundled_modules(bundle_info, bundles)
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Modules\n"
@@ -331,4 +331,4 @@ if __name__ == "__main__":
 		package(args.bundle_key, bundle_info, nodos_version)
 
 	if args.gh_release:
-		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, bundle_key)
+		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key)

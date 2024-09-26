@@ -122,5 +122,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="Release notes" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
         working-directory: ./bundler-${{ github.ref_name }}/

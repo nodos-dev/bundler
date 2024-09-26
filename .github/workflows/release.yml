@@ -17,7 +17,6 @@ on:
         default: "false"
 
 env:
-  DIST_TARGET_DIR: "D:/Builds/Bundler/${{ github.run_number }}"
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
@@ -69,25 +68,27 @@ jobs:
       - name: Download Nodos
         id: create_installer
         run: |
-          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Download Modules
         id: download_modules
         run: |
-          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-modules
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-modules
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package
         run: |
-          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
         working-directory: ./bundler-${{ github.ref_name }}/
   deploy-dist-machine:
     name: "Deploy (Distribution Machine)"
     runs-on: self-hosted
-    needs: package-bundle
+    needs: [package-bundle, set-build-number]
     steps:
       - name: Copy Bundle to Distribution Machine
         shell: pwsh
+        env: 
+            DIST_TARGET_DIR: "D:/Builds/Bundler/${{ needs.set-build-number.outputs.build_number }}"
         run: |
           New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}"
           copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}
@@ -102,5 +103,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./dist.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="Release notes" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-notes="Release notes" --gh-release-title-postfix=" (${{ github.ref_name }})" --gh-release-target-branch="${{ github.ref_name }}" 
         working-directory: ./bundler-${{ github.ref_name }}/

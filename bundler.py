@@ -218,7 +218,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	artifacts_abspath = [os.path.abspath(path) for path in artifacts]
 	package_name = bundle_info.get("package_name")
 	if package_name is None:
-		logger.error(f"Missing package name in bundle info, setting it to 'nodos.bundle.{short_name}'")
+		logger.warning(f"Missing package name in bundle info, setting it to 'nodos.bundle.{short_name}'")
 		package_name = f"nodos.bundle.{short_name}"
 
 	for path in artifacts_abspath:

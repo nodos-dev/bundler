@@ -20,7 +20,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.2.0.b3608",
+			"nodos_version": "1.2.0.b3612",
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
@@ -112,7 +112,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.8.0.b503"
+					"version": "5.9.0.b516"
 				},
 				{
 					"name": "nos.filters",

@@ -173,7 +173,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.1.0.b616"
+					"version": "2.1.0.b620"
 				},
 				{
 					"name": "nos.bluefish",

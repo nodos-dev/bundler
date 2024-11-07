@@ -83,7 +83,7 @@ def download_nodos(bundle_info, nodos_version):
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
 	# Download Nodos
-	result = run(["nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	if result.returncode != 0:
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
@@ -133,7 +133,7 @@ def download_modules(bundle_info, bundles, nodos_version):
 		module_name = module["name"]
 		module_version = module["version"]
 		logger.info(f"Downloading module {module_name} version {module_version} using nosman")
-		result = run(["nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
+		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
@@ -167,7 +167,7 @@ def package(bundle_key, bundle_info, nodos_version):
 	# Zip everything under workspace_folder
 	archive_format = "zip"
 	if platform.system() == "Linux":
-		archive_format = "tar.gz"
+		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", archive_format, f"{WORKSPACE_FOLDER}")
 
 def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):

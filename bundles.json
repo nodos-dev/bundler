@@ -131,16 +131,8 @@
 					"version": "2.0.0.b587"
 				},
 				{
-					"name": "nos.webcam",
-					"version": "1.1.0.b575"
-				},
-				{
 					"name": "nos.sys.animation",
 					"version": "1.2.0.b667"
-				},
-				{
-					"name": "nos.webrtc",
-					"version": "1.1.0.b667"
 				}
 			],
 			"includes": ["minimal_1.3"]

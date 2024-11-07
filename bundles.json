@@ -20,11 +20,11 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b3635",
+			"nodos_version": "1.3.0.b3669",
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
-					"version": "1.1.0.b660"
+					"version": "1.1.0.b667"
 				}
 			]
 		},
@@ -108,19 +108,19 @@
 			"bundled_modules": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b660"
+					"version": "1.1.0.b667"
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.20.1.b523"
+					"version": "5.21.0.b536"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.2.0.b655"
+					"version": "1.2.0.b667"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.4.0.b639"
+					"version": "1.4.0.b667"
 				},
 				{
 					"name": "nos.utilities",
@@ -128,7 +128,7 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.0.0.b584"
+					"version": "2.0.0.b587"
 				},
 				{
 					"name": "nos.webcam",
@@ -136,11 +136,11 @@
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "1.2.0.b646"
+					"version": "1.2.0.b667"
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.1.0.b660"
+					"version": "1.1.0.b667"
 				}
 			],
 			"includes": ["minimal_1.3"]
@@ -173,7 +173,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.2.0.b615"
+					"version": "2.2.1.b623"
 				},
 				{
 					"name": "nos.bluefish",
@@ -181,7 +181,7 @@
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b650"
+					"version": "1.6.0.b669"
 				}
 			],
 			"includes": ["standard_1.3"]

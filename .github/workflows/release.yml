@@ -14,6 +14,7 @@ on:
 
 env:
   SYSTEM_NOSMAN_PATH: "/usr/bin/nodos" 
+  NOSMAN_EXECUTABLE_NAME: "nodos"
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
@@ -60,11 +61,11 @@ jobs:
         shell: pwsh
         run: |
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
-              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/nodos.exe"
+              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/${{ env.NOSMAN_EXECUTABLE_NAME }}"
               cd ./__nosman_staging__
-              ./nodos.exe update
+              ./${{ env.NOSMAN_EXECUTABLE_NAME }} update
               cd ..
-              Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./nodos.exe"
+              Copy-Item -Path "./__nosman_staging__/${{ env.NOSMAN_EXECUTABLE_NAME }}" -Destination "./${{ env.NOSMAN_EXECUTABLE_NAME }}"
               Remove-Item -Path "./__nosman_staging__" -Recurse -Force
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Download Nodos

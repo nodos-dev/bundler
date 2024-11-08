@@ -49,11 +49,11 @@ jobs:
           if [ "${{ runner.os }}" == "Linux" ]; then
             echo "SYSTEM_NOSMAN_PATH=/usr/bin/nodos" >> $GITHUB_ENV
             echo "NOSMAN_EXECUTABLE_NAME=nodos" >> $GITHUB_ENV
-            echo "DIST_TARGET_DIR=~/Builds/Bundler/" >> $GITHUB_ENV
+            echo "DIST_TARGET_DIR=~/Builds/Bundler" >> $GITHUB_ENV
           else
             echo "SYSTEM_NOSMAN_PATH=C:/Tools/nodos.exe" >> $GITHUB_ENV
             echo "NOSMAN_EXECUTABLE_NAME=nodos.exe" >> $GITHUB_ENV
-            echo "DIST_TARGET_DIR=D:/Builds/Bundler/" >> $GITHUB_ENV
+            echo "DIST_TARGET_DIR=D:/Builds/Bundler" >> $GITHUB_ENV
           fi
       - name: Update Git Credentials
         continue-on-error: true

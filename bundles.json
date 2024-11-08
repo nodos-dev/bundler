@@ -135,16 +135,8 @@
 					"version": "0.1.0.b598"
 				},
 				{
-					"name": "nos.webcam",
-					"version": "1.2.0.b583"
-				},
-				{
 					"name": "nos.sys.animation",
 					"version": "1.2.0.b667"
-				},
-				{
-					"name": "nos.webrtc",
-					"version": "1.1.0.b687"
 				}
 			],
 			"includes": ["minimal_1.3"]
@@ -178,14 +170,6 @@
 				{
 					"name": "nos.aja",
 					"version": "2.2.1.b634"
-				},
-				{
-					"name": "nos.sys.decklink",
-					"version": "0.1.0.b9"
-				},
-				{
-					"name": "nos.decklink",
-					"version": "0.1.1.b10"
 				},
 				{
 					"name": "nos.track",

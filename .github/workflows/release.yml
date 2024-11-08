@@ -44,6 +44,7 @@ jobs:
     needs: set-build-number
     steps:
       - name: Setup Environment Variables
+        shell: bash
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
             echo "SYSTEM_NOSMAN_PATH=/usr/bin/nodos" >> $GITHUB_ENV

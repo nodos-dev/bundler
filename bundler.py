@@ -73,8 +73,13 @@ def get_semver_from_version(version):
 	patch = version_parts[2]
 	return major, minor, patch
 
+def get_compressed_file_extension():
+	if platform.system() == "Linux":
+		return ".tar.gz"
+	return ".zip"
+
 def get_release_artifacts(dir):
-	files = glob.glob(f"{dir}/*f{COMPRESSED_FILE_EXTENSION}")
+	files = glob.glob(f"{dir}/*{get_compressed_file_extension()}")
 	return files
 
 def download_nodos(bundle_info, nodos_version):
@@ -177,6 +182,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		short_name = bundle_key
 	release_repo, target_branch = gh_release_repo, gh_release_target_branch
 	artifacts = get_release_artifacts(ARTIFACTS_FOLDER)
+	if len(artifacts) == 0:
+		logger.error("No artifacts found to release")
+		exit(1)
 	for path in artifacts:
 		logger.info(f"Release artifact: {path}")
 	major, minor, patch = get_semver_from_version(nodos_version)
@@ -229,10 +237,10 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		# If file_name is of format Nodos-{major}.{minor}.{patch}.b{build_number}-bundle-{dist_key}.zip, it is a bundled distribution. Get the dist_key from it.
 		dist_key = None
 		if file_name.startswith(f"{nodos_zip_prefix}-bundle-"):
-			dist_key = file_name.split("-bundle-")[1].split(COMPRESSED_FILE_EXTENSION)[0]
+			dist_key = file_name.split("-bundle-")[1].split(get_compressed_file_extension())[0]
 		# Use nosman to publish Nodos:
 		logger.info("Running nosman publish")
-		nosman_args = [f"nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
+		nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
 					"bot@nodos.dev"]
 		if dry_run_release:
 			nosman_args.append("--dry-run")
@@ -243,10 +251,6 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 			exit(result.returncode)
 
 if __name__ == "__main__":
-	# if linux, COMPRESSED_FILE_EXTENSION = ".tar.gz"
-	if platform.system() == "Linux":
-		COMPRESSED_FILE_EXTENSION = ".tar.gz"
-
 	logger.remove()
 	logger.add(stdout, format="<green>[Distribute Nodos]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 

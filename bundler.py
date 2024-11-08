@@ -7,6 +7,7 @@ import shutil
 import json
 import glob
 import platform
+from collections import OrderedDict
 
 
 WORKSPACE_FOLDER = "./workspace"
@@ -97,10 +98,10 @@ def get_bundled_modules(bundle_info, bundles):
 	bundled_modules = list(bundle_info["bundled_modules"] if "bundled_modules" in bundle_info else [])
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
-		includes = set([])
+		includes = list([])
 		while len(queue) > 0:
 			current = queue.pop(0)
-			includes.update([current])
+			includes.extend([current])
 			other_conf = bundles.get(current)
 			if other_conf is None:
 				logger.error(f"Depending bundle key {current} not found in bundles.json")
@@ -113,9 +114,9 @@ def get_bundled_modules(bundle_info, bundles):
 				logger.error(f"Include bundle key {include} not found in bundles.json")
 				exit(1)
 			others = list(conf["bundled_modules"] if "bundled_modules" in conf else [])
-			bundled_modules.extend(others)
+			bundled_modules = others + bundled_modules
 
-	modules_map = {}
+	modules_map = OrderedDict()
 	for module in bundled_modules:
 		modules_map[module["name"]] = module
 	return modules_map
@@ -143,7 +144,6 @@ def download_modules(bundle_info, bundles, nodos_version):
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
 		included_modules.append({"name": module_name, "version": module_version})
-
 	# Write included modules to Profile.json
 	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
 	profile = {}

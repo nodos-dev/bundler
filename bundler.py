@@ -1,21 +1,19 @@
 import argparse
-import io
 from subprocess import CompletedProcess, call, run
-import subprocess
 from sys import stderr, stdout
-import zipfile
 from loguru import logger
 import os
 import shutil
 import json
-import pathlib
 import glob
 import platform
-import requests
+from collections import OrderedDict
 
 
 WORKSPACE_FOLDER = "./workspace"
 ARTIFACTS_FOLDER = "./Artifacts/"
+
+COMPRESSED_FILE_EXTENSION = ".zip"
 
 def getenv(var_name):
 	val = os.getenv(var_name)
@@ -76,8 +74,13 @@ def get_semver_from_version(version):
 	patch = version_parts[2]
 	return major, minor, patch
 
+def get_compressed_file_extension():
+	if platform.system() == "Linux":
+		return ".tar.gz"
+	return ".zip"
+
 def get_release_artifacts(dir):
-	files = glob.glob(f"{dir}/*.zip")
+	files = glob.glob(f"{dir}/*{get_compressed_file_extension()}")
 	return files
 
 def download_nodos(bundle_info, nodos_version):
@@ -86,7 +89,7 @@ def download_nodos(bundle_info, nodos_version):
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
 	# Download Nodos
-	result = run(["nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	if result.returncode != 0:
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
@@ -95,10 +98,10 @@ def get_bundled_modules(bundle_info, bundles):
 	bundled_modules = list(bundle_info["bundled_modules"] if "bundled_modules" in bundle_info else [])
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
-		includes = set([])
+		includes = list([])
 		while len(queue) > 0:
 			current = queue.pop(0)
-			includes.update([current])
+			includes.extend([current])
 			other_conf = bundles.get(current)
 			if other_conf is None:
 				logger.error(f"Depending bundle key {current} not found in bundles.json")
@@ -111,9 +114,9 @@ def get_bundled_modules(bundle_info, bundles):
 				logger.error(f"Include bundle key {include} not found in bundles.json")
 				exit(1)
 			others = list(conf["bundled_modules"] if "bundled_modules" in conf else [])
-			bundled_modules.extend(others)
+			bundled_modules = others + bundled_modules
 
-	modules_map = {}
+	modules_map = OrderedDict()
 	for module in bundled_modules:
 		modules_map[module["name"]] = module
 	return modules_map
@@ -136,12 +139,11 @@ def download_modules(bundle_info, bundles, nodos_version):
 		module_name = module["name"]
 		module_version = module["version"]
 		logger.info(f"Downloading module {module_name} version {module_version} using nosman")
-		result = run(["nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
+		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
 		included_modules.append({"name": module_name, "version": module_version})
-
 	# Write included modules to Profile.json
 	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
 	profile = {}
@@ -168,7 +170,10 @@ def package(bundle_key, bundle_info, nodos_version):
 
 	major, minor, patch = get_semver_from_version(nodos_version)
 	# Zip everything under workspace_folder
-	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", 'zip', f"{WORKSPACE_FOLDER}")
+	archive_format = "zip"
+	if platform.system() == "Linux":
+		archive_format = "gztar"
+	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", archive_format, f"{WORKSPACE_FOLDER}")
 
 def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):
 	short_name = bundle_info.get("short_name")
@@ -177,6 +182,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		short_name = bundle_key
 	release_repo, target_branch = gh_release_repo, gh_release_target_branch
 	artifacts = get_release_artifacts(ARTIFACTS_FOLDER)
+	if len(artifacts) == 0:
+		logger.error("No artifacts found to release")
+		exit(1)
 	for path in artifacts:
 		logger.info(f"Release artifact: {path}")
 	major, minor, patch = get_semver_from_version(nodos_version)
@@ -229,10 +237,10 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		# If file_name is of format Nodos-{major}.{minor}.{patch}.b{build_number}-bundle-{dist_key}.zip, it is a bundled distribution. Get the dist_key from it.
 		dist_key = None
 		if file_name.startswith(f"{nodos_zip_prefix}-bundle-"):
-			dist_key = file_name.split("-bundle-")[1].split(".zip")[0]
+			dist_key = file_name.split("-bundle-")[1].split(get_compressed_file_extension())[0]
 		# Use nosman to publish Nodos:
 		logger.info("Running nosman publish")
-		nosman_args = [f"nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
+		nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email",
 					"bot@nodos.dev"]
 		if dry_run_release:
 			nosman_args.append("--dry-run")

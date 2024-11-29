@@ -20,11 +20,11 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b3669",
+			"nodos_version": "1.3.0.b33738",
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
-					"version": "1.1.0.b667"
+					"version": "1.1.2.b700"
 				}
 			]
 		},
@@ -112,27 +112,31 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.21.0.b536"
+					"version": "5.22.0.b551"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.2.0.b667"
+					"version": "1.2.0.b696"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.4.0.b667"
+					"version": "1.4.0.b698"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "2.9.1.b660"
+					"version": "2.11.0.b699"
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.0.0.b587"
+					"version": "2.0.0.b927"
 				},
 				{
 					"name": "nos.sys.animation",
 					"version": "1.2.0.b667"
+				},
+				{
+					"name": "nos.webrtc",
+					"version": "1.1.0.b687"
 				}
 			],
 			"includes": ["minimal_1.3"]
@@ -165,11 +169,11 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.2.1.b623"
+					"version": "2.2.1.b634"
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b669"
+					"version": "1.6.0.b696"
 				},
 				{
 					"name": "nos.display",

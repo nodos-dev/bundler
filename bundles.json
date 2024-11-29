@@ -185,7 +185,7 @@
 				},
 				{
 					"name": "nos.display",
-					"version": "0.1.0.b6"
+					"version": "0.1.0.b7"
 				}
 			],
 			"includes": ["standard_1.3"]

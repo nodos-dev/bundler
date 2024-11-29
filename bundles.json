@@ -182,6 +182,10 @@
 				{
 					"name": "nos.track",
 					"version": "1.6.0.b669"
+				},
+				{
+					"name": "nos.display",
+					"version": "0.1.0.b6"
 				}
 			],
 			"includes": ["standard_1.3"]

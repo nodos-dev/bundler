@@ -20,11 +20,11 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.2.1.b3695",
+			"nodos_version": "1.2.1.b3747",
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
-					"version": "1.1.0.b626"
+					"version": "1.1.0.b706"
 				}
 			]
 		},
@@ -128,7 +128,7 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "1.5.0.b588"
+					"version": "1.5.1.b600"
 				},
 				{
 					"name": "nos.webcam",
@@ -173,7 +173,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.1.1.b627"
+					"version": "2.1.1.b636"
 				},
 				{
 					"name": "nos.track",

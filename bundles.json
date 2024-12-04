@@ -180,10 +180,6 @@
 					"version": "2.2.1.b634"
 				},
 				{
-					"name": "nos.bluefish",
-					"version": "1.0.2.b20"
-				},
-				{
 					"name": "nos.device.decklink",
 					"version": "0.1.0.b5"
 				},

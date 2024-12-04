@@ -185,11 +185,11 @@
 				},
 				{
 					"name": "nos.device.decklink",
-					"version": "0.1.0.b4"
+					"version": "0.1.0.b5"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "0.1.0.b4"
+					"version": "0.1.0.b5"
 				},
 				{
 					"name": "nos.track",

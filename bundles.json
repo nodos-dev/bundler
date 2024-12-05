@@ -20,7 +20,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b3745",
+			"nodos_version": "1.3.0.b3749",
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
@@ -112,7 +112,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.23.1.b553"
+					"version": "5.23.1.b554"
 				},
 				{
 					"name": "nos.filters",
@@ -128,7 +128,7 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.0.0.b592"
+					"version": "2.1.0.b602"
 				},
 				{
 					"name": "nos.sys.mediaio",
@@ -136,7 +136,7 @@
 				},
 				{
 					"name": "nos.webcam",
-					"version": "1.1.0.b575"
+					"version": "1.2.0.b583"
 				},
 				{
 					"name": "nos.sys.animation",

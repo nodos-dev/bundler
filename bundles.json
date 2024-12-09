@@ -124,7 +124,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "2.12.1.b704"
+					"version": "2.13.0.b713"
 				},
 				{
 					"name": "nos.mediaio",
@@ -185,11 +185,11 @@
 				},
 				{
 					"name": "nos.decklink",
-					"version": "0.1.0.b9"
+					"version": "0.1.1.b10"
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b696"
+					"version": "1.6.0.b713"
 				},
 				{
 					"name": "nos.display",

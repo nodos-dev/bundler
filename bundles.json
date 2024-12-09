@@ -180,12 +180,12 @@
 					"version": "2.2.1.b634"
 				},
 				{
-					"name": "nos.device.decklink",
-					"version": "0.1.0.b5"
+					"name": "nos.sys.decklink",
+					"version": "0.1.0.b9"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "0.1.0.b5"
+					"version": "0.1.0.b9"
 				},
 				{
 					"name": "nos.track",

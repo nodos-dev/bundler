@@ -46,7 +46,7 @@ jobs:
       - name: Setup Environment Variables
         shell: bash
         run: |
-          if [[ -z "$SYSTEM_NOSMAN_PATH" ||  -z "$NOSMAN_EXECUTABLE_NAME" ||  -z "$NOS_BUILD_DIR" ]]; then
+          if [[ -z "${SYSTEM_NOSMAN_PATH}//" ||  -z "${NOSMAN_EXECUTABLE_NAME}//" ||  -z "${NOS_BUILD_DIR}//" ]]; then
             echo "Error: SYSTEM_NOSMAN_PATH, NOSMAN_EXECUTABLE_NAME or NOS_BUILD_DIR environment variable is not set."
             exit 1
           else

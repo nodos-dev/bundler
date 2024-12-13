@@ -26,7 +26,7 @@ concurrency:
 jobs:
   set-build-number:
     name: Set Build Number
-    runs-on: [self-hosted, bundler, Windows]
+    runs-on: [self-hosted, bundler, Linux, 1.3]
     outputs:
       build_number: ${{ steps.offset-build-number.outputs.build_number }}
     steps:
@@ -67,7 +67,7 @@ jobs:
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
               Copy-Item -Path "$Env:SYSTEM_NOSMAN_PATH" -Destination "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME"
               cd ./__nosman_staging__
-              ./${{ env.NOSMAN_EXECUTABLE_NAME }} update
+              & ./$Env:NOSMAN_EXECUTABLE_NAME update
               cd ..
               Copy-Item -Path "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
               Remove-Item -Path "./__nosman_staging__" -Recurse -Force

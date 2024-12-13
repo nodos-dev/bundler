@@ -46,13 +46,18 @@ jobs:
       - name: Setup Environment Variables
         shell: bash
         run: |
+          if [[ -z "$SYSTEM_NOSMAN_PATH" ||  -z "$NOSMAN_EXECUTABLE_NAME" ||  -z "$NOS_BUILD_DIR" ]]; then
+            echo "Error: SYSTEM_NOSMAN_PATH, NOSMAN_EXECUTABLE_NAME or NOS_BUILD_DIR environment variable is not set."
+            exit 1
+          else
+            echo "SYSTEM_NOSMAN_PATH is set to: $SYSTEM_NOSMAN_PATH"
+            echo "NOSMAN_EXECUTABLE_NAME is set to: $NOSMAN_EXECUTABLE_NAME"
+            echo "NOS_BUILD_DIR is set to: $NOS_BUILD_DIR"
+          fi
           if [ "${{ runner.os }}" == "Linux" ]; then
             echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
           else
             echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}\\Bundler" >> $GITHUB_ENV
-          if ([string]::IsNullOrEmpty($Env:SYSTEM_NOSMAN_PATH) -or [string]::IsNullOrEmpty($Env:NOSMAN_EXECUTABLE_NAME) -or [string]::IsNullOrEmpty($Env:NOS_BUILD_DIR)) {
-              throw "SYSTEM_NOSMAN_PATH or NOSMAN_EXECUTABLE_NAME is not set."
-          }
           fi
       - name: Update Git Credentials
         continue-on-error: true

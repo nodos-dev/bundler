@@ -40,20 +40,14 @@ jobs:
   bundle:
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    runs-on: [self-hosted, bundler, Windows]
+    runs-on: [self-hosted, bundler, Linux, 1.3]
     needs: set-build-number
     steps:
       - name: Setup Environment Variables
         shell: bash
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
-            echo "SYSTEM_NOSMAN_PATH=/usr/bin/nodos" >> $GITHUB_ENV
-            echo "NOSMAN_EXECUTABLE_NAME=nodos" >> $GITHUB_ENV
-            echo "DIST_TARGET_DIR=~/Builds/Bundler" >> $GITHUB_ENV
-          else
-            echo "SYSTEM_NOSMAN_PATH=C:/Tools/nodos.exe" >> $GITHUB_ENV
-            echo "NOSMAN_EXECUTABLE_NAME=nodos.exe" >> $GITHUB_ENV
-            echo "DIST_TARGET_DIR=D:/Builds/Bundler" >> $GITHUB_ENV
+            echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
           fi
       - name: Update Git Credentials
         continue-on-error: true
@@ -71,11 +65,11 @@ jobs:
         shell: pwsh
         run: |
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
-              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/${{ env.NOSMAN_EXECUTABLE_NAME }}"
+              Copy-Item -Path "$Env:SYSTEM_NOSMAN_PATH" -Destination "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME"
               cd ./__nosman_staging__
               ./${{ env.NOSMAN_EXECUTABLE_NAME }} update
               cd ..
-              Copy-Item -Path "./__nosman_staging__/${{ env.NOSMAN_EXECUTABLE_NAME }}" -Destination "./${{ env.NOSMAN_EXECUTABLE_NAME }}"
+              Copy-Item -Path "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
               Remove-Item -Path "./__nosman_staging__" -Recurse -Force
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Download Nodos

@@ -75,7 +75,7 @@ jobs:
               cd ./__nosman_staging__
               & ./$Env:NOSMAN_EXECUTABLE_NAME update
               cd ..
-              Copy-Item -Path "./__nosman_staging__/$Env.NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
+              Copy-Item -Path "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
               Remove-Item -Path "./__nosman_staging__" -Recurse -Force
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Download Nodos

@@ -26,7 +26,7 @@ concurrency:
 jobs:
   set-build-number:
     name: Set Build Number
-    runs-on: [self-hosted, bundler, Windows]
+    runs-on: [self-hosted, bundler, Windows, 1.3]
     outputs:
       build_number: ${{ steps.offset-build-number.outputs.build_number }}
     steps:

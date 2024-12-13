@@ -50,8 +50,8 @@ jobs:
             echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
           else
             echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}\\Bundler" >> $GITHUB_ENV
-          if (-not $Env:SYSTEM_NOSMAN_PATH -or -not $Env:NOSMAN_EXECUTABLE_NAME -or $Env:NOS_BUILD_DIR) {
-              throw "SYSTEM_NOSMAN_PATH, NOSMAN_EXECUTABLE_NAME or NOS_BUILD_DIR is not set."
+          if ([string]::IsNullOrEmpty($Env:SYSTEM_NOSMAN_PATH) -or [string]::IsNullOrEmpty($Env:NOSMAN_EXECUTABLE_NAME) -or [string]::IsNullOrEmpty($Env:NOS_BUILD_DIR)) {
+              throw "SYSTEM_NOSMAN_PATH or NOSMAN_EXECUTABLE_NAME is not set."
           }
           fi
       - name: Update Git Credentials

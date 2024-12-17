@@ -13,7 +13,6 @@ on:
         default: "default_1.2"
 
 env:
-  SYSTEM_NOSMAN_PATH: "C:/Tools/nosman.exe" 
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
@@ -27,7 +26,7 @@ concurrency:
 jobs:
   set-build-number:
     name: Set Build Number
-    runs-on: [self-hosted, bundler]
+    runs-on: [self-hosted, bundler, 1.2]
     outputs:
       build_number: ${{ steps.offset-build-number.outputs.build_number }}
     steps:
@@ -38,11 +37,20 @@ jobs:
           BUILD_NUMBER=$(( ${{ github.run_number }} + 3527 ))
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
-  checkout:
-    name: Checkout
-    runs-on: [self-hosted, bundler]
+  bundle:
+    env:
+        BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
+    runs-on: [self-hosted, bundler, 1.2]
     needs: set-build-number
     steps:
+      - name: Setup Environment Variables
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
+          else
+            echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}\\Bundler" >> $GITHUB_ENV
+          fi
       - name: Update Git Credentials
         continue-on-error: true
         shell: bash
@@ -55,32 +63,17 @@ jobs:
           ref: ${{ github.ref }}
           token: ${{ env.GH_TOKEN }}
           path: ./bundler-${{ github.ref_name }}
-
-  copy-nosman:
-    name: Copy Nosman
-    runs-on: [self-hosted, bundler]
-    needs: [checkout]
-    steps:
-        - name: Copy Nosman
-          shell: pwsh
-          run: |
+      - name: Copy Nosman
+        shell: pwsh
+        run: |
               New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
-              Copy-Item -Path "${{ env.SYSTEM_NOSMAN_PATH }}" -Destination "./__nosman_staging__/nodos.exe"
+              Copy-Item -Path "$Env:SYSTEM_NOSMAN_PATH" -Destination "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME"
               cd ./__nosman_staging__
-              ./nodos.exe update
+              & ./$Env:NOSMAN_EXECUTABLE_NAME update
               cd ..
-              Copy-Item -Path "./__nosman_staging__/nodos.exe" -Destination "./nodos.exe"
+              Copy-Item -Path "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
               Remove-Item -Path "./__nosman_staging__" -Recurse -Force
-          working-directory: ./bundler-${{ github.ref_name }}
-
-
-  package-bundle:
-    name: Download and Package Bundle
-    runs-on: [self-hosted, bundler]
-    needs: [copy-nosman, set-build-number]
-    env:
-        BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    steps:
+        working-directory: ./bundler-${{ github.ref_name }}
       - name: Download Nodos
         id: create_installer
         run: |
@@ -96,28 +89,12 @@ jobs:
         run: |
           python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
         working-directory: ./bundler-${{ github.ref_name }}/
-
-  deploy-dist-machine:
-    name: "Deploy (Distribution Machine)"
-    runs-on: [self-hosted, bundler]
-    needs: [package-bundle, set-build-number]
-    steps:
       - name: Copy Bundle to Distribution Machine
         shell: pwsh
-        env: 
-            DIST_TARGET_DIR: "D:/Builds/Bundler/${{ needs.set-build-number.outputs.build_number }}"
         run: |
-          New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}"
-          copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}
-        working-directory: ./bundler-${{ github.ref_name }}/
-
-  deploy_github:
-    name: "Deploy (GitHub)"
-    runs-on: [self-hosted, bundler]
-    needs: [package-bundle, set-build-number]
-    env:
-        BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    steps:
+          New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}/${{ needs.set-build-number.outputs.build_number }}"
+          copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}/${{ needs.set-build-number.outputs.build_number }}
+        working-directory: ./bundler-${{ github.ref_name }}
       - name: Create Release
         id: release_nos_main_repo
         shell: pwsh

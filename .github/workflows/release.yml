@@ -38,6 +38,7 @@ jobs:
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
   bundle:
+    name: Bundle Nodos (${{ github.event.inputs.bundle_key }})
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     runs-on: [self-hosted, bundler, 1.2]

@@ -177,7 +177,7 @@
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b741"
+					"version": "1.6.0.b742"
 				}
 			],
 			"includes": ["standard_1.2"]

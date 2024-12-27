@@ -173,7 +173,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.1.1.b645"
+					"version": "2.1.2.b650"
 				},
 				{
 					"name": "nos.track",

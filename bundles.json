@@ -24,7 +24,7 @@
 			"bundled_modules": [
 				{
 					"name":"nos.reflect",
-					"version": "1.2.0.b724"
+					"version": "1.2.0.b754"
 				}
 			]
 		},
@@ -108,43 +108,47 @@
 			"bundled_modules": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b667"
+					"version": "1.1.0.b754"
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.23.1.b554"
+					"version": "5.23.1.b559"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.2.0.b696"
+					"version": "1.2.0.b754"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.4.0.b698"
+					"version": "1.5.0.b754"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "2.13.0.b713"
+					"version": "3.1.0.b754"
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.1.0.b602"
+					"version": "2.3.1.b623"
 				},
 				{
 					"name": "nos.sys.mediaio",
-					"version": "0.1.0.b598"
+					"version": "0.2.0.b623"
 				},
 				{
 					"name": "nos.webcam",
-					"version": "1.2.0.b583"
+					"version": "1.2.1.b621"
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "1.2.0.b667"
+					"version": "1.2.0.b754"
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.1.0.b687"
+					"version": "1.1.0.b754"
+				},
+				{
+					"name": "nos.str",
+					"version": "0.1.0.b754"
 				}
 			],
 			"includes": ["minimal_1.3"]
@@ -177,7 +181,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.2.1.b634"
+					"version": "2.2.2.b646"
 				},
 				{
 					"name": "nos.sys.decklink",
@@ -189,7 +193,7 @@
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b713"
+					"version": "1.6.0.b754"
 				},
 				{
 					"name": "nos.display",

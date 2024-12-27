@@ -185,11 +185,11 @@
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "0.2.0.b14"
+					"version": "1.0.0.b16"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "0.2.0.b14"
+					"version": "0.2.0.b16"
 				},
 				{
 					"name": "nos.track",

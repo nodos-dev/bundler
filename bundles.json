@@ -116,11 +116,11 @@
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.2.0.b696"
+					"version": "1.2.0.b703"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.4.0.b698"
+					"version": "1.4.0.b703"
 				},
 				{
 					"name": "nos.utilities",
@@ -174,10 +174,6 @@
 				{
 					"name": "nos.track",
 					"version": "1.6.0.b713"
-				},
-				{
-					"name": "nos.display",
-					"version": "0.1.0.b7"
 				}
 			],
 			"includes": ["standard_1.3"]

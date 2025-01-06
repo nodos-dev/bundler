@@ -15,6 +15,13 @@ ARTIFACTS_FOLDER = "./Artifacts/"
 
 COMPRESSED_FILE_EXTENSION = ".zip"
 
+def get_current_target_platform():
+    # x86_64-windows, x86_64-linux, arm64-linux etc.
+    arch, os = platform.machine().lower(), platform.system().lower()
+    if arch == "amd64":
+        arch = "x86_64"
+    return f"{arch}-{os}"
+
 def getenv(var_name):
 	val = os.getenv(var_name)
 	if val is None:
@@ -173,7 +180,7 @@ def package(bundle_key, bundle_info, nodos_version):
 	archive_format = "zip"
 	if platform.system() == "Linux":
 		archive_format = "gztar"
-	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}", archive_format, f"{WORKSPACE_FOLDER}")
+	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
 def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):
 	short_name = bundle_info.get("short_name")
@@ -189,7 +196,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		logger.info(f"Release artifact: {path}")
 	major, minor, patch = get_semver_from_version(nodos_version)
 	build_number = get_build_number()
-	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}"
+	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
 	modules = get_bundled_modules(bundle_info, bundles)

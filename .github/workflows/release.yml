@@ -55,7 +55,7 @@ jobs:
         id: prepare-step
         shell: bash
         run: |
-          runner_tags="[self-hosted, bundler, ${{ inputs.target_platform }}]"
+          runner_tags="['self-hosted', 'bundler', '${{ inputs.target_platform }}']"
           echo Runner Tags: $runner_tags
           echo "runner-tags=$runner_tags" >> $GITHUB_OUTPUT
 
@@ -63,7 +63,7 @@ jobs:
     name: Bundle Nodos (${{ github.event.inputs.bundle_key }})
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    runs-on: ${{ needs.prepare-strategy.outputs.runner-tags }}
+    runs-on: ${{ fromJson(needs.prepare-strategy.outputs.runner-tags) }}
     needs: [prepare-strategy, set-build-number]
     steps:
       - name: Setup Environment Variables

@@ -11,6 +11,14 @@ on:
         description: 'Bundle Name'
         required: true
         default: "default_1.2"
+      target_platform:
+        description: 'Target Platform'
+        required: true
+        default: 'Windows'
+        type: choice
+        options:
+          - Windows
+          - Linux
 
 env:
   GH_USERNAME: "nodos-bot"
@@ -26,7 +34,7 @@ concurrency:
 jobs:
   set-build-number:
     name: Set Build Number
-    runs-on: [self-hosted, bundler, 1.2]
+    runs-on: [self-hosted, bundler]
     outputs:
       build_number: ${{ steps.offset-build-number.outputs.build_number }}
     steps:
@@ -37,12 +45,26 @@ jobs:
           BUILD_NUMBER=$(( ${{ github.run_number }} + 3527 ))
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
+  prepare-strategy:
+    name: Prepare Strategy
+    runs-on: [self-hosted, bundler]
+    outputs:
+      runner-tags: ${{ steps.prepare-step.outputs.runner-tags }}
+    steps:
+      - name: Prepare Runner Tags
+        id: prepare-step
+        shell: bash
+        run: |
+          runner_tags="[self-hosted, bundler, ${{ inputs.target_platform }}]"
+          echo Runner Tags: $runner_tags
+          echo "runner-tags=$runner_tags" >> $GITHUB_OUTPUT
+
   bundle:
     name: Bundle Nodos (${{ github.event.inputs.bundle_key }})
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    runs-on: [self-hosted, bundler, 1.2]
-    needs: set-build-number
+    runs-on: ${{ needs.prepare-strategy.outputs.runner-tags }}
+    needs: [prepare-strategy, set-build-number]
     steps:
       - name: Setup Environment Variables
         shell: bash

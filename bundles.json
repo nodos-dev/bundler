@@ -474,7 +474,7 @@
 					"version": "2.2.0.b247"
 				}
 			],
-			"includes": ["broadcast_1.3"]
+			"includes": ["linux_broadcast_1.3"]
 		},
 		"linux_standard_1.3": {
 			"module_index_urls": [
@@ -535,7 +535,7 @@
 					"version": "1.2.0.b667"
 				}
 			],
-			"includes": ["minimal_1.3"]
+			"includes": ["linux_minimal_1.3"]
 		},
 		"linux_broadcast_1.3": {
 			"module_index_urls": [
@@ -572,7 +572,7 @@
 					"version": "1.6.0.b713"
 				}
 			],
-			"includes": ["standard_1.3"]
+			"includes": ["linux_standard_1.3"]
 		}
 	}
 }

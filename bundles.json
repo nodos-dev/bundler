@@ -208,11 +208,11 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b3918",
+			"nodos_version": "1.3.0.b3929",
 			"bundled_modules": [
 				{
 					"name": "nos.reflect",
-					"version": "1.3.0.b768"
+					"version": "1.3.0.b777"
 				}
 			]
 		},
@@ -298,23 +298,23 @@
 			"bundled_modules": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b754"
+					"version": "1.1.0.b777"
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.23.1.b559"
+					"version": "5.23.2.b565"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.2.0.b754"
+					"version": "1.2.0.b777"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.7.0.b766"
+					"version": "1.7.0.b777"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.1.2.b771"
+					"version": "3.1.2.b777"
 				},
 				{
 					"name": "nos.mediaio",
@@ -330,15 +330,15 @@
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "1.2.0.b754"
+					"version": "1.2.0.b777"
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.1.0.b754"
+					"version": "1.1.0.b777"
 				},
 				{
 					"name": "nos.str",
-					"version": "0.1.0.b754"
+					"version": "0.1.0.b777"
 				}
 			],
 			"includes": [
@@ -373,23 +373,23 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.2.2.b668"
+					"version": "2.2.2.b671"
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "1.2.0.b43"
+					"version": "1.3.0.b48"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "0.3.2.b43"
+					"version": "0.3.4.b48"
 				},
 				{
 					"name": "nos.track",
-					"version": "1.6.0.b754"
+					"version": "1.6.0.b777"
 				},
 				{
 					"name": "nos.display",
-					"version": "0.1.0.b13"
+					"version": "0.1.0.b20"
 				}
 			],
 			"includes": [

@@ -212,7 +212,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.reflect",
-					"version": "1.3.0.b777"
+					"version": "1.3.2.b786"
 				}
 			]
 		},
@@ -305,8 +305,12 @@
 					"version": "5.24.0.b573"
 				},
 				{
+					"name": "nos.sys.settings",
+					"version": "0.1.1.b788"
+				},
+				{
 					"name": "nos.filters",
-					"version": "1.2.0.b777"
+					"version": "1.2.1.b786"
 				},
 				{
 					"name": "nos.math",
@@ -314,7 +318,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.1.2.b777"
+					"version": "3.1.3.b786"
 				},
 				{
 					"name": "nos.mediaio",
@@ -334,7 +338,7 @@
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.1.0.b777"
+					"version": "1.1.1.b786"
 				},
 				{
 					"name": "nos.str",

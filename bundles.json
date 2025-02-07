@@ -193,17 +193,7 @@
 				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
 					"is_active": true
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -222,16 +212,6 @@
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
 					"is_active": true
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -273,24 +253,9 @@
 		"standard_1.3": {
 			"module_index_urls": [
 				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
-					"name": "nodos-standard",
-					"is_active": true
-				},
-				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -360,24 +325,9 @@
 		"broadcast_1.3": {
 			"module_index_urls": [
 				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
-					"name": "nodos-standard",
-					"is_active": true
-				},
-				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -413,17 +363,7 @@
 				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false 
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": true 
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false 
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -441,17 +381,7 @@
 				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": true 
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false 
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false 
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -491,24 +421,9 @@
 		"linux_standard_1.3": {
 			"module_index_urls": [
 				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
-					"name": "nodos-standard",
-					"is_active": true 
-				},
-				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
@@ -552,24 +467,9 @@
 		"linux_broadcast_1.3": {
 			"module_index_urls": [
 				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json",
-					"name": "nodos-standard",
-					"is_active": true 
-				},
-				{
 					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
 					"name": "nodos",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json",
-					"name": "nodos-without-ai",
-					"is_active": false
-				},
-				{
-					"url": "https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json",
-					"name": "nodos-ai",
-					"is_active": false
+					"is_active": true
 				}
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",

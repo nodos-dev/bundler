@@ -337,12 +337,20 @@
 					"version": "1.4.0.b823"
 				},
 				{
+					"name": "nos.animation",
+					"version": "0.2.0.b823"
+				},
+				{
 					"name": "nos.webrtc",
 					"version": "1.1.2.b814"
 				},
 				{
 					"name": "nos.str",
 					"version": "0.2.0.b814"
+				},
+				{
+					"name": "nos.sys.device",
+					"version": "0.1.0.b3"
 				}
 			],
 			"includes": [

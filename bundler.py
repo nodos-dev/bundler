@@ -133,6 +133,10 @@ def download_modules(bundle_info, bundles, nodos_version):
 	shutil.rmtree(f"{WORKSPACE_FOLDER}/Module/", ignore_errors=True)
 	os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
 	logger.info("Collecting module information from bundle")
+	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	if result.returncode != 0:
+		logger.error(f"nosman rescan returned with {result.returncode}")
+		exit(result.returncode)
 	
 	modules_map = get_bundled_modules(bundle_info, bundles)
 

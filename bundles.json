@@ -198,7 +198,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b4030",
+			"nodos_version": "1.3.0.b4062",
 			"bundled_modules": [
 				{
 					"name": "nos.sys.variables",
@@ -206,7 +206,7 @@
 				},
 				{
 					"name": "nos.reflect",
-					"version": "1.4.5.b858"
+					"version": "1.6.1.b878"
 				}
 			]
 		},
@@ -271,31 +271,31 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "5.25.2.b588"
+					"version": "6.0.1.b592"
 				},
 				{
 					"name": "nos.sys.settings",
-					"version": "0.2.0.b802"
+					"version": "0.3.0.b804"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.4.0.b845"
+					"version": "1.5.1.b878"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.8.1.b814"
+					"version": "1.9.1.b878"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.4.1.b858"
+					"version": "3.8.1.b878"
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.4.0.b638"
+					"version": "2.5.0.b641"
 				},
 				{
 					"name": "nos.sys.mediaio",
-					"version": "0.3.0.b638"
+					"version": "0.4.0.b641"
 				},
 				{
 					"name": "nos.webcam",
@@ -311,15 +311,15 @@
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.1.3.b848"
+					"version": "1.2.0.b868"
 				},
 				{
 					"name": "nos.str",
-					"version": "0.2.0.b814"
+					"version": "0.3.0.b868"
 				},
 				{
 					"name": "nos.sys.device",
-					"version": "0.1.0.b3"
+					"version": "0.3.0.b9"
 				}
 			],
 			"includes": [
@@ -343,15 +343,15 @@
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.0.0.b65"
+					"version": "2.1.0.b70"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "1.0.0.b65"
+					"version": "1.1.1.b70"
 				},
 				{
 					"name": "nos.track",
-					"version": "1.8.0.b823"
+					"version": "1.9.0.b878"
 				},
 				{
 					"name": "nos.display",

@@ -279,7 +279,7 @@
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.5.1.b878"
+					"version": "1.5.2.b880"
 				},
 				{
 					"name": "nos.math",
@@ -355,7 +355,7 @@
 				},
 				{
 					"name": "nos.display",
-					"version": "0.2.0.b22"
+					"version": "0.3.0.b26"
 				}
 			],
 			"includes": [

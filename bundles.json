@@ -303,11 +303,11 @@
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "1.4.0.b823"
+					"version": "1.5.0.b878"
 				},
 				{
 					"name": "nos.animation",
-					"version": "0.2.1.b858"
+					"version": "0.3.0.b878"
 				},
 				{
 					"name": "nos.webrtc",
@@ -339,7 +339,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.2.3.b673"
+					"version": "2.3.0.b681"
 				},
 				{
 					"name": "nos.sys.decklink",

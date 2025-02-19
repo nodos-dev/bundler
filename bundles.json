@@ -198,11 +198,11 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b4062",
+			"nodos_version": "1.3.0.b4067",
 			"bundled_modules": [
 				{
 					"name": "nos.sys.variables",
-					"version": "0.1.0.b852"
+					"version": "0.2.0.b878"
 				},
 				{
 					"name": "nos.reflect",
@@ -267,7 +267,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b784"
+					"version": "1.1.0.b878"
 				},
 				{
 					"name": "nos.sys.vulkan",
@@ -291,11 +291,11 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.5.0.b641"
+					"version": "2.5.0.b643"
 				},
 				{
 					"name": "nos.sys.mediaio",
-					"version": "0.4.0.b641"
+					"version": "0.4.0.b643"
 				},
 				{
 					"name": "nos.webcam",
@@ -311,11 +311,11 @@
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.2.0.b868"
+					"version": "1.2.0.b878"
 				},
 				{
 					"name": "nos.str",
-					"version": "0.3.0.b868"
+					"version": "0.3.0.b878"
 				},
 				{
 					"name": "nos.sys.device",

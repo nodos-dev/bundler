@@ -198,7 +198,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.0.b4076",
+			"nodos_version": "1.3.0.b4084",
 			"bundled_modules": [
 				{
 					"name": "nos.sys.variables",
@@ -339,7 +339,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.4.0.b683"
+					"version": "2.4.1.b686"
 				},
 				{
 					"name": "nos.sys.decklink",

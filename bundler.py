@@ -170,13 +170,18 @@ def package(bundle_key, bundle_info, nodos_version):
 	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman", ignore_errors=True)
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
-	engine_settigns_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
-	with open(engine_settigns_path, "r") as f:
+	engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
+	if not os.path.exists(engine_settings_path):
+		engine_settings_path = f"{engine_folder}/Config/EngineSettings.json"
+		if not os.path.exists(engine_settings_path):
+			logger.error(f"Engine settings file not found in both {engine_folder}/Config and {engine_folder}/Config/Defaults")
+			exit(1)
+	with open(engine_settings_path, "r") as f:
 		engine_settings = json.load(f)
 		engine_settings["remote_modules"] = bundle_info["module_index_urls"]
 		engine_settings["engine_index_url"] = bundle_info["engine_index_url"]
 
-	with open(engine_settigns_path, "w") as f:
+	with open(engine_settings_path, "w") as f:
 		json.dump(engine_settings, f, indent=2)
 
 	major, minor, patch = get_semver_from_version(nodos_version)

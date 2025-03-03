@@ -339,7 +339,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.4.1.b686"
+					"version": "2.4.2.b690"
 				},
 				{
 					"name": "nos.sys.decklink",

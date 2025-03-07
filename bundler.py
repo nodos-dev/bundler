@@ -28,7 +28,7 @@ def getenv(var_name, fail_on_missing=True):
 		logger.error(f"Environment variable {var_name} is not set!")
 		if fail_on_missing:
 			exit(1)
-		else 
+		else:
 			return None
 	return val
 

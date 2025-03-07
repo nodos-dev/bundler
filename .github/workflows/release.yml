@@ -19,6 +19,9 @@ on:
         options:
           - Windows
           - Linux
+      previous_tag:
+        description: 'Previous Tag or Commit'
+        required: false
 
 env:
   GH_USERNAME: "nodos-bot"

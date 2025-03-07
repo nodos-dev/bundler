@@ -48,11 +48,11 @@ def get_bundle_info(bundle_key, bundles):
 		return None
 	return bundles[bundle_key]
 
-def get_nodos_version(bundle_info, bundles):
-	nodos_version = bundle_info.get("nodos_version")
-	if nodos_version is not None:
-		return nodos_version
-# Try to get nodos_version from the bundle's includes
+def get_inheritable_value(bundle_info, key, bundles):
+	value = bundle_info.get(key)
+	if value is not None:
+		return value
+# Try to get value from the bundle's includes
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
 		while len(queue) > 0:
@@ -61,11 +61,18 @@ def get_nodos_version(bundle_info, bundles):
 			if other_conf is None:
 				logger.error(f"Depending bundle key {current} not found in bundles.json")
 				exit(1)
-			nodos_version = other_conf.get("nodos_version")
-			if nodos_version is not None:
-				return nodos_version
+			value = other_conf.get(key)
+			if value is not None:
+				return value
 			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
-	return nodos_version
+	return value
+
+def get_nodos_github_url(bundle_info, bundles):
+	return get_inheritable_value(bundle_info, "nodos_github_url", bundles)
+
+
+def get_nodos_version(bundle_info, bundles):
+	return get_inheritable_value(bundle_info, "nodos_version", bundles)
 
 def get_semver_from_version(version):
 	if version is None:
@@ -191,6 +198,24 @@ def package(bundle_key, bundle_info, nodos_version):
 		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
+def get_previous_bundles(previous_commit):
+	# Retrieve the previous bundles.json file from the specified commit
+	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
+	if result.returncode != 0:
+		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}")
+		exit(result.returncode)
+	previous_bundles_json = json.loads(result.stdout)
+	if previous_bundles_json.get("bundles") is None:
+		logger.error(f"Failed to read bundles.json from commit {previous_commit}. Missing 'bundles' key")
+		return None
+	return previous_bundles_json["bundles"]
+
+def fill_github_url_static_info(url):
+	arch, os = platform.machine().lower(), platform.system().lower()
+	if arch == "amd64":
+		arch = "x86_64"
+	return url.replace("%%arch%%", arch).replace("%%os%%", os)
+
 def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):
 	short_name = bundle_info.get("short_name")
 	if short_name is None:
@@ -209,10 +234,73 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	title = f"{tag}"
 
 	modules = get_bundled_modules(bundle_info, bundles)
+
+	# Retrieve the previous bundle info
+	previous_commit = getenv("PREVIOUS_COMMIT")
+	previous_bundles = None
+	if previous_commit is not None:
+		previous_bundles = get_previous_bundles(previous_commit)
+	previous_modules = None
+	previous_nodos_version = None
+	if previous_bundles is None:
+		logger.error(f"Failed to read bundles.json from commit {previous_commit}")
+	else:
+		if previous_bundles.get(bundle_key) is None:
+			logger.error(f"Bundle key {bundle_key} not found in bundles.json from commit {previous_commit}")
+		else:
+			previous_bundle_info = previous_bundles.get(bundle_key)
+			if previous_bundle_info is None:
+				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
+			else:
+				previous_modules = get_bundled_modules(previous_bundle_info, previous_bundles)
+				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles)
+
 	release_notes = f"## Nodos {nodos_version}\n\n"
+	release_notes += f"### Engine\n"
+	if previous_nodos_version is not None and previous_nodos_version != nodos_version:
+		nodos_github_url = get_nodos_github_url(bundle_info, bundles)
+		if nodos_github_url is not None:
+			comparison_url = fill_github_url_static_info(nodos_github_url).replace("%%old_version%%", previous_nodos_version).replace("%%new_version%%", nodos_version)
+			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version}, [Compare]({comparison_url}))\n"
+		else:			
+			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version})\n"
+	else:
+		release_notes += f"* Engine version: {nodos_version}\n"
+
+
+	nodos_github_url = get_nodos_github_url(bundle_info, bundles)
+
 	release_notes += f"### Modules\n"
+
+
 	for module in modules.values():
-		release_notes += f"* {module['name']} - {module['version']}\n"
+		old_version = None
+		if previous_modules is not None:
+			old_version = previous_modules.get(module['name'], {}).get('version')
+		if old_version and old_version != module['version']:
+			if 'github_url' in module:
+				old_build = old_version.split(".b")[-1]
+				new_build = module['version'].split(".b")[-1]
+				comparison_url = fill_github_url_static_info(module['github_url']).replace("%%old_build%%", old_build).replace("%%new_build%%", new_build)
+				release_notes += f"* {module['name']} - {module['version']} (prev: {old_version}, [Compare]({comparison_url}))\n"
+			else:
+				release_notes += f"* {module['name']} - {module['version']} (prev: {old_version})\n"
+		elif old_version:
+			release_notes += f"* {module['name']} - {module['version']} (no change)\n"
+		else:
+			release_notes += f"* {module['name']} - {module['version']} (new)\n"
+
+	if previous_commit is not None:
+		#check if this is a tag
+		if previous_commit.startswith("v"):
+			release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_commit}\n"
+		else:
+			#try to find the tag of the previous commit
+			result = run(["git", "describe", "--tags", "--abbrev=0", previous_commit], capture_output=True, text=True)
+			if result.returncode == 0:
+				previous_tag = result.stdout.strip()
+				release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_tag}\n"
+
 
 	ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]
 	if target_branch != "":
@@ -229,8 +317,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	logger.info(f"GitHub Release: Pushing release artifacts to repo {release_repo}")
 	result = run_dry_runnable(ghargs, dry_run_release)
 	if result.returncode != 0:
-		print(result.stderr)
-		logger.error(f"GitHub CLI returned with {result.returncode}")
+		logger.error(f"GitHub CLI returned with error {result.stderr} and code {result.returncode}")
 		exit(result.returncode)
 	logger.info("GitHub release successful")
 	if skip_nosman_publish:

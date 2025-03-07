@@ -22,11 +22,14 @@ def get_current_target_platform():
         arch = "x86_64"
     return f"{arch}-{os}"
 
-def getenv(var_name):
+def getenv(var_name, fail_on_missing=True):
 	val = os.getenv(var_name)
 	if val is None:
 		logger.error(f"Environment variable {var_name} is not set!")
-		exit(1)
+		if fail_on_missing:
+			exit(1)
+		else 
+			return None
 	return val
 
 def run_dry_runnable(args, dry_run):
@@ -236,7 +239,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	modules = get_bundled_modules(bundle_info, bundles)
 
 	# Retrieve the previous bundle info
-	previous_commit = getenv("PREVIOUS_COMMIT")
+	previous_commit = getenv("PREVIOUS_COMMIT", False)
 	previous_bundles = None
 	if previous_commit is not None:
 		previous_bundles = get_previous_bundles(previous_commit)

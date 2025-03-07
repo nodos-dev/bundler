@@ -27,6 +27,7 @@ env:
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
+  PREVIOUS_COMMIT: ${{ github.event.inputs.previous_tag }}
 
 # TODO: Support parallel runs
 concurrency:

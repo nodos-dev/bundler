@@ -90,6 +90,7 @@ jobs:
           ref: ${{ github.ref }}
           token: ${{ env.GH_TOKEN }}
           path: ./bundler-${{ github.ref_name }}
+          fetch-depth: 0
       - name: Copy Nosman
         shell: pwsh
         run: |

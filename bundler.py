@@ -205,8 +205,8 @@ def get_previous_bundles(previous_commit):
 	# Retrieve the previous bundles.json file from the specified commit
 	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
 	if result.returncode != 0:
-		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}")
-		exit(result.returncode)
+		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}. Error: {result.stderr}")
+		return None
 	previous_bundles_json = json.loads(result.stdout)
 	if previous_bundles_json.get("bundles") is None:
 		logger.error(f"Failed to read bundles.json from commit {previous_commit}. Missing 'bundles' key")

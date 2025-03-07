@@ -319,7 +319,7 @@
 				},
 				{
 					"name": "nos.sys.device",
-					"version": "0.3.2.b13"
+					"version": "0.3.3.b15"
 				}
 			],
 			"includes": [

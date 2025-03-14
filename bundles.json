@@ -288,7 +288,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.1.2.b608",
+					"version": "6.2.1.b612",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

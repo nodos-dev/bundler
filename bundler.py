@@ -160,7 +160,7 @@ def download_modules(bundle_info, bundles, nodos_version):
 		module_name = module["name"]
 		module_version = module["version"]
 		logger.info(f"Downloading module {module_name} version {module_version} using nosman")
-		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version], stdout=stdout, stderr=stderr, universal_newlines=True)
+		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)

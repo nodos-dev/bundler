@@ -1,5 +1,5 @@
 import argparse
-from subprocess import CompletedProcess, call, run
+from subprocess import CompletedProcess, call, run, CalledProcessError
 from sys import stderr, stdout
 from loguru import logger
 import os
@@ -14,6 +14,19 @@ WORKSPACE_FOLDER = "./workspace"
 ARTIFACTS_FOLDER = "./Artifacts/"
 
 COMPRESSED_FILE_EXTENSION = ".zip"
+
+def force_delete_folder(folder_path):
+    """Forcefully deletes a folder, handling permission issues."""
+    if not os.path.exists(folder_path):
+        return
+
+    try:
+        if os.name == "nt":  # Windows
+            run(["powershell", "-Command", "Remove-Item", "-Path", folder_path, "-Recurse", "-Force"], shell=True, check=True)
+        else:  # Linux/macOS
+            run(["rm", "-rf", repo_path], check=True)
+    except CalledProcessError as e:
+        print(f"Error deleting {folder_path}: {e}", file=stderr)
 
 def get_current_target_platform():
     # x86_64-windows, x86_64-linux, arm64-linux etc.
@@ -101,7 +114,7 @@ def get_release_artifacts(dir):
 	return files
 
 def download_nodos(bundle_info, nodos_version):
-	shutil.rmtree(WORKSPACE_FOLDER, ignore_errors=True)
+	force_delete_folder(WORKSPACE_FOLDER)
 	logger.info("Reading Nodos version from bundle")
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
@@ -140,7 +153,7 @@ def get_bundled_modules(bundle_info, bundles):
 
 def download_modules(bundle_info, bundles, nodos_version):
 	logger.info("Deleting old modules")
-	shutil.rmtree(f"{WORKSPACE_FOLDER}/Module/", ignore_errors=True)
+	force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
 	os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
 	logger.info("Collecting module information from bundle")
 	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
@@ -176,8 +189,8 @@ def download_modules(bundle_info, bundles, nodos_version):
 
 def package(bundle_key, bundle_info, nodos_version):
 	logger.info("Packaging Nodos")
-	shutil.rmtree(ARTIFACTS_FOLDER, ignore_errors=True)
-	shutil.rmtree(f"{WORKSPACE_FOLDER}/.nosman", ignore_errors=True)
+	force_delete_folder(ARTIFACTS_FOLDER)
+	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman")
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
 	engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"

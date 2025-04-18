@@ -10,7 +10,7 @@ on:
       bundle_key:
         description: 'Bundle Name'
         required: true
-        default: "default_1.2"
+        default: "broadcast_1.4"
       target_platform:
         description: 'Target Platform'
         required: true

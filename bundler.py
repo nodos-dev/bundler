@@ -181,9 +181,14 @@ def download_modules(bundle_info, bundles, nodos_version):
 	# Write included modules to Profile.json
 	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
 	profile = {}
-	if "loaded_modules" not in profile:
-		profile["loaded_modules"] = []
-	profile["loaded_modules"].extend(included_modules)
+	loaded_plugins_key = "loaded_plugins"
+	major, minor, patch = get_semver_from_version(nodos_version)
+	# If version lower than 1.4.0 use loaded_modules key
+	if int(major) < 1 or (int(major) == 1 and int(minor) < 4):
+		loaded_plugins_key = "loaded_modules"
+	if loaded_plugins_key not in profile:
+		profile[loaded_plugins_key] = []
+	profile[loaded_plugins_key].extend(included_modules)
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)
 

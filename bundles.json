@@ -609,7 +609,7 @@
 				},
 				{
 					"name": "nos.webcam",
-					"version": "1.11.0.b652",
+					"version": "1.11.0.b655",
 					"github_url": "https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

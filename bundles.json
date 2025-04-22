@@ -369,7 +369,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.5.2.b700",
+					"version": "2.6.1.b731",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -384,7 +384,7 @@
 				},
 				{
 					"name": "nos.track",
-					"version": "1.9.1.b902",
+					"version": "1.9.2.b957",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

@@ -308,7 +308,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.9.4.b954",
+					"version": "3.9.5.b959",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

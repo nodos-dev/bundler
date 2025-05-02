@@ -483,6 +483,10 @@
 					"version": "6.3.6.b652"
 				},
 				{
+					"name": "nos.sys.settings",
+					"version": "0.3.0.b804"
+				},
+				{
 					"name": "nos.filters",
 					"version": "1.5.2.b980"
 				},
@@ -505,6 +509,11 @@
 				{
 					"name": "nos.sys.animation",
 					"version": "1.5.1.b980"
+				},
+				{
+					"name": "nos.sys.device",
+					"version": "0.3.3.b15",
+					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
 			"includes": [

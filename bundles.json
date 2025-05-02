@@ -410,6 +410,10 @@
 			"nodos_version": "1.3.0.b4294",
 			"bundled_modules": [
 				{
+					"name": "nos.sys.variables",
+					"version": "1.0.1.b980"
+				},
+				{
 					"name": "nos.reflect",
 					"version": "1.6.5.b980"
 				}

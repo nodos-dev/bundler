@@ -24,7 +24,7 @@ def force_delete_folder(folder_path):
         if os.name == "nt":  # Windows
             run(["powershell", "-Command", "Remove-Item", "-Path", folder_path, "-Recurse", "-Force"], shell=True, check=True)
         else:  # Linux/macOS
-            run(["rm", "-rf", repo_path], check=True)
+            run(["rm", "-rf", folder_path], check=True)
     except CalledProcessError as e:
         print(f"Error deleting {folder_path}: {e}", file=stderr)
 

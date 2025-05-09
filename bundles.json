@@ -587,7 +587,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.23.5.b654",
+					"version": "6.25.1.b662",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -652,7 +652,7 @@
 				},
 				{
 					"name": "nos.rive",
-					"version": "0.2.1.b15",
+					"version": "0.2.2.b18",
 					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],

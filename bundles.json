@@ -354,7 +354,12 @@
 				{
 					"name": "nos.rive",
 					"version": "0.3.0.b20",
-					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+					"github_url": "https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sync",
+					"version": "0.1.0.b998",
+					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
 			"includes": [
@@ -374,7 +379,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.5.b744",
+					"version": "2.6.6.b745",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

@@ -374,7 +374,7 @@
 			"bundled_modules": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.8.b748",
+					"version": "2.6.9.b749",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

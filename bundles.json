@@ -358,7 +358,7 @@
 				},
 				{
 					"name": "nos.sample.dxapp",
-					"version": "1.1.0.b38",
+					"version": "1.1",
 					"github_url": "https::github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%",
 					"type": "sample"
 				}

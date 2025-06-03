@@ -68,7 +68,7 @@ def get_inheritable_value(bundle_info, key, bundles):
 	value = bundle_info.get(key)
 	if value is not None:
 		return value
-# Try to get value from the bundle's includes
+	# Try to get value from the bundle's includes
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
 		while len(queue) > 0:
@@ -151,10 +151,12 @@ def get_bundled_packages(bundle_info, bundles):
 		packages_map[package["name"]] = package
 	return packages_map
 
-def download_modules(bundle_info, bundles, nodos_version):
+def download_packages(bundle_info, bundles, nodos_version):
 	logger.info("Deleting old modules")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
+	force_delete_folder(f"{WORKSPACE_FOLDER}/Samples/")
 	os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
+	os.makedirs(f"{WORKSPACE_FOLDER}/Samples/", exist_ok=True)
 	logger.info("Collecting module information from bundle")
 	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	if result.returncode != 0:
@@ -173,9 +175,9 @@ def download_modules(bundle_info, bundles, nodos_version):
 		package_name = package["name"]
 		package_version = package["version"]
 		logger.info(f"Downloading package {package_name} version {package_version} using nosman")
-		out_dir = f"Module/{package_name}"
+		out_dir = f"./Module/{package_name}"
 		if "type" in package and package["type"] == "sample":
-			out_dir = f"Samples/{package_name}"
+			out_dir = f"./Samples/{package_name}"
 		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
@@ -423,7 +425,7 @@ if __name__ == "__main__":
 						default=False,
 						help="Download Nodos using nosman")
 
-	parser.add_argument('--download-modules',
+	parser.add_argument('--download-packages',
 					 	action='store_true',
 						default=False,
 						help="Download modules using nosman")
@@ -462,8 +464,8 @@ if __name__ == "__main__":
 	if args.download_nodos:
 		download_nodos(bundle_info, nodos_version)
 
-	if args.download_modules:
-		download_modules(bundle_info, bundles, nodos_version)
+	if args.download_packages:
+		download_packages(bundle_info, bundles, nodos_version)
 
 	if args.pack:
 		package(args.bundle_key, bundle_info, nodos_version)

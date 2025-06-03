@@ -92,25 +92,24 @@ jobs:
           path: ./bundler-${{ github.ref_name }}
           fetch-depth: 0
       - name: Copy Nosman
-        shell: pwsh
+        shell: bash
         run: |
-              New-Item -ItemType Directory -Path "./__nosman_staging__" -Force
-              Copy-Item -Path "$Env:SYSTEM_NOSMAN_PATH" -Destination "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME"
-              cd ./__nosman_staging__
-              & ./$Env:NOSMAN_EXECUTABLE_NAME update
-              cd ..
-              Copy-Item -Path "./__nosman_staging__/$Env:NOSMAN_EXECUTABLE_NAME" -Destination "./$Env:NOSMAN_EXECUTABLE_NAME"
-              Remove-Item -Path "./__nosman_staging__" -Recurse -Force
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            curl -L -o nodos.exe https://github.com/nodos-dev/nodos/releases/latest/download/nosman-windows.exe
+          else
+            curl -L -o nodos https://github.com/nodos-dev/nodos/releases/latest/download/nosman-linux
+            chmod +x ./nodos
+          fi
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Download Nodos
         id: create_installer
         run: |
           python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
         working-directory: ./bundler-${{ github.ref_name }}/
-      - name: Download Modules
-        id: download_modules
+      - name: Download Packages
+        id: download_packages
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-modules
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-packages
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package

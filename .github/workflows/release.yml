@@ -95,7 +95,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            curl -L -o nodos.exe https://github.com/nodos-dev/nodos/releases/latest/download/nosman-windows.exe
+            powershell.exe -Command "Invoke-WebRequest -Uri 'https://github.com/nodos-dev/nodos/releases/latest/download/nosman-windows.exe' -OutFile 'nodos.exe'"
           else
             curl -L -o nodos https://github.com/nodos-dev/nodos/releases/latest/download/nosman-linux
             chmod +x ./nodos

@@ -203,6 +203,7 @@ def package(bundle_key, bundle_info, nodos_version):
 	force_delete_folder(ARTIFACTS_FOLDER)
 	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman")
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
 	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
 	engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
 	if not os.path.exists(engine_settings_path):

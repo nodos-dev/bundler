@@ -124,8 +124,8 @@ def download_nodos(bundle_info, nodos_version):
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
 
-def get_bundled_modules(bundle_info, bundles):
-	bundled_modules = list(bundle_info["bundled_modules"] if "bundled_modules" in bundle_info else [])
+def get_bundled_packages(bundle_info, bundles):
+	bundled_packages = list(bundle_info["bundled_packages"] if "bundled_packages" in bundle_info else [])
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
 		includes = list([])
@@ -143,13 +143,13 @@ def get_bundled_modules(bundle_info, bundles):
 			if conf is None:
 				logger.error(f"Include bundle key {include} not found in bundles.json")
 				exit(1)
-			others = list(conf["bundled_modules"] if "bundled_modules" in conf else [])
-			bundled_modules = others + bundled_modules
+			others = list(conf["bundled_packages"] if "bundled_packages" in conf else [])
+			bundled_packages = others + bundled_packages
 
-	modules_map = OrderedDict()
-	for module in bundled_modules:
-		modules_map[module["name"]] = module
-	return modules_map
+	packages_map = OrderedDict()
+	for package in bundled_packages:
+		packages_map[package["name"]] = package
+	return packages_map
 
 def download_modules(bundle_info, bundles, nodos_version):
 	logger.info("Deleting old modules")
@@ -161,23 +161,26 @@ def download_modules(bundle_info, bundles, nodos_version):
 		logger.error(f"nosman rescan returned with {result.returncode}")
 		exit(result.returncode)
 	
-	modules_map = get_bundled_modules(bundle_info, bundles)
+	packages_map = get_bundled_packages(bundle_info, bundles)
 
-	downloading_modules_str = ""
-	for module in modules_map.keys():
-		downloading_modules_str += f"{module} "
-	logger.info(f"Downloading modules: {downloading_modules_str}")
+	downloading_packages_str = ""
+	for package in packages_map.keys():
+		downloading_packages_str += f"{package} "
+	logger.info(f"Downloading packages: {downloading_packages_str}")
 	
-	included_modules = []
-	for module in modules_map.values():
-		module_name = module["name"]
-		module_version = module["version"]
-		logger.info(f"Downloading module {module_name} version {module_version} using nosman")
-		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", module_name, module_version, "--out-dir", f"./Module/{module_name}", "--prefix", module_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	included_packages = []
+	for package in packages_map.values():
+		package_name = package["name"]
+		package_version = package["version"]
+		logger.info(f"Downloading package {package_name} version {package_version} using nosman")
+		out_dir = f"Module/{package_name}"
+		if "type" in package and package["type"] == "sample":
+			out_dir = f"Samples/{package_name}"
+		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
-		included_modules.append({"name": module_name, "version": module_version})
+		included_packages.append({"name": package_name, "version": package_version})
 	# Write included modules to Profile.json
 	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
 	profile = {}
@@ -188,7 +191,8 @@ def download_modules(bundle_info, bundles, nodos_version):
 		loaded_plugins_key = "loaded_modules"
 	if loaded_plugins_key not in profile:
 		profile[loaded_plugins_key] = []
-	profile[loaded_plugins_key].extend(included_modules)
+	included_plugins = [package for package in included_packages if ("type" not in package or package["type"] != "sample")]
+	profile[loaded_plugins_key].extend(included_plugins)
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)
 
@@ -254,14 +258,14 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
-	modules = get_bundled_modules(bundle_info, bundles)
+	packages = get_bundled_packages(bundle_info, bundles)
 
 	# Retrieve the previous bundle info
 	previous_commit = getenv("PREVIOUS_COMMIT", False)
 	previous_bundles = None
 	if previous_commit is not None:
 		previous_bundles = get_previous_bundles(previous_commit)
-	previous_modules = None
+	previous_packages = None
 	previous_nodos_version = None
 	if previous_bundles is None:
 		logger.error(f"Failed to read bundles.json from commit {previous_commit}")
@@ -273,7 +277,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 			if previous_bundle_info is None:
 				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
 			else:
-				previous_modules = get_bundled_modules(previous_bundle_info, previous_bundles)
+				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles)
 				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles)
 
 	release_notes = f"## Nodos {nodos_version}\n\n"
@@ -294,22 +298,22 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	release_notes += f"### Modules\n"
 
 
-	for module in modules.values():
+	for package in packages.values():
 		old_version = None
-		if previous_modules is not None:
-			old_version = previous_modules.get(module['name'], {}).get('version')
-		if old_version and old_version != module['version']:
-			if 'github_url' in module:
+		if previous_packages is not None:
+			old_version = previous_packages.get(package['name'], {}).get('version')
+		if old_version and old_version != package['version']:
+			if 'github_url' in package:
 				old_build = old_version.split(".b")[-1]
-				new_build = module['version'].split(".b")[-1]
-				comparison_url = fill_github_url_static_info(module['github_url']).replace("%%old_build%%", old_build).replace("%%new_build%%", new_build)
-				release_notes += f"* {module['name']} - {module['version']} (prev: {old_version}, [Compare]({comparison_url}))\n"
+				new_build = package['version'].split(".b")[-1]
+				comparison_url = fill_github_url_static_info(package['github_url']).replace("%%old_build%%", old_build).replace("%%new_build%%", new_build)
+				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version}, [Compare]({comparison_url}))\n"
 			else:
-				release_notes += f"* {module['name']} - {module['version']} (prev: {old_version})\n"
+				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version})\n"
 		elif old_version:
-			release_notes += f"* {module['name']} - {module['version']} (no change)\n"
+			release_notes += f"* {package['name']} - {package['version']} (no change)\n"
 		else:
-			release_notes += f"* {module['name']} - {module['version']} (new)\n"
+			release_notes += f"* {package['name']} - {package['version']} (new)\n"
 
 	if previous_commit is not None:
 		#check if this is a tag

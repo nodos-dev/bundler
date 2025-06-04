@@ -221,7 +221,7 @@
 				},
 				{
 					"name": "nos.reflect",
-					"version": "1.7.1.b1003",
+					"version": "1.7.3.b1004",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			]
@@ -308,7 +308,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.10.3.b1002",
+					"version": "3.10.4.b1004",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

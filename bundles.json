@@ -361,6 +361,11 @@
 					"version": "1.1.3.b45",
 					"github_url": "https::github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%",
 					"type": "sample"
+				},
+				{
+					"name": "nos.sync",
+					"version": "1.0.0.b1005",
+					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
 			"includes": [
@@ -380,7 +385,7 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.10.b750",
+					"version": "2.6.11.b751",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

@@ -364,7 +364,7 @@
 				},
 				{
 					"name": "nos.sync",
-					"version": "1.0.0.b1005",
+					"version": "2.0.0.b1006",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
@@ -385,7 +385,7 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.12.b753",
+					"version": "2.6.14.b754",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

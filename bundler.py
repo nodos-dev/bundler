@@ -193,7 +193,10 @@ def download_packages(bundle_info, bundles, nodos_version):
 		loaded_plugins_key = "loaded_modules"
 	if loaded_plugins_key not in profile:
 		profile[loaded_plugins_key] = []
-	included_plugins = [package for package in included_packages if ("type" not in package or package["type"] != "sample")]
+	included_plugins = []
+	for package in included_packages:
+		if "type" not in package or package["type"] != "sample":
+			included_plugins.append(package)
 	profile[loaded_plugins_key].extend(included_plugins)
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)

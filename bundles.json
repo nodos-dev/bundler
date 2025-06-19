@@ -364,7 +364,7 @@
 				},
 				{
 					"name": "nos.sync",
-					"version": "3.0.0.b1020",
+					"version": "3.1.0.b1022",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
@@ -385,17 +385,17 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.17.b759",
+					"version": "2.6.18.b761",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.2.0.b108",
+					"version": "2.2.1.b110",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "1.2.5.b108",
+					"version": "1.2.6.b110",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

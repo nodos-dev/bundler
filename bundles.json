@@ -313,7 +313,7 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.5.2.b670",
+					"version": "2.5.4.b677",
 					"github_url": "https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

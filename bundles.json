@@ -298,7 +298,7 @@
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.5.2.b928",
+					"version": "1.5.3.b1030",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

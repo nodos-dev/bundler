@@ -288,7 +288,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.5.5.b677",
+					"version": "6.5.6.b681",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -390,12 +390,12 @@
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.2.1.b110",
+					"version": "2.2.2.b120",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "1.2.13.b118",
+					"version": "1.2.14.b120",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

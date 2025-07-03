@@ -570,7 +570,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.4.0.b4403",
+			"nodos_version": "1.4.0.b4407",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%",
 			"bundled_packages": [
 				{
@@ -603,7 +603,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.25.1.b662",
+					"version": "6.26.3.b682",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -618,17 +618,17 @@
 				},
 				{
 					"name": "nos.math",
-					"version": "1.21.1.b986",
+					"version": "1.22.0.b1033",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.24.b1033",
+					"version": "3.24.0.b1036",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.12.1.b666",
+					"version": "2.12.2.b678",
 					"github_url": "https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -658,7 +658,7 @@
 				},
 				{
 					"name": "nos.sys.device",
-					"version": "0.10.2.b23",
+					"version": "0.10.3.b26",
 					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -689,17 +689,17 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.11.3.b740",
+					"version": "2.12.2.b769",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.11.3.b101",
+					"version": "2.12.0.b121",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "1.12.1.b101",
+					"version": "1.12.2.b121",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -709,7 +709,7 @@
 				},
 				{
 					"name": "nos.display",
-					"version": "0.11.1.b37",
+					"version": "0.11.2.b39",
 					"github_url": "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],

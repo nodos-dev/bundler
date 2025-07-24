@@ -390,7 +390,7 @@
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.2.3.b126",
+					"version": "2.2.4.b129",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

@@ -570,17 +570,17 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.4.0.b4407",
+			"nodos_version": "1.4.0.b4452",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%",
 			"bundled_packages": [
 				{
 					"name": "nos.sys.variables",
-					"version": "1.11.2.b986",
+					"version": "1.11.3.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.reflect",
-					"version": "1.12.1.b1033",
+					"version": "1.12.4.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			]
@@ -598,67 +598,67 @@
 			"bundled_packages": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b953",
+					"version": "2.0.0.b1078",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.26.3.b682",
+					"version": "6.29.0.b702",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.settings",
-					"version": "0.10.3.b817",
+					"version": "1.1.0.b824",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.filters",
-					"version": "1.11.1.b986",
+					"version": "1.11.3.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.22.0.b1033",
+					"version": "1.22.1.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.24.0.b1036",
+					"version": "3.26.0.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.12.2.b678",
+					"version": "2.12.3.b681",
 					"github_url": "https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.webcam",
-					"version": "1.11.1.b657",
+					"version": "1.11.2.b660",
 					"github_url": "https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "1.11.2.b986",
+					"version": "1.12.1.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.animation",
-					"version": "0.11.1.b986",
+					"version": "0.11.2.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.11.1.b986",
+					"version": "1.11.2.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.str",
-					"version": "0.11.1.b986",
+					"version": "0.11.2.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.device",
-					"version": "0.10.3.b26",
+					"version": "0.11.1.b31",
 					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -668,7 +668,7 @@
 				},
 				{
 					"name": "nos.sync",
-					"version": "10.1.0.b1033",
+					"version": "10.1.1.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
@@ -689,27 +689,27 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.12.2.b769",
+					"version": "2.13.1.b774",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sys.decklink",
-					"version": "2.12.0.b121",
+					"version": "2.12.5.b134",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.decklink",
-					"version": "1.12.2.b121",
+					"version": "1.12.5.b134",
 					"github_url": "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.track",
-					"version": "1.21.3.b986",
+					"version": "1.21.4.b1076",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.display",
-					"version": "0.11.2.b39",
+					"version": "0.11.3.b41",
 					"github_url": "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],

@@ -570,7 +570,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.4.0.b4452",
+			"nodos_version": "1.4.0.b4459",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%",
 			"bundled_packages": [
 				{
@@ -603,7 +603,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.29.0.b702",
+					"version": "6.30.1.b709",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

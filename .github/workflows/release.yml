@@ -90,14 +90,14 @@ jobs:
           ref: ${{ github.ref }}
           token: ${{ env.GH_TOKEN }}
           path: ./bundler-${{ github.ref_name }}
-          fetch-depth: 0
+          fetch-depth: 01
       - name: Copy Nosman
         shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            powershell.exe -Command "Invoke-WebRequest -Uri 'https://github.com/nodos-dev/nodos/releases/latest/download/nosman-windows.exe' -OutFile 'nodos.exe'"
+            powershell.exe -Command "Invoke-WebRequest -Uri 'https://github.com/nodos-dev/workspace/releases/latest/download/nosman-windows.exe' -OutFile 'nodos.exe'"
           else
-            curl -L -o nodos https://github.com/nodos-dev/nodos/releases/latest/download/nosman-linux
+            curl -L -o nodos https://github.com/nodos-dev/workspace/releases/latest/download/nosman-linux
             chmod +x ./nodos
           fi
         working-directory: ./bundler-${{ github.ref_name }}

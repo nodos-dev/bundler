@@ -413,6 +413,102 @@
 				"standard_1.3"
 			]
 		},
+		"ai_1.3": {
+			"module_index_urls": [
+				{
+					"url": "https://raw.githubusercontent.com/mediaz/nodos-index/main/index",
+					"name": "nodos",
+					"is_active": true
+				}
+			],
+			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
+			"short_name": "ai",
+			"bundled_packages": [
+				{
+					"name": "nos.ml.ai_nodes",
+					"version": "1.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.ai.model_nodes",
+					"version": "2.2.1.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.cuda",
+					"version": "1.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.interop",
+					"version": "2.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.ml.onnx",
+					"version": "2.3.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.ml.tensors",
+					"version": "2.3.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.ml.tokenizer",
+					"version": "1.1.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai",
+					"version": "3.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.cuda",
+					"version": "2.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.depth_anything",
+					"version": "1.0.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.depth_anything",
+					"version": "1.0.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.depth_anything_v2",
+					"version": "1.0.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.rmbg",
+					"version": "1.0.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.rt4ksr",
+					"version": "1.0.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.ai.models.rvm",
+					"version": "0.1.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.tensor",
+					"version": "2.2.0.b277",
+					"github_url": "https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%"
+				}
+			],
+			"includes": [
+				"broadcast_1.3"
+			]
+		},
 		"linux_minimal_1.3": {
 			"module_index_urls": [
 				{

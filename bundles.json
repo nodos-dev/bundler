@@ -407,6 +407,11 @@
 					"name": "nos.display",
 					"version": "0.3.0.b26",
 					"github_url": "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+				},
+				{
+					"name": "nos.sys.lino",
+					"version": "1.0.0.b1089",
+					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
 			"includes": [

@@ -676,12 +676,12 @@
 			"bundled_packages": [
 				{
 					"name": "nos.sys.variables",
-					"version": "2.0.0.b1102",
+					"version": "2.0.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.reflect",
-					"version": "2.0.0.b1102",
+					"version": "2.0.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			]
@@ -714,17 +714,17 @@
 				},
 				{
 					"name": "nos.filters",
-					"version": "2.0.0.b1102",
+					"version": "2.0.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.math",
-					"version": "1.23.0.b1102",
+					"version": "1.23.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.28.0.b1102",
+					"version": "3.28.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -739,22 +739,22 @@
 				},
 				{
 					"name": "nos.sys.animation",
-					"version": "2.0.0.b1102",
+					"version": "2.0.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.animation",
-					"version": "0.12.0.b1102",
+					"version": "0.12.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.webrtc",
-					"version": "1.12.0.b1102",
+					"version": "1.12.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.str",
-					"version": "0.11.2.b1102",
+					"version": "0.11.2.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -764,12 +764,12 @@
 				},
 				{
 					"name": "nos.rive",
-					"version": "0.13.0.b26",
+					"version": "0.13.0.b28",
 					"github_url": "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.sync",
-					"version": "10.1.1.b1102",
+					"version": "10.1.1.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],
@@ -805,12 +805,12 @@
 				},
 				{
 					"name": "nos.track",
-					"version": "2.0.0.b1102",
+					"version": "2.0.0.b1104",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
 					"name": "nos.display",
-					"version": "0.11.3.b41",
+					"version": "0.12.0.b47",
 					"github_url": "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],

@@ -211,7 +211,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.1.b4517",
+			"nodos_version": "1.3.1.b4533",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%",
 			"bundled_packages": [
 				{
@@ -308,7 +308,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.14.0.b1106",
+					"version": "3.14.1.b1107",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

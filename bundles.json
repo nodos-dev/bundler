@@ -308,7 +308,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "3.14.1.b1107",
+					"version": "3.14.2.b1108",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

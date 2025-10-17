@@ -221,7 +221,7 @@
 				},
 				{
 					"name": "nos.reflect",
-					"version": "1.7.11.b1106",
+					"version": "1.7.12.b1109",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			]

@@ -221,7 +221,7 @@
 				},
 				{
 					"name": "nos.reflect",
-					"version": "1.7.12.b1109",
+					"version": "1.7.13.b1112",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			]
@@ -410,7 +410,7 @@
 				},
 				{
 					"name": "nos.sys.lino",
-					"version": "1.0.2.b1092",
+					"version": "1.0.3.b1112",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				}
 			],

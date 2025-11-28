@@ -132,7 +132,7 @@
 				},
 				{
 					"name": "nos.utilities",
-					"version": "2.8.3.b742",
+					"version": "2.8.4.b1124",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%"
 				},
 				{

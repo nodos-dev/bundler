@@ -20,7 +20,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.2.6.b4322",
+			"nodos_version": "1.2.7.b4575",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%...v%%new_version%%",
 			"bundled_packages": [
 				{

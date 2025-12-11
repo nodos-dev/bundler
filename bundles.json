@@ -211,7 +211,7 @@
 			],
 			"engine_index_url": "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json",
 			"short_name": "minimal",
-			"nodos_version": "1.3.2.b4572",
+			"nodos_version": "1.3.2.b4586",
 			"nodos_github_url": "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%",
 			"bundled_packages": [
 				{
@@ -283,7 +283,7 @@
 			"bundled_packages": [
 				{
 					"name": "nos.sys.shaderc",
-					"version": "1.1.0.b928",
+					"version": "1.1.0.b953",
 					"github_url": "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -313,7 +313,7 @@
 				},
 				{
 					"name": "nos.mediaio",
-					"version": "2.6.0.b687",
+					"version": "2.7.0.b700",
 					"github_url": "https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -385,7 +385,7 @@
 			"bundled_packages": [
 				{
 					"name": "nos.aja",
-					"version": "2.6.25.b784",
+					"version": "2.7.0.b789",
 					"github_url": "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

@@ -288,7 +288,7 @@
 				},
 				{
 					"name": "nos.sys.vulkan",
-					"version": "6.7.0.b691",
+					"version": "6.7.4.b738",
 					"github_url": "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{
@@ -405,7 +405,7 @@
 				},
 				{
 					"name": "nos.display",
-					"version": "0.3.0.b26",
+					"version": "0.4.0.b52",
 					"github_url": "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 				},
 				{

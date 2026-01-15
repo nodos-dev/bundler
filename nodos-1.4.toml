@@ -99,7 +99,7 @@ github_url = "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%
 [[bundles.standard.bundled_packages]]
 name = "nos.rive"
 version = "0.13.0.b28"
-github_url = "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+github_url = "https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 
 [[bundles.standard.bundled_packages]]
 name = "nos.sync"

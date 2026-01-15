@@ -121,7 +121,7 @@ github_url = "https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_b
 [[bundles.standard.bundled_packages]]
 name = "nos.sample.dxapp"
 version = "1.1.6.b57"
-github_url = "https::github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+github_url = "https://github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
 type = "sample"
 
 [[bundles.standard.bundled_packages]]

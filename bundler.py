@@ -76,7 +76,7 @@ def get_inheritable_value(bundle_info, key, bundles):
 			current = queue.pop(0)
 			other_conf = bundles.get(current)
 			if other_conf is None:
-				logger.error(f"Depending bundle key {current} not found in bundles.json")
+				logger.error(f"Depending bundle key {current} not found in bundles")
 				exit(1)
 			value = other_conf.get(key)
 			if value is not None:

@@ -1,0 +1,147 @@
+# Nodos 1.4 Bundle Definitions
+
+[bundles.minimal]
+short_name = "minimal"
+nodos_version = "1.4.0.b4528"
+nodos_github_url = "https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%"
+engine_index_url = "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json"
+
+[[bundles.minimal.module_index_urls]]
+url = "https://raw.githubusercontent.com/mediaz/nodos-index/main/index"
+name = "nodos"
+is_active = true
+
+[[bundles.minimal.bundled_packages]]
+name = "nos.sys.variables"
+version = "2.0.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.minimal.bundled_packages]]
+name = "nos.reflect"
+version = "2.0.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[bundles.standard]
+short_name = "standard"
+engine_index_url = "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json"
+includes = ["minimal"]
+
+[[bundles.standard.module_index_urls]]
+url = "https://raw.githubusercontent.com/mediaz/nodos-index/main/index"
+name = "nodos"
+is_active = true
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sys.shaderc"
+version = "2.0.0.b1102"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sys.vulkan"
+version = "7.0.0.b718"
+github_url = "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sys.settings"
+version = "2.0.0.b834"
+github_url = "https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.filters"
+version = "2.0.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.math"
+version = "1.23.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.utilities"
+version = "3.28.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.mediaio"
+version = "3.0.0.b693"
+github_url = "https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.webcam"
+version = "2.0.0.b666"
+github_url = "https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sys.animation"
+version = "2.0.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.animation"
+version = "0.12.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.webrtc"
+version = "1.12.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.str"
+version = "0.11.2.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sys.device"
+version = "1.0.0.b41"
+github_url = "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.rive"
+version = "0.13.0.b28"
+github_url = "https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.standard.bundled_packages]]
+name = "nos.sync"
+version = "10.1.1.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[bundles.broadcast]
+short_name = "broadcast"
+engine_index_url = "https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json"
+includes = ["standard"]
+
+[[bundles.broadcast.module_index_urls]]
+url = "https://raw.githubusercontent.com/mediaz/nodos-index/main/index"
+name = "nodos"
+is_active = true
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.aja"
+version = "3.0.0.b783"
+github_url = "https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.sys.decklink"
+version = "3.0.0.b146"
+github_url = "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.decklink"
+version = "2.0.0.b146"
+github_url = "https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.track"
+version = "2.0.0.b1104"
+github_url = "https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.display"
+version = "0.12.0.b47"
+github_url = "https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"
+
+[[bundles.broadcast.bundled_packages]]
+name = "nos.sys.ffmpeg.deps"
+version = "7.1.0"
+github_url = "https://github.com/nodos-dev/ffmpeg-deps/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%"

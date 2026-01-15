@@ -5,6 +5,7 @@ from loguru import logger
 import os
 import shutil
 import json
+import tomllib
 import glob
 import platform
 from collections import OrderedDict
@@ -60,7 +61,7 @@ def get_build_number():
 
 def get_bundle_info(bundle_key, bundles):
 	if bundles.get(bundle_key) is None:
-		logger.error(f"Bundle key {bundle_key} not found in bundle.json")
+		logger.error(f"Bundle key {bundle_key} not found in bundles")
 		return None
 	return bundles[bundle_key]
 
@@ -124,8 +125,14 @@ def download_nodos(bundle_info, nodos_version):
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
 
-def get_bundled_packages(bundle_info, bundles):
-	bundled_packages = list(bundle_info["bundled_packages"] if "bundled_packages" in bundle_info else [])
+def get_bundled_packages(bundle_info, bundles, target_platform=None):
+	"""Get bundled packages for a bundle, with platform-specific overrides."""
+	if target_platform is None:
+		# Determine platform from system
+		os_name = platform.system().lower()
+		target_platform = os_name
+	
+	bundled_packages = list(bundle_info.get("bundled_packages", []))
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
 		includes = list([])
@@ -134,24 +141,42 @@ def get_bundled_packages(bundle_info, bundles):
 			includes.extend([current])
 			other_conf = bundles.get(current)
 			if other_conf is None:
-				logger.error(f"Depending bundle key {current} not found in bundles.json")
+				logger.error(f"Depending bundle key {current} not found in bundles")
 				exit(1)
-			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
+			queue.extend(other_conf.get("includes", []))
 		logger.info(f"Adding modules from: {' '.join(includes)}")
 		for include in includes:
 			conf = bundles.get(include)
 			if conf is None:
-				logger.error(f"Include bundle key {include} not found in bundles.json")
+				logger.error(f"Include bundle key {include} not found in bundles")
 				exit(1)
-			others = list(conf["bundled_packages"] if "bundled_packages" in conf else [])
+			others = list(conf.get("bundled_packages", []))
 			bundled_packages = others + bundled_packages
 
 	packages_map = OrderedDict()
 	for package in bundled_packages:
-		packages_map[package["name"]] = package
+		package_platform = package.get("platform")
+		package_disabled = package.get("disabled", False)
+		
+		# Skip if package is for a different platform
+		if package_platform is not None and package_platform != target_platform:
+			continue
+		
+		# Skip if package is disabled
+		if package_disabled:
+			logger.info(f"Skipping disabled package: {package['name']}")
+			continue
+			
+		# If platform-specific, override the default
+		if package_platform == target_platform:
+			packages_map[package["name"]] = package
+		# Only add if not already in map (platform-specific takes precedence)
+		elif package["name"] not in packages_map:
+			packages_map[package["name"]] = package
+	
 	return packages_map
 
-def download_packages(bundle_info, bundles, nodos_version):
+def download_packages(bundle_info, bundles, nodos_version, target_platform=None):
 	logger.info("Deleting old modules")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Samples/")
@@ -163,7 +188,7 @@ def download_packages(bundle_info, bundles, nodos_version):
 		logger.error(f"nosman rescan returned with {result.returncode}")
 		exit(result.returncode)
 	
-	packages_map = get_bundled_packages(bundle_info, bundles)
+	packages_map = get_bundled_packages(bundle_info, bundles, target_platform)
 
 	downloading_packages_str = ""
 	for package in packages_map.keys():
@@ -232,8 +257,26 @@ def package(bundle_key, bundle_info, nodos_version):
 		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
-def get_previous_bundles(previous_commit):
-	# Retrieve the previous bundles.json file from the specified commit
+def get_previous_bundles(previous_commit, version=None):
+	"""Retrieve the previous bundles from the specified commit.
+	
+	Args:
+		previous_commit: Git commit hash or tag
+		version: Optional version string (e.g., "1.4") to look for TOML file
+	"""
+	# Try TOML first if version is provided
+	if version:
+		toml_filename = f"nodos-{version}.toml"
+		result = run(["git", "show", f"{previous_commit}:{toml_filename}"], capture_output=True, text=True)
+		if result.returncode == 0:
+			import io
+			previous_bundles_toml = tomllib.load(io.BytesIO(result.stdout.encode()))
+			if previous_bundles_toml.get("bundles") is None:
+				logger.error(f"Failed to read {toml_filename} from commit {previous_commit}. Missing 'bundles' key")
+				return None
+			return previous_bundles_toml["bundles"]
+	
+	# Fallback to JSON
 	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
 	if result.returncode != 0:
 		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}. Error: {result.stderr}")
@@ -250,7 +293,7 @@ def fill_github_url_static_info(url):
 		arch = "x86_64"
 	return url.replace("%%arch%%", arch).replace("%%os%%", os)
 
-def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, target_platform=None):
 	short_name = bundle_info.get("short_name")
 	if short_name is None:
 		logger.info("Missing short name in bundle info, choosing short name as bundle key")
@@ -267,26 +310,28 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
-	packages = get_bundled_packages(bundle_info, bundles)
+	packages = get_bundled_packages(bundle_info, bundles, target_platform)
 
 	# Retrieve the previous bundle info
 	previous_commit = getenv("PREVIOUS_COMMIT", False)
 	previous_bundles = None
 	if previous_commit is not None:
-		previous_bundles = get_previous_bundles(previous_commit)
+		# Extract version from nodos_version for TOML lookup
+		version_str = f"{major}.{minor}"
+		previous_bundles = get_previous_bundles(previous_commit, version_str)
 	previous_packages = None
 	previous_nodos_version = None
 	if previous_bundles is None:
-		logger.error(f"Failed to read bundles.json from commit {previous_commit}")
+		logger.error(f"Failed to read bundles from commit {previous_commit}")
 	else:
 		if previous_bundles.get(bundle_key) is None:
-			logger.error(f"Bundle key {bundle_key} not found in bundles.json from commit {previous_commit}")
+			logger.error(f"Bundle key {bundle_key} not found in bundles from commit {previous_commit}")
 		else:
 			previous_bundle_info = previous_bundles.get(bundle_key)
 			if previous_bundle_info is None:
 				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
 			else:
-				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles)
+				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles, target_platform)
 				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles)
 
 	release_notes = f"## Nodos {nodos_version}\n\n"
@@ -395,14 +440,26 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
 		description="Create distribution packages for Nodos")
+	parser.add_argument("--version",
+					 	help="The nodos version (1.2, 1.3, 1.4, etc.)",
+						action="store",
+						required=False)
 	parser.add_argument("--bundle-key",
 					 	help="The key of the bundle to package",
 						action="store",
-						required=True)
+						required=False)
 	parser.add_argument("--bundles-json-path",
-					 	help="The path to the bundles.json file",
+					 	help="The path to the bundles.json file (legacy)",
 						action="store",
-						required=True)
+						required=False)
+	parser.add_argument("--bundles-toml-path",
+					 	help="The path to the bundles TOML file",
+						action="store",
+						required=False)
+	parser.add_argument("--target-platform",
+					 	help="The target platform (linux, windows, etc.)",
+						action="store",
+						required=False)
 
 	parser.add_argument('--gh-release',
 						action='store_true',
@@ -446,36 +503,85 @@ if __name__ == "__main__":
 
 	bundles = None
 	bundle_info = None
+	target_platform = args.target_platform
 
-	with open(args.bundles_json_path, 'r') as f:
-		bundles_json = json.load(f)
-		if bundles_json is None:
-			logger.error("Failed to read bundles.json")
+	# Determine which file format to use
+	if args.bundles_toml_path:
+		# Load TOML file
+		with open(args.bundles_toml_path, 'rb') as f:
+			bundles_data = tomllib.load(f)
+			if bundles_data is None:
+				logger.error(f"Failed to read {args.bundles_toml_path}")
+				exit(1)
+			if bundles_data.get("bundles") is None:
+				logger.error(f"Failed to read {args.bundles_toml_path}. Missing 'bundles' key")
+				exit(1)
+			bundles = bundles_data.get("bundles")
+	elif args.bundles_json_path:
+		# Load JSON file (legacy)
+		with open(args.bundles_json_path, 'r') as f:
+			bundles_json = json.load(f)
+			if bundles_json is None:
+				logger.error("Failed to read bundles.json")
+				exit(1)
+			if bundles_json.get("bundles") is None:
+				logger.error("Failed to read bundles.json. Missing 'bundles' key")
+				exit(1)
+			bundles = bundles_json.get("bundles")
+	elif args.version:
+		# Auto-detect TOML file based on version
+		toml_path = f"nodos-{args.version}.toml"
+		if not os.path.exists(toml_path):
+			logger.error(f"Bundle file {toml_path} not found")
 			exit(1)
-		if bundles_json.get("bundles") is None:
-			logger.error("Failed to read bundles.json. Missing 'bundles' key")
-			exit(1)
-		bundles = bundles_json.get("bundles")
-		bundle_info = get_bundle_info(args.bundle_key, bundles)
-
-	nodos_version = get_nodos_version(bundle_info, bundles)
-
-	if bundles is None:
-		logger.error("Failed to read bundles.json. Missing 'bundles' key")
+		with open(toml_path, 'rb') as f:
+			bundles_data = tomllib.load(f)
+			if bundles_data is None:
+				logger.error(f"Failed to read {toml_path}")
+				exit(1)
+			if bundles_data.get("bundles") is None:
+				logger.error(f"Failed to read {toml_path}. Missing 'bundles' key")
+				exit(1)
+			bundles = bundles_data.get("bundles")
+	else:
+		logger.error("Either --version, --bundles-toml-path, or --bundles-json-path must be specified")
 		exit(1)
 
-	if bundle_info is None:
+	if args.bundle_key:
+		bundle_info = get_bundle_info(args.bundle_key, bundles)
+
+	nodos_version = None
+	if bundle_info:
+		nodos_version = get_nodos_version(bundle_info, bundles)
+
+	if bundles is None:
+		logger.error("Failed to read bundles. Missing 'bundles' key")
+		exit(1)
+
+	if args.bundle_key and bundle_info is None:
 		logger.error(f"Failed to read bundle info for key {args.bundle_key}")
 		exit(1)
 
 	if args.download_nodos:
+		if bundle_info is None or nodos_version is None:
+			logger.error("Bundle key and version required for --download-nodos")
+			exit(1)
 		download_nodos(bundle_info, nodos_version)
 
 	if args.download_packages:
-		download_packages(bundle_info, bundles, nodos_version)
+		if bundle_info is None or nodos_version is None:
+			logger.error("Bundle key and version required for --download-packages")
+			exit(1)
+		download_packages(bundle_info, bundles, nodos_version, target_platform)
 
 	if args.pack:
+		if bundle_info is None or nodos_version is None or args.bundle_key is None:
+			logger.error("Bundle key and version required for --pack")
+			exit(1)
 		package(args.bundle_key, bundle_info, nodos_version)
 
 	if args.gh_release:
-		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key)
+		if bundle_info is None or nodos_version is None or args.bundle_key is None:
+			logger.error("Bundle key and version required for --gh-release")
+			exit(1)
+		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, target_platform)

@@ -88,8 +88,18 @@ def get_nodos_github_url(bundle_info, bundles):
 	return get_inheritable_value(bundle_info, "nodos_github_url", bundles)
 
 
-def get_nodos_version(bundle_info, bundles):
-	return get_inheritable_value(bundle_info, "nodos_version", bundles)
+def get_nodos_version(bundle_info, bundles, target_platform=None):
+	"""Get the nodos version for a bundle, with platform-specific override support."""
+	# Check for platform-specific version first
+	if target_platform:
+		platform_version_key = f"nodos_version_{target_platform}"
+		platform_version = bundle_info.get(platform_version_key)
+		if platform_version is not None:
+			return platform_version
+	
+	# Fall back to default version
+	version = get_inheritable_value(bundle_info, "nodos_version", bundles)
+	return version
 
 def get_semver_from_version(version):
 	if version is None:
@@ -332,7 +342,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
 			else:
 				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles, target_platform)
-				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles)
+				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles, target_platform)
 
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Engine\n"
@@ -552,7 +562,7 @@ if __name__ == "__main__":
 
 	nodos_version = None
 	if bundle_info:
-		nodos_version = get_nodos_version(bundle_info, bundles)
+		nodos_version = get_nodos_version(bundle_info, bundles, target_platform)
 
 	if bundles is None:
 		logger.error("Failed to read bundles. Missing 'bundles' key")

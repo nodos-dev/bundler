@@ -22,9 +22,20 @@ Bundles are now configured using TOML files instead of JSON. Each Nodos version 
 
 Each bundle is defined without version suffixes. For example, instead of `broadcast_1.4`, use just `broadcast`.
 
-### Platform-Specific Packages
+### Platform-Specific Configuration
 
-Packages can now specify platform-specific options:
+The bundler supports platform-specific overrides for both packages and nodos versions:
+
+#### Platform-Specific Nodos Version
+
+```toml
+[bundles.minimal]
+short_name = "minimal"
+nodos_version = "1.3.2.b4623"       # Default version
+nodos_version_linux = "1.3.0.b4294" # Linux-specific version
+```
+
+#### Platform-Specific Packages
 
 ```toml
 # Default package configuration
@@ -32,7 +43,7 @@ Packages can now specify platform-specific options:
 name = "nos.webcam"
 version = "2.0.0.b666"
 
-# Linux-specific override
+# Linux-specific override (disables the package)
 [[bundles.standard.bundled_packages]]
 name = "nos.webcam"
 disabled = true

@@ -186,8 +186,9 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 			packages_map.pop(package_name, None)
 			continue
 		
-		# Platform-specific packages always override
-		# Default packages (no platform specified) are only added if not already present
+		# Platform-specific packages always override (first condition)
+		# Default packages (no platform) only added if not already present (second condition)
+		# This ensures platform-specific packages can override defaults, but not vice versa
 		if package_platform == target_platform or package_name not in packages_map:
 			packages_map[package_name] = package
 	

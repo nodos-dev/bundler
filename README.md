@@ -12,5 +12,5 @@ Environment variables:
 - `PREVIOUS_COMMIT`: The commit hash of the previous release(Optional)
 
 ```bash
-python .\bundler.py --bundle-key="broadcast_1.3" --bundles-json="./bundles.json" --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --download-nodos --download-modules --pack
+python .\bundler.py --bundle-key="broadcast_1.3" --bundles-path="./bundles.yaml" --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --download-nodos --download-modules --pack
 ```

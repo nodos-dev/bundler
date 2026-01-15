@@ -104,17 +104,17 @@ jobs:
       - name: Download Nodos
         id: create_installer
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-path="./bundles.yaml" --download-nodos
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Download Packages
         id: download_packages
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-packages
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-path="./bundles.yaml" --download-packages
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-path="./bundles.yaml" --pack
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Copy Bundle to Distribution Machine
         shell: pwsh
@@ -126,5 +126,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" 
+          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-path="./bundles.yaml" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" 
         working-directory: ./bundler-${{ github.ref_name }}/

@@ -8,6 +8,7 @@ import json
 import glob
 import platform
 from collections import OrderedDict
+import yaml
 
 
 WORKSPACE_FOLDER = "./workspace"
@@ -29,11 +30,45 @@ def force_delete_folder(folder_path):
         print(f"Error deleting {folder_path}: {e}", file=stderr)
 
 def get_current_target_platform():
-    # x86_64-windows, x86_64-linux, arm64-linux etc.
-    arch, os = platform.machine().lower(), platform.system().lower()
-    if arch == "amd64":
-        arch = "x86_64"
-    return f"{arch}-{os}"
+	# x86_64-windows, x86_64-linux, arm64-linux etc.
+	arch, os = platform.machine().lower(), platform.system().lower()
+	if arch == "amd64":
+		arch = "x86_64"
+	return f"{arch}-{os}"
+
+def get_versions_platform_key():
+	arch, os = platform.machine().lower(), platform.system().lower()
+	if arch in ("amd64", "x86_64"):
+		arch = "x64"
+	elif arch in ("aarch64", "arm64"):
+		arch = "arm64"
+	return f"{arch}-{os}"
+
+def get_package_version(package):
+	if "versions" in package:
+		versions = package["versions"]
+		platform_key = get_versions_platform_key()
+		if platform_key in versions:
+			return versions[platform_key]
+		arch, os = platform.machine().lower(), platform.system().lower()
+		if arch == "amd64":
+			arch = "x86_64"
+		fallback_keys = [
+			f"{arch}-{os}",
+		]
+		if arch == "x86_64":
+			fallback_keys.append(f"x64-{os}")
+		if arch in ("aarch64", "arm64"):
+			fallback_keys.append(f"arm64-{os}")
+		for key in fallback_keys:
+			if key in versions:
+				return versions[key]
+		logger.error(f"Missing version for platform {platform_key} in package {package.get('name')}")
+		exit(1)
+	if "version" in package:
+		return package["version"]
+	logger.error(f"Missing version/versions for package {package.get('name')}")
+	exit(1)
 
 def getenv(var_name, fail_on_missing=True):
 	val = os.getenv(var_name)
@@ -60,7 +95,7 @@ def get_build_number():
 
 def get_bundle_info(bundle_key, bundles):
 	if bundles.get(bundle_key) is None:
-		logger.error(f"Bundle key {bundle_key} not found in bundle.json")
+		logger.error(f"Bundle key {bundle_key} not found in bundles file")
 		return None
 	return bundles[bundle_key]
 
@@ -75,7 +110,7 @@ def get_inheritable_value(bundle_info, key, bundles):
 			current = queue.pop(0)
 			other_conf = bundles.get(current)
 			if other_conf is None:
-				logger.error(f"Depending bundle key {current} not found in bundles.json")
+				logger.error(f"Depending bundle key {current} not found in bundles file")
 				exit(1)
 			value = other_conf.get(key)
 			if value is not None:
@@ -134,21 +169,23 @@ def get_bundled_packages(bundle_info, bundles):
 			includes.extend([current])
 			other_conf = bundles.get(current)
 			if other_conf is None:
-				logger.error(f"Depending bundle key {current} not found in bundles.json")
+				logger.error(f"Depending bundle key {current} not found in bundles file")
 				exit(1)
 			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
 		logger.info(f"Adding modules from: {' '.join(includes)}")
 		for include in includes:
 			conf = bundles.get(include)
 			if conf is None:
-				logger.error(f"Include bundle key {include} not found in bundles.json")
+				logger.error(f"Include bundle key {include} not found in bundles file")
 				exit(1)
 			others = list(conf["bundled_packages"] if "bundled_packages" in conf else [])
 			bundled_packages = others + bundled_packages
 
 	packages_map = OrderedDict()
 	for package in bundled_packages:
-		packages_map[package["name"]] = package
+		resolved_package = dict(package)
+		resolved_package["version"] = get_package_version(package)
+		packages_map[resolved_package["name"]] = resolved_package
 	return packages_map
 
 def download_packages(bundle_info, bundles, nodos_version):
@@ -233,16 +270,25 @@ def package(bundle_key, bundle_info, nodos_version):
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
 def get_previous_bundles(previous_commit):
-	# Retrieve the previous bundles.json file from the specified commit
-	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
-	if result.returncode != 0:
-		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}. Error: {result.stderr}")
-		return None
-	previous_bundles_json = json.loads(result.stdout)
-	if previous_bundles_json.get("bundles") is None:
-		logger.error(f"Failed to read bundles.json from commit {previous_commit}. Missing 'bundles' key")
-		return None
-	return previous_bundles_json["bundles"]
+	# Retrieve the previous bundles file from the specified commit
+	for path in ("bundles.yaml", "bundles.yml", "bundles.json"):
+		result = run(["git", "show", f"{previous_commit}:{path}"], capture_output=True, text=True)
+		if result.returncode != 0:
+			continue
+		try:
+			if path.endswith((".yaml", ".yml")):
+				previous_bundles_doc = yaml.safe_load(result.stdout)
+			else:
+				previous_bundles_doc = json.loads(result.stdout)
+		except Exception as e:
+			logger.error(f"Failed to parse {path} from commit {previous_commit}. Error: {e}")
+			return None
+		if previous_bundles_doc.get("bundles") is None:
+			logger.error(f"Failed to read {path} from commit {previous_commit}. Missing 'bundles' key")
+			return None
+		return previous_bundles_doc["bundles"]
+	logger.error(f"Failed to retrieve bundles file from commit {previous_commit}.")
+	return None
 
 def fill_github_url_static_info(url):
 	arch, os = platform.machine().lower(), platform.system().lower()
@@ -277,10 +323,10 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	previous_packages = None
 	previous_nodos_version = None
 	if previous_bundles is None:
-		logger.error(f"Failed to read bundles.json from commit {previous_commit}")
+		logger.error(f"Failed to read bundles file from commit {previous_commit}")
 	else:
 		if previous_bundles.get(bundle_key) is None:
-			logger.error(f"Bundle key {bundle_key} not found in bundles.json from commit {previous_commit}")
+			logger.error(f"Bundle key {bundle_key} not found in bundles file from commit {previous_commit}")
 		else:
 			previous_bundle_info = previous_bundles.get(bundle_key)
 			if previous_bundle_info is None:
@@ -399,10 +445,16 @@ if __name__ == "__main__":
 					 	help="The key of the bundle to package",
 						action="store",
 						required=True)
-	parser.add_argument("--bundles-json-path",
-					 	help="The path to the bundles.json file",
-						action="store",
-						required=True)
+	bundles_path_group = parser.add_mutually_exclusive_group(required=True)
+	bundles_path_group.add_argument("--bundles-path",
+					 	help="The path to the bundles YAML/JSON file",
+						action="store")
+	bundles_path_group.add_argument("--bundles-json-path",
+					 	help="(Deprecated) The path to the bundles.json file",
+						action="store")
+	bundles_path_group.add_argument("--bundles-json",
+					 	help="(Deprecated) The path to the bundles.json file",
+						action="store")
 
 	parser.add_argument('--gh-release',
 						action='store_true',
@@ -447,13 +499,17 @@ if __name__ == "__main__":
 	bundles = None
 	bundle_info = None
 
-	with open(args.bundles_json_path, 'r') as f:
-		bundles_json = json.load(f)
+	bundles_path = args.bundles_path or args.bundles_json_path or args.bundles_json
+	with open(bundles_path, 'r') as f:
+		if bundles_path.lower().endswith((".yaml", ".yml")):
+			bundles_json = yaml.safe_load(f)
+		else:
+			bundles_json = json.load(f)
 		if bundles_json is None:
-			logger.error("Failed to read bundles.json")
+			logger.error("Failed to read bundles file")
 			exit(1)
 		if bundles_json.get("bundles") is None:
-			logger.error("Failed to read bundles.json. Missing 'bundles' key")
+			logger.error("Failed to read bundles file. Missing 'bundles' key")
 			exit(1)
 		bundles = bundles_json.get("bundles")
 		bundle_info = get_bundle_info(args.bundle_key, bundles)
@@ -461,7 +517,7 @@ if __name__ == "__main__":
 	nodos_version = get_nodos_version(bundle_info, bundles)
 
 	if bundles is None:
-		logger.error("Failed to read bundles.json. Missing 'bundles' key")
+		logger.error("Failed to read bundles file. Missing 'bundles' key")
 		exit(1)
 
 	if bundle_info is None:

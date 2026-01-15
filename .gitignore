@@ -3,3 +3,5 @@ workspace/
 nodos.exe
 nodos
 bundles.json
+__pycache__/
+*.pyc

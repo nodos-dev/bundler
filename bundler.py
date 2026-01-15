@@ -6,6 +6,7 @@ import os
 import shutil
 import json
 import tomllib
+import io
 import glob
 import platform
 from collections import OrderedDict
@@ -35,6 +36,11 @@ def get_current_target_platform():
     if arch == "amd64":
         arch = "x86_64"
     return f"{arch}-{os}"
+
+def get_platform_name():
+    """Get the normalized platform name (windows, linux, etc.)"""
+    os_name = platform.system().lower()
+    return os_name
 
 def getenv(var_name, fail_on_missing=True):
 	val = os.getenv(var_name)
@@ -139,8 +145,7 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 	"""Get bundled packages for a bundle, with platform-specific overrides."""
 	if target_platform is None:
 		# Determine platform from system
-		os_name = platform.system().lower()
-		target_platform = os_name
+		target_platform = get_platform_name()
 	
 	bundled_packages = list(bundle_info.get("bundled_packages", []))
 	if "includes" in bundle_info:
@@ -163,26 +168,28 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 			others = list(conf.get("bundled_packages", []))
 			bundled_packages = others + bundled_packages
 
+	# Process packages: platform-specific packages override defaults
 	packages_map = OrderedDict()
 	for package in bundled_packages:
 		package_platform = package.get("platform")
 		package_disabled = package.get("disabled", False)
+		package_name = package["name"]
 		
 		# Skip if package is for a different platform
 		if package_platform is not None and package_platform != target_platform:
 			continue
 		
-		# Skip if package is disabled
+		# Skip if package is disabled for this platform
 		if package_disabled:
-			logger.info(f"Skipping disabled package: {package['name']}")
+			logger.info(f"Skipping disabled package: {package_name}")
+			# Remove from map if it was added earlier (this allows disabling inherited packages)
+			packages_map.pop(package_name, None)
 			continue
-			
-		# If platform-specific, override the default
-		if package_platform == target_platform:
-			packages_map[package["name"]] = package
-		# Only add if not already in map (platform-specific takes precedence)
-		elif package["name"] not in packages_map:
-			packages_map[package["name"]] = package
+		
+		# Platform-specific packages always override
+		# Default packages (no platform specified) are only added if not already present
+		if package_platform == target_platform or package_name not in packages_map:
+			packages_map[package_name] = package
 	
 	return packages_map
 
@@ -279,7 +286,6 @@ def get_previous_bundles(previous_commit, version=None):
 		toml_filename = f"nodos-{version}.toml"
 		result = run(["git", "show", f"{previous_commit}:{toml_filename}"], capture_output=True, text=True)
 		if result.returncode == 0:
-			import io
 			previous_bundles_toml = tomllib.load(io.BytesIO(result.stdout.encode()))
 			if previous_bundles_toml.get("bundles") is None:
 				logger.error(f"Failed to read {toml_filename} from commit {previous_commit}. Missing 'bundles' key")

@@ -16,6 +16,7 @@ WORKSPACE_FOLDER = "./workspace"
 ARTIFACTS_FOLDER = "./Artifacts/"
 
 COMPRESSED_FILE_EXTENSION = ".zip"
+PLATFORMS_KEY = "platforms"  # Key for platform-specific overrides
 
 def force_delete_folder(folder_path):
     """Forcefully deletes a folder, handling permission issues."""
@@ -101,16 +102,13 @@ def get_nodos_version(bundle_info, bundles, target_platform=None):
 	then falls back to bundle_info['nodos_version'].
 	"""
 	# Check for platform-specific version in nested structure
-	if target_platform and 'platforms' in bundle_info:
-		platforms = bundle_info['platforms']
-		if target_platform in platforms:
-			platform_data = platforms[target_platform]
-			if 'nodos_version' in platform_data:
-				return platform_data['nodos_version']
+	if target_platform and PLATFORMS_KEY in bundle_info:
+		platform_version = bundle_info[PLATFORMS_KEY].get(target_platform, {}).get('nodos_version')
+		if platform_version:
+			return platform_version
 	
 	# Fall back to default version
-	version = get_inheritable_value(bundle_info, "nodos_version", bundles)
-	return version
+	return get_inheritable_value(bundle_info, "nodos_version", bundles)
 
 def get_semver_from_version(version):
 	if version is None:
@@ -188,12 +186,12 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 	for package in bundled_packages:
 		package_name = package["name"]
 		
-		# Start with the base package data
-		pkg_data = {k: v for k, v in package.items() if k != 'platforms'}
+		# Start with the base package data (exclude platforms key)
+		pkg_data = {k: v for k, v in package.items() if k != PLATFORMS_KEY}
 		
 		# Check for platform-specific overrides
-		if 'platforms' in package and target_platform in package['platforms']:
-			platform_overrides = package['platforms'][target_platform]
+		if PLATFORMS_KEY in package and target_platform in package[PLATFORMS_KEY]:
+			platform_overrides = package[PLATFORMS_KEY][target_platform]
 			
 			# Check if disabled for this platform
 			if platform_overrides.get('disabled'):

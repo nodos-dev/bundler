@@ -1,0 +1,121 @@
+bundles:
+  minimal:
+    short_name: minimal
+    nodos_version: 1.2.7.b4582
+    nodos_github_url: https://github.com/mediaz/nodos/compare/v%%old_version%%...v%%new_version%%
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json
+      name: nodos-without-ai
+      is_active: true
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json
+      name: nodos-ai
+      is_active: false
+    bundled_packages:
+    - name: nos.reflect
+      version: 1.1.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+  standard:
+    short_name: standard
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    includes:
+    - minimal
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json
+      name: nodos-standard
+      is_active: true
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json
+      name: nodos-without-ai
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json
+      name: nodos-ai
+      is_active: false
+    bundled_packages:
+    - name: nos.sys.shaderc
+      version: 1.0.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.sys.vulkan
+      version: 5.9.2.b558
+      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.filters
+      version: 1.2.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.math
+      version: 1.3.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.utilities
+      version: 2.8.4.b1124
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.mediaio
+      version: 1.5.2.b667
+      github_url: https://github.com/nodos-dev/mediaio/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.webcam
+      version: 1.1.0.b619
+      github_url: https://github.com/nodos-dev/webcam/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.sys.animation
+      version: 1.2.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.webrtc
+      version: 1.1.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+  broadcast:
+    short_name: broadcast
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    includes:
+    - standard
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos_standard.json
+      name: nodos-standard
+      is_active: true
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json
+      name: nodos-without-ai
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json
+      name: nodos-ai
+      is_active: false
+    bundled_packages:
+    - name: nos.aja
+      version: 2.1.3.b739
+      github_url: https://github.com/nodos-dev/aja/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+    - name: nos.track
+      version: 1.6.0.b742
+      github_url: https://github.com/nodos-dev/modules/compare/build.nodos-1.2-%%os%%-%%old_build%%...build.nodos-1.2-%%os%%-%%new_build%%
+  full:
+    short_name: full
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    includes:
+    - broadcast
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-without-ai.json
+      name: nodos-without-ai
+      is_active: false
+    - url: https://raw.githubusercontent.com/nodos-dev/index/main/presets/nodos-ai.json
+      name: nodos-ai
+      is_active: false
+    bundled_packages:
+    - name: nos.sys.ai
+      version: 3.1.0.b247
+    - name: nos.sys.cuda
+      version: 2.1.0.b247
+    - name: nos.sys.tensor
+      version: 2.1.0.b247
+    - name: nos.ai.model_nodes
+      version: 2.1.0.b247
+    - name: nos.interop
+      version: 2.1.0.b247
+    - name: nos.ml.onnx
+      version: 2.2.0.b247
+    - name: nos.ml.tensors
+      version: 2.2.0.b247

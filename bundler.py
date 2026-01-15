@@ -5,7 +5,7 @@ from loguru import logger
 import os
 import shutil
 import json
-import tomllib
+import yaml
 import io
 import glob
 import platform
@@ -280,18 +280,18 @@ def get_previous_bundles(previous_commit, version=None):
 	
 	Args:
 		previous_commit: Git commit hash or tag
-		version: Optional version string (e.g., "1.4") to look for TOML file
+		version: Optional version string (e.g., "1.4") to look for YAML file
 	"""
-	# Try TOML first if version is provided
+	# Try YAML first if version is provided
 	if version:
-		toml_filename = f"nodos-{version}.toml"
-		result = run(["git", "show", f"{previous_commit}:{toml_filename}"], capture_output=True, text=True)
+		yaml_filename = f"nodos-{version}.yaml"
+		result = run(["git", "show", f"{previous_commit}:{yaml_filename}"], capture_output=True, text=True)
 		if result.returncode == 0:
-			previous_bundles_toml = tomllib.load(io.BytesIO(result.stdout.encode()))
-			if previous_bundles_toml.get("bundles") is None:
-				logger.error(f"Failed to read {toml_filename} from commit {previous_commit}. Missing 'bundles' key")
+			previous_bundles_yaml = yaml.safe_load(result.stdout)
+			if previous_bundles_yaml.get("bundles") is None:
+				logger.error(f"Failed to read {yaml_filename} from commit {previous_commit}. Missing 'bundles' key")
 				return None
-			return previous_bundles_toml["bundles"]
+			return previous_bundles_yaml["bundles"]
 	
 	# Fallback to JSON
 	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
@@ -469,8 +469,8 @@ if __name__ == "__main__":
 					 	help="The path to the bundles.json file (legacy)",
 						action="store",
 						required=False)
-	parser.add_argument("--bundles-toml-path",
-					 	help="The path to the bundles TOML file",
+	parser.add_argument("--bundles-yaml-path",
+					 	help="The path to the bundles YAML file",
 						action="store",
 						required=False)
 	parser.add_argument("--target-platform",
@@ -523,15 +523,15 @@ if __name__ == "__main__":
 	target_platform = args.target_platform
 
 	# Determine which file format to use
-	if args.bundles_toml_path:
-		# Load TOML file
-		with open(args.bundles_toml_path, 'rb') as f:
-			bundles_data = tomllib.load(f)
+	if args.bundles_yaml_path:
+		# Load YAML file
+		with open(args.bundles_yaml_path, 'r') as f:
+			bundles_data = yaml.safe_load(f)
 			if bundles_data is None:
-				logger.error(f"Failed to read {args.bundles_toml_path}")
+				logger.error(f"Failed to read {args.bundles_yaml_path}")
 				exit(1)
 			if bundles_data.get("bundles") is None:
-				logger.error(f"Failed to read {args.bundles_toml_path}. Missing 'bundles' key")
+				logger.error(f"Failed to read {args.bundles_yaml_path}. Missing 'bundles' key")
 				exit(1)
 			bundles = bundles_data.get("bundles")
 	elif args.bundles_json_path:
@@ -546,22 +546,22 @@ if __name__ == "__main__":
 				exit(1)
 			bundles = bundles_json.get("bundles")
 	elif args.version:
-		# Auto-detect TOML file based on version
-		toml_path = f"nodos-{args.version}.toml"
-		if not os.path.exists(toml_path):
-			logger.error(f"Bundle file {toml_path} not found")
+		# Auto-detect YAML file based on version
+		yaml_path = f"nodos-{args.version}.yaml"
+		if not os.path.exists(yaml_path):
+			logger.error(f"Bundle file {yaml_path} not found")
 			exit(1)
-		with open(toml_path, 'rb') as f:
-			bundles_data = tomllib.load(f)
+		with open(yaml_path, 'r') as f:
+			bundles_data = yaml.safe_load(f)
 			if bundles_data is None:
-				logger.error(f"Failed to read {toml_path}")
+				logger.error(f"Failed to read {yaml_path}")
 				exit(1)
 			if bundles_data.get("bundles") is None:
-				logger.error(f"Failed to read {toml_path}. Missing 'bundles' key")
+				logger.error(f"Failed to read {yaml_path}. Missing 'bundles' key")
 				exit(1)
 			bundles = bundles_data.get("bundles")
 	else:
-		logger.error("Either --version, --bundles-toml-path, or --bundles-json-path must be specified")
+		logger.error("Either --version, --bundles-yaml-path, or --bundles-json-path must be specified")
 		exit(1)
 
 	if args.bundle_key:

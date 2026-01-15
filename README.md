@@ -4,7 +4,7 @@ Nodos Bundler is a tool to bundle a nodos version with modules and release it as
 # Usage
 
 Requirements:
-- Python 3.11+
+- Python 3.7+
 - [`nodos` CLI tool](https://github.com/nodos-dev/nodos)
 
 Environment variables:
@@ -13,10 +13,10 @@ Environment variables:
 
 ## Bundle Configuration
 
-Bundles are now configured using TOML files instead of JSON. Each Nodos version has its own TOML file:
-- `nodos-1.2.toml` - Bundles for Nodos 1.2
-- `nodos-1.3.toml` - Bundles for Nodos 1.3
-- `nodos-1.4.toml` - Bundles for Nodos 1.4
+Bundles are now configured using YAML files instead of JSON. Each Nodos version has its own YAML file:
+- `nodos-1.2.yaml` - Bundles for Nodos 1.2
+- `nodos-1.3.yaml` - Bundles for Nodos 1.3
+- `nodos-1.4.yaml` - Bundles for Nodos 1.4
 
 ### Bundle Structure
 
@@ -28,32 +28,35 @@ The bundler supports platform-specific overrides for both packages and nodos ver
 
 #### Platform-Specific Nodos Version
 
-```toml
-[bundles.minimal]
-short_name = "minimal"
-nodos_version = "1.3.2.b4623"       # Default version
-nodos_version_linux = "1.3.0.b4294" # Linux-specific version
+```yaml
+bundles:
+  minimal:
+    short_name: minimal
+    nodos_version: 1.3.2.b4623       # Default version
+    nodos_version_linux: 1.3.0.b4294 # Linux-specific version
 ```
 
 #### Platform-Specific Packages
 
-```toml
+```yaml
 # Default package configuration
-[[bundles.standard.bundled_packages]]
-name = "nos.webcam"
-version = "2.0.0.b666"
+bundles:
+  standard:
+    bundled_packages:
+    - name: nos.webcam
+      version: 2.0.0.b666
 
-# Linux-specific override (disables the package)
-[[bundles.standard.bundled_packages]]
-name = "nos.webcam"
-disabled = true
-platform = "linux"
+    # Linux-specific override (disables the package)
+    - name: nos.webcam
+      disabled: true
+      platform: linux
 
-# Platform-specific version
-[[bundles.minimal.bundled_packages]]
-name = "nos.reflect"
-version = "1.6.5.b980"
-platform = "linux"
+    # Platform-specific version
+  minimal:
+    bundled_packages:
+    - name: nos.reflect
+      version: 1.6.5.b980
+      platform: linux
 ```
 
 ## Command Line Usage
@@ -63,9 +66,9 @@ platform = "linux"
 python ./bundler.py --version="1.4" --bundle-key="broadcast" --target-platform="windows" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev"
 ```
 
-### Using TOML file path:
+### Using YAML file path:
 ```bash
-python ./bundler.py --bundles-toml-path="./nodos-1.3.toml" --bundle-key="broadcast" --target-platform="linux" --download-nodos --download-packages --pack
+python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --target-platform="linux" --download-nodos --download-packages --pack
 ```
 
 ### Legacy JSON support:

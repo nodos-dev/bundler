@@ -1,10 +1,10 @@
 # Bundler Refactoring Migration Guide
 
-This guide explains the changes made to the bundler and how to migrate from the old JSON-based system to the new TOML-based system.
+This guide explains the changes made to the bundler and how to migrate from the old JSON-based system to the new YAML-based system.
 
 ## What Changed
 
-### 1. TOML Instead of JSON
+### 1. YAML Instead of JSON
 
 **Before (bundles.json):**
 ```json
@@ -22,25 +22,27 @@ This guide explains the changes made to the bundler and how to migrate from the 
 }
 ```
 
-**After (nodos-1.4.toml):**
-```toml
-[bundles.minimal]
-short_name = "minimal"
-[[bundles.minimal.bundled_packages]]
-name = "nos.reflect"
-version = "2.0.0.b1104"
+**After (nodos-1.4.yaml):**
+```yaml
+bundles:
+  minimal:
+    short_name: minimal
+    bundled_packages:
+    - name: nos.reflect
+      version: 2.0.0.b1104
 
-[bundles.broadcast]
-short_name = "broadcast"
-includes = ["standard"]
+  broadcast:
+    short_name: broadcast
+    includes:
+    - standard
 ```
 
 ### 2. Version-Specific Files
 
 Instead of one large `bundles.json` file, bundles are now organized by Nodos version:
-- `nodos-1.2.toml` - All bundles for Nodos 1.2
-- `nodos-1.3.toml` - All bundles for Nodos 1.3
-- `nodos-1.4.toml` - All bundles for Nodos 1.4
+- `nodos-1.2.yaml` - All bundles for Nodos 1.2
+- `nodos-1.3.yaml` - All bundles for Nodos 1.3
+- `nodos-1.4.yaml` - All bundles for Nodos 1.4
 
 ### 3. Simplified Bundle Keys
 
@@ -50,46 +52,49 @@ Bundle keys no longer include version suffixes:
 
 Dependencies only reference bundles in the same file:
 - ❌ Old: `"includes": ["standard_1.4"]`
-- ✅ New: `includes = ["standard"]`
+- ✅ New: `includes: [standard]`
 
 ### 4. Platform-Specific Support
 
 #### Platform-Specific Nodos Version
 
-```toml
-[bundles.minimal]
-nodos_version = "1.3.2.b4623"       # Default (Windows)
-nodos_version_linux = "1.3.0.b4294" # Linux override
+```yaml
+bundles:
+  minimal:
+    nodos_version: 1.3.2.b4623       # Default (Windows)
+    nodos_version_linux: 1.3.0.b4294 # Linux override
 ```
 
 #### Platform-Specific Package Versions
 
-```toml
-# Default version
-[[bundles.minimal.bundled_packages]]
-name = "nos.reflect"
-version = "1.7.13.b1112"
-
-# Linux-specific version (overrides default)
-[[bundles.minimal.bundled_packages]]
-name = "nos.reflect"
-version = "1.6.5.b980"
-platform = "linux"
+```yaml
+bundles:
+  minimal:
+    bundled_packages:
+    # Default version
+    - name: nos.reflect
+      version: 1.7.13.b1112
+    
+    # Linux-specific version (overrides default)
+    - name: nos.reflect
+      version: 1.6.5.b980
+      platform: linux
 ```
 
 #### Disabling Packages Per Platform
 
-```toml
-# Package enabled by default
-[[bundles.standard.bundled_packages]]
-name = "nos.webcam"
-version = "2.0.0.b666"
-
-# Disable on Linux
-[[bundles.standard.bundled_packages]]
-name = "nos.webcam"
-disabled = true
-platform = "linux"
+```yaml
+bundles:
+  standard:
+    bundled_packages:
+    # Package enabled by default
+    - name: nos.webcam
+      version: 2.0.0.b666
+    
+    # Disable on Linux
+    - name: nos.webcam
+      disabled: true
+      platform: linux
 ```
 
 ### 5. Updated Command Line Interface
@@ -111,10 +116,10 @@ python bundler.py \
   --download-nodos --download-packages --pack
 ```
 
-**Alternative (using TOML path):**
+**Alternative (using YAML path):**
 ```bash
 python bundler.py \
-  --bundles-toml-path="./nodos-1.4.toml" \
+  --bundles-yaml-path="./nodos-1.4.yaml" \
   --bundle-key="broadcast" \
   --target-platform="linux" \
   --download-nodos --download-packages --pack
@@ -180,11 +185,11 @@ python bundler.py \
 ### Example 3: Checking which packages are included
 
 ```python
-import tomllib
+import yaml
 
 # Load bundle configuration
-with open('nodos-1.4.toml', 'rb') as f:
-    data = tomllib.load(f)
+with open('nodos-1.4.yaml', 'r') as f:
+    data = yaml.safe_load(f)
     bundles = data['bundles']
 
 # Get broadcast bundle for Linux
@@ -196,8 +201,8 @@ broadcast = bundles['broadcast']
 1. **Better Organization**: Each Nodos version in its own file
 2. **Cleaner Keys**: No version suffixes to maintain
 3. **Platform Flexibility**: Easy to specify platform-specific options
-4. **Type Safety**: TOML is more structured than JSON
-5. **Easier to Read**: TOML syntax is more human-friendly
+4. **Widely Supported**: YAML is a widely-used standard format
+5. **Easier to Read**: YAML syntax is clean and human-friendly
 6. **Maintainability**: Changes to one version don't affect others
 
 ## Backward Compatibility

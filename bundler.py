@@ -95,13 +95,18 @@ def get_nodos_github_url(bundle_info, bundles):
 
 
 def get_nodos_version(bundle_info, bundles, target_platform=None):
-	"""Get the nodos version for a bundle, with platform-specific override support."""
-	# Check for platform-specific version first
-	if target_platform:
-		platform_version_key = f"nodos_version_{target_platform}"
-		platform_version = bundle_info.get(platform_version_key)
-		if platform_version is not None:
-			return platform_version
+	"""Get the nodos version for a bundle, with platform-specific override support.
+	
+	First checks bundle_info['platforms'][platform]['nodos_version'],
+	then falls back to bundle_info['nodos_version'].
+	"""
+	# Check for platform-specific version in nested structure
+	if target_platform and 'platforms' in bundle_info:
+		platforms = bundle_info['platforms']
+		if target_platform in platforms:
+			platform_data = platforms[target_platform]
+			if 'nodos_version' in platform_data:
+				return platform_data['nodos_version']
 	
 	# Fall back to default version
 	version = get_inheritable_value(bundle_info, "nodos_version", bundles)
@@ -142,7 +147,17 @@ def download_nodos(bundle_info, nodos_version):
 		exit(result.returncode)
 
 def get_bundled_packages(bundle_info, bundles, target_platform=None):
-	"""Get bundled packages for a bundle, with platform-specific overrides."""
+	"""Get bundled packages for a bundle, with platform-specific overrides.
+	
+	Packages can have a 'platforms' sub-element with platform-specific overrides:
+	- name: nos.reflect
+	  version: 1.7.13.b1112
+	  platforms:
+	    linux:
+	      version: 1.6.5.b980
+	    windows:
+	      disabled: true
+	"""
 	if target_platform is None:
 		# Determine platform from system
 		target_platform = get_platform_name()
@@ -168,29 +183,31 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 			others = list(conf.get("bundled_packages", []))
 			bundled_packages = others + bundled_packages
 
-	# Process packages: platform-specific packages override defaults
+	# Process packages with platform-specific overrides
 	packages_map = OrderedDict()
 	for package in bundled_packages:
-		package_platform = package.get("platform")
-		package_disabled = package.get("disabled", False)
 		package_name = package["name"]
 		
-		# Skip if package is for a different platform
-		if package_platform is not None and package_platform != target_platform:
-			continue
+		# Start with the base package data
+		pkg_data = {k: v for k, v in package.items() if k != 'platforms'}
 		
-		# Skip if package is disabled for this platform
-		if package_disabled:
-			logger.info(f"Skipping disabled package: {package_name}")
-			# Remove from map if it was added earlier (this allows disabling inherited packages)
-			packages_map.pop(package_name, None)
-			continue
+		# Check for platform-specific overrides
+		if 'platforms' in package and target_platform in package['platforms']:
+			platform_overrides = package['platforms'][target_platform]
+			
+			# Check if disabled for this platform
+			if platform_overrides.get('disabled'):
+				logger.info(f"Skipping disabled package: {package_name}")
+				# Remove from map if it was added earlier (allows disabling inherited packages)
+				packages_map.pop(package_name, None)
+				continue
+			
+			# Apply platform-specific overrides
+			for key, value in platform_overrides.items():
+				pkg_data[key] = value
 		
-		# Platform-specific packages always override (first condition)
-		# Default packages (no platform) only added if not already present (second condition)
-		# This ensures platform-specific packages can override defaults, but not vice versa
-		if package_platform == target_platform or package_name not in packages_map:
-			packages_map[package_name] = package
+		# Add or update the package in the map
+		packages_map[package_name] = pkg_data
 	
 	return packages_map
 

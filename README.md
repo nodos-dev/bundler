@@ -32,31 +32,31 @@ The bundler supports platform-specific overrides for both packages and nodos ver
 bundles:
   minimal:
     short_name: minimal
-    nodos_version: 1.3.2.b4623       # Default version
-    nodos_version_linux: 1.3.0.b4294 # Linux-specific version
+    nodos_version: 1.3.2.b4623  # Default version
+    platforms:
+      linux:
+        nodos_version: 1.3.0.b4294  # Linux-specific override
 ```
 
 #### Platform-Specific Packages
 
 ```yaml
-# Default package configuration
 bundles:
-  standard:
-    bundled_packages:
-    - name: nos.webcam
-      version: 2.0.0.b666
-
-    # Linux-specific override (disables the package)
-    - name: nos.webcam
-      disabled: true
-      platform: linux
-
-    # Platform-specific version
   minimal:
     bundled_packages:
     - name: nos.reflect
-      version: 1.6.5.b980
-      platform: linux
+      version: 1.7.13.b1112  # Default version
+      platforms:
+        linux:
+          version: 1.6.5.b980  # Linux-specific version
+  
+  standard:
+    bundled_packages:
+    - name: nos.webcam
+      version: 2.0.0.b666  # Default version
+      platforms:
+        linux:
+          disabled: true  # Disabled on Linux
 ```
 
 ## Command Line Usage

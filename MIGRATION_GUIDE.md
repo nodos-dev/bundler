@@ -56,13 +56,17 @@ Dependencies only reference bundles in the same file:
 
 ### 4. Platform-Specific Support
 
+Platform-specific configurations are now nested under a `platforms` sub-element, making them easier to find and maintain.
+
 #### Platform-Specific Nodos Version
 
 ```yaml
 bundles:
   minimal:
-    nodos_version: 1.3.2.b4623       # Default (Windows)
-    nodos_version_linux: 1.3.0.b4294 # Linux override
+    nodos_version: 1.3.2.b4623  # Default
+    platforms:
+      linux:
+        nodos_version: 1.3.0.b4294  # Linux override
 ```
 
 #### Platform-Specific Package Versions
@@ -71,14 +75,11 @@ bundles:
 bundles:
   minimal:
     bundled_packages:
-    # Default version
     - name: nos.reflect
-      version: 1.7.13.b1112
-    
-    # Linux-specific version (overrides default)
-    - name: nos.reflect
-      version: 1.6.5.b980
-      platform: linux
+      version: 1.7.13.b1112  # Default version
+      platforms:
+        linux:
+          version: 1.6.5.b980  # Linux-specific override
 ```
 
 #### Disabling Packages Per Platform
@@ -87,14 +88,11 @@ bundles:
 bundles:
   standard:
     bundled_packages:
-    # Package enabled by default
     - name: nos.webcam
-      version: 2.0.0.b666
-    
-    # Disable on Linux
-    - name: nos.webcam
-      disabled: true
-      platform: linux
+      version: 2.0.0.b666  # Default - enabled
+      platforms:
+        linux:
+          disabled: true  # Disabled on Linux
 ```
 
 ### 5. Updated Command Line Interface

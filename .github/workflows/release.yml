@@ -81,6 +81,8 @@ jobs:
 
   bundle:
     name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }})
+    permissions:
+      contents: write  # Required for creating releases
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     runs-on: ${{ fromJson(needs.prepare-strategy.outputs.runner-tags) }}

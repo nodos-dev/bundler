@@ -282,7 +282,7 @@ def get_previous_bundles(previous_commit, version=None):
 		previous_commit: Git commit hash or tag
 		version: Optional version string (e.g., "1.4") to look for YAML file
 	"""
-	# Try YAML first if version is provided
+	# Load YAML file if version is provided
 	if version:
 		yaml_filename = f"nodos-{version}.yaml"
 		result = run(["git", "show", f"{previous_commit}:{yaml_filename}"], capture_output=True, text=True)

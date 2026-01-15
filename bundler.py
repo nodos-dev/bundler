@@ -7,6 +7,7 @@ import shutil
 import json
 import glob
 import platform
+import re
 from collections import OrderedDict
 
 
@@ -187,7 +188,8 @@ def download_packages(bundle_info, bundles, nodos_version):
 			incl["type"] = "sample"
 		included_packages.append(incl)
 	# Write included modules to Profile.json
-	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
+	engine_folder = resolve_engine_folder(nodos_version)
+	profile_json_path = f"{engine_folder}/Config/Profile.json"
 	profile = {}
 	loaded_plugins_key = "loaded_plugins"
 	major, minor, patch = get_semver_from_version(nodos_version)
@@ -210,7 +212,7 @@ def package(bundle_key, bundle_info, nodos_version):
 	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman")
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
-	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
+	engine_folder = resolve_engine_folder(nodos_version)
 	engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
 	if not os.path.exists(engine_settings_path):
 		engine_settings_path = f"{engine_folder}/Config/EngineSettings.json"
@@ -231,6 +233,28 @@ def package(bundle_key, bundle_info, nodos_version):
 	if platform.system() == "Linux":
 		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
+
+def resolve_engine_folder(nodos_version):
+	engine_root = f"{WORKSPACE_FOLDER}/Engine"
+	exact = f"{engine_root}/{nodos_version}"
+	if os.path.isdir(exact):
+		return exact
+
+	candidates = [path for path in glob.glob(f"{engine_root}/{nodos_version}*") if os.path.isdir(path)]
+	if not candidates:
+		logger.error(f"Engine folder not found for version {nodos_version} in {engine_root}")
+		exit(1)
+
+	def candidate_key(path):
+		name = os.path.basename(path)
+		match = re.search(r"\.b(\d+)", name)
+		build_num = int(match.group(1)) if match else -1
+		return (build_num, os.path.getmtime(path))
+
+	best = max(candidates, key=candidate_key)
+	if best != exact:
+		logger.info(f"Using engine folder {best} for version {nodos_version}")
+	return best
 
 def get_previous_bundles(previous_commit):
 	# Retrieve the previous bundles.json file from the specified commit

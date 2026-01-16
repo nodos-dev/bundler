@@ -89,6 +89,7 @@ bundles:
 - Versions can be less specific (e.g., "1.4.0" or "8.0")
 - All package versions are explicitly specified per platform-architecture
 - Packages without a version for a platform-arch are skipped for that platform
+- Package versions are resolved to full versions after install using `nodos info <package> <version> --relaxed` for Profile.json, release notes, and folder names
 
 ## Command Line Usage
 

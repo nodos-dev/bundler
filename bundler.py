@@ -8,6 +8,7 @@ import yaml
 import io
 import glob
 import platform
+import json
 from collections import OrderedDict
 
 
@@ -150,10 +151,80 @@ def get_semver_from_version(version):
 	patch = version_parts[2]
 	return major, minor, patch
 
+def resolve_package_version(package_name, package_version):
+	logger.info(f"Resolving package {package_name} version {package_version} using nosman info")
+	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "info", package_name, package_version, "--relaxed"],
+				 capture_output=True, text=True, env=os.environ.copy())
+	if result.returncode != 0:
+		logger.error(f"nosman info returned with {result.returncode}: {result.stderr}")
+		exit(result.returncode)
+	try:
+		info = json.loads(result.stdout)
+	except json.JSONDecodeError as exc:
+		logger.error(f"Failed to parse nosman info output for {package_name} {package_version}: {exc}")
+		exit(1)
+	resolved_version = info.get("info", {}).get("id", {}).get("version")
+	if not resolved_version:
+		logger.error(f"Failed to resolve version for {package_name} {package_version}")
+		exit(1)
+	if resolved_version != package_version:
+		logger.info(f"Resolved {package_name} {package_version} -> {resolved_version}")
+	return resolved_version
+
+def rename_package_prefix_folder(base_dir, requested_version, resolved_version):
+	if requested_version == resolved_version:
+		return
+	old_path = os.path.join(base_dir, requested_version)
+	new_path = os.path.join(base_dir, resolved_version)
+	if not os.path.isdir(old_path):
+		logger.warning(f"Expected package folder not found: {old_path}")
+		return
+	if os.path.exists(new_path):
+		logger.warning(f"Resolved package folder already exists: {new_path}")
+		return
+	shutil.move(old_path, new_path)
+
+def read_profile_plugins(workspace_folder, nodos_version):
+	engine_version = resolve_nodos_engine_version(workspace_folder, nodos_version)
+	profile_json_path = f"{os.path.abspath(workspace_folder)}/Engine/{engine_version}/Config/Profile.json"
+	if not os.path.exists(profile_json_path):
+		return []
+	with open(profile_json_path, "r") as f:
+		profile = json.load(f)
+	loaded_plugins = profile.get("loaded_plugins")
+	if loaded_plugins is None:
+		loaded_plugins = profile.get("loaded_modules")
+	if loaded_plugins is None:
+		return []
+	return loaded_plugins
+
 def get_compressed_file_extension():
 	if platform.system() == "Linux":
 		return ".tar.gz"
 	return ".zip"
+
+def resolve_nodos_engine_version(workspace_folder, nodos_version):
+	engine_root = os.path.join(workspace_folder, "Engine")
+	exact_path = os.path.join(engine_root, nodos_version)
+	if os.path.isdir(exact_path):
+		return nodos_version
+	if not os.path.isdir(engine_root):
+		logger.error(f"Nodos Engine folder not found: {engine_root}")
+		exit(1)
+	candidates = []
+	prefix = f"{nodos_version}."
+	for name in os.listdir(engine_root):
+		full_path = os.path.join(engine_root, name)
+		if os.path.isdir(full_path) and name.startswith(prefix):
+			candidates.append(name)
+	if len(candidates) == 1:
+		logger.info(f"Resolved Nodos Engine version {nodos_version} to {candidates[0]}")
+		return candidates[0]
+	if len(candidates) > 1:
+		logger.error(f"Multiple Nodos Engine versions match {nodos_version}: {', '.join(candidates)}")
+	else:
+		logger.error(f"No Nodos Engine version matches {nodos_version} under {engine_root}")
+	exit(1)
 
 def get_release_artifacts(dir):
 	files = glob.glob(f"{dir}/*{get_compressed_file_extension()}")
@@ -217,11 +288,15 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 		# Check if version is specified for this platform-arch
 		version = package.get(platform_arch_key)
 		
+		# Optional type field
+		package_type = package.get("type")
+
 		if version:
 			# Version explicitly specified
 			pkg_data = {
 				'name': package_name,
-				'version': version
+				'version': version,
+				'type': package_type
 			}
 			# Add or update the package in the map
 			packages_map[package_name] = pkg_data
@@ -250,24 +325,28 @@ def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=Non
 		downloading_packages_str += f"{package} "
 	logger.info(f"Downloading packages: {downloading_packages_str}")
 	
+	absolute_workspace = os.path.abspath(WORKSPACE_FOLDER)
+
 	included_packages = []
 	for package in packages_map.values():
 		package_name = package["name"]
 		package_version = package["version"]
+		package_type = package.get("type")
 		logger.info(f"Downloading package {package_name} version {package_version} using nosman")
-		out_dir = f"./Module/{package_name}"
-		if "type" in package and package["type"] == "sample":
-			out_dir = f"./Samples/{package_name}"
+		out_dir = f"{absolute_workspace}/Module/{package_name}"
+		if package_type == "sample":
+			out_dir = f"{absolute_workspace}/Samples/{package_name}"
 		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
-		incl = {"name": package_name, "version": package_version}
-		if "type" in package:
-			incl["type"] = "sample"
+		resolved_version = resolve_package_version(package_name, package_version)
+		rename_package_prefix_folder(out_dir, package_version, resolved_version)
+		incl = {"name": package_name, "version": resolved_version}
 		included_packages.append(incl)
 	# Write included modules to Profile.json
-	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
+	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
+	profile_json_path = f"{absolute_workspace}/Engine/{engine_version}/Config/Profile.json"
 	profile = {}
 	loaded_plugins_key = "loaded_plugins"
 	major, minor, patch = get_semver_from_version(nodos_version)
@@ -281,17 +360,17 @@ def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=Non
 		if "type" not in package or package["type"] != "sample":
 			included_plugins.append(package)
 	profile[loaded_plugins_key].extend(included_plugins)
-	import json
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)
 
-def package(bundle_key, bundle_info, nodos_version):
+def package(bundle_key, bundle_info, nodos_version, bundles):
 	logger.info("Packaging Nodos")
 	force_delete_folder(ARTIFACTS_FOLDER)
 	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman")
 	run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
-	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}"
+	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
+	engine_folder = f"{WORKSPACE_FOLDER}/Engine/{engine_version}"
 	engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
 	if not os.path.exists(engine_settings_path):
 		engine_settings_path = f"{engine_folder}/Config/EngineSettings.json"
@@ -301,8 +380,16 @@ def package(bundle_key, bundle_info, nodos_version):
 	import json
 	with open(engine_settings_path, "r") as f:
 		engine_settings = json.load(f)
-		engine_settings["remote_modules"] = bundle_info["module_index_urls"]
-		engine_settings["engine_index_url"] = bundle_info["engine_index_url"]
+		module_index_urls = get_inheritable_value(bundle_info, "module_index_urls", bundles)
+		engine_index_url = get_inheritable_value(bundle_info, "engine_index_url", bundles)
+		if module_index_urls is None:
+			logger.error("Missing module_index_urls in bundle or included bundles")
+			exit(1)
+		if engine_index_url is None:
+			logger.error("Missing engine_index_url in bundle or included bundles")
+			exit(1)
+		engine_settings["remote_modules"] = module_index_urls
+		engine_settings["engine_index_url"] = engine_index_url
 
 	with open(engine_settings_path, "w") as f:
 		json.dump(engine_settings, f, indent=2)
@@ -335,11 +422,15 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		platform_arch_key = get_platform_arch_key()
 
 	packages = get_bundled_packages(bundle_info, bundles, platform_arch_key)
+	profile_plugins = read_profile_plugins(WORKSPACE_FOLDER, nodos_version)
+	if len(profile_plugins) > 0:
+		packages = OrderedDict((pkg["name"], {"name": pkg["name"], "version": pkg["version"]}) for pkg in profile_plugins)
 
 	# Create simple release notes
-	release_notes = f"## Nodos {nodos_version}\n\n"
+	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
+	release_notes = f"## Nodos {engine_version}\n\n"
 	release_notes += f"### Engine\n"
-	release_notes += f"Version: {nodos_version}\n\n"
+	release_notes += f"Version: {engine_version}\n\n"
 	release_notes += f"### Modules ({len(packages)})\n"
 	for pkg_name, pkg_data in packages.items():
 		release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
@@ -464,11 +555,10 @@ if __name__ == "__main__":
 	bundle_info = None
 	platform_arch_key = None  # Will be auto-detected if not specified
 
-	# Determine which file format to use
 	if args.bundles_yaml_path:
 		# Load YAML file
 		with open(args.bundles_yaml_path, 'r') as f:
-			bundles_data = yaml.safe_load(f)
+			bundles_data = yaml.load(f, Loader=yaml.BaseLoader)
 			if bundles_data is None:
 				logger.error(f"Failed to read {args.bundles_yaml_path}")
 				exit(1)
@@ -483,7 +573,7 @@ if __name__ == "__main__":
 			logger.error(f"Bundle file {yaml_path} not found")
 			exit(1)
 		with open(yaml_path, 'r') as f:
-			bundles_data = yaml.safe_load(f)
+			bundles_data = yaml.load(f, Loader=yaml.BaseLoader)
 			if bundles_data is None:
 				logger.error(f"Failed to read {yaml_path}")
 				exit(1)
@@ -532,7 +622,7 @@ if __name__ == "__main__":
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:
 			logger.error("Bundle key and version required for --pack")
 			exit(1)
-		package(args.bundle_key, bundle_info, nodos_version)
+		package(args.bundle_key, bundle_info, nodos_version, bundles)
 
 	if args.gh_release:
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:

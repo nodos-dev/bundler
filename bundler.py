@@ -131,9 +131,9 @@ def get_nodos_version(bundle_info, bundles, platform_arch_key=None):
 			return version
 		
 		logger.error(f"No version specified for nodos on {platform_arch_key}")
-		exit(1)
+	else:
+		logger.error(f"Missing nodos version configuration")
 	
-	logger.error(f"Missing nodos version configuration")
 	exit(1)
 
 def get_semver_from_version(version):

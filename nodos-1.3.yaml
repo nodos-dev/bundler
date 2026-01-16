@@ -10,13 +10,11 @@ bundles:
     nodos_version: 1.3.2.b4623
     bundled_packages:
     - version: 1.0.1.b928
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sys.variables
       platforms:
         linux:
           version: 1.0.1.b980
     - version: 1.7.13.b1112
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.reflect
       platforms:
         linux:
@@ -24,6 +22,7 @@ bundles:
     platforms:
       linux:
         nodos_version: 1.3.0.b4294
+    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
   standard:
     short_name: standard
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -35,7 +34,6 @@ bundles:
     - minimal
     bundled_packages:
     - version: 1.1.0.b953
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sys.shaderc
       platforms:
         linux:
@@ -50,19 +48,16 @@ bundles:
       github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sys.settings
     - version: 1.5.5.b1037
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.filters
       platforms:
         linux:
           version: 1.5.2.b980
     - version: 1.9.3.b907
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.math
       platforms:
         linux:
           version: 1.9.3.b980
     - version: 3.14.5.b1149
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.utilities
       platforms:
         linux:
@@ -86,19 +81,15 @@ bundles:
         linux:
           disabled: true
     - version: 1.5.2.b1018
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sys.animation
       platforms:
         linux:
           version: 1.5.1.b980
     - version: 0.3.2.b928
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.animation
     - version: 1.2.3.b1141
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.webrtc
     - version: 0.3.1.b1106
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.str
     - version: 0.3.4.b24
       github_url: https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
@@ -115,8 +106,8 @@ bundles:
       type: sample
       name: nos.sample.dxapp
     - version: 3.1.1.b1023
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sync
+    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
   broadcast:
     short_name: broadcast
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -134,13 +125,11 @@ bundles:
         linux:
           version: 2.5.2.b700
     - version: 2.2.6.b136
-      github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.sys.decklink
       platforms:
         linux:
           disabled: true
     - version: 1.2.18.b149
-      github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
       name: nos.decklink
       platforms:
         linux:
@@ -163,6 +152,7 @@ bundles:
       platforms:
         linux:
           disabled: true
+    default_package_github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
   ai:
     short_name: ai
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -174,50 +164,36 @@ bundles:
     - broadcast
     bundled_packages:
     - version: 1.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.ml.ai_nodes
     - version: 2.2.1.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.ai.model_nodes
     - version: 1.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.cuda
     - version: 2.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.interop
     - version: 2.3.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.ml.onnx
     - version: 2.3.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.ml.tensors
     - version: 1.1.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.ml.tokenizer
     - version: 3.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai
     - version: 2.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.cuda
     - version: 1.0.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai.models.depth_anything
     - version: 1.0.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai.models.depth_anything_v2
     - version: 1.0.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai.models.rmbg
     - version: 1.0.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai.models.rt4ksr
     - version: 0.1.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.ai.models.rvm
     - version: 2.2.0.b277
-      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
       name: nos.sys.tensor
+    default_package_github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
   full:
     short_name: full
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json

@@ -4,7 +4,6 @@ from sys import stderr, stdout
 from loguru import logger
 import os
 import shutil
-import json
 import yaml
 import io
 import glob
@@ -42,6 +41,15 @@ def get_platform_name():
     """Get the normalized platform name (windows, linux, etc.)"""
     os_name = platform.system().lower()
     return os_name
+
+def get_architecture_name():
+    """Get the normalized architecture name (x86_64, aarch64, etc.)"""
+    arch = platform.machine().lower()
+    if arch == "amd64":
+        arch = "x86_64"
+    elif arch == "arm64":
+        arch = "aarch64"
+    return arch
 
 def getenv(var_name, fail_on_missing=True):
 	val = os.getenv(var_name)
@@ -95,15 +103,26 @@ def get_nodos_github_url(bundle_info, bundles):
 	return get_inheritable_value(bundle_info, "nodos_github_url", bundles)
 
 
-def get_nodos_version(bundle_info, bundles, target_platform=None):
-	"""Get the nodos version for a bundle, with platform-specific override support.
+def get_nodos_version(bundle_info, bundles, target_platform=None, target_arch=None):
+	"""Get the nodos version for a bundle, with platform and architecture-specific override support.
 	
-	First checks bundle_info['platforms'][platform]['nodos_version'],
-	then falls back to bundle_info['nodos_version'].
+	Lookup order:
+	1. bundle_info['platforms'][platform][arch]['nodos_version']
+	2. bundle_info['platforms'][platform]['nodos_version']
+	3. bundle_info['nodos_version']
 	"""
 	# Check for platform-specific version in nested structure
 	if target_platform and PLATFORMS_KEY in bundle_info:
-		platform_version = bundle_info[PLATFORMS_KEY].get(target_platform, {}).get('nodos_version')
+		platform_data = bundle_info[PLATFORMS_KEY].get(target_platform, {})
+		
+		# Check for architecture-specific version first
+		if target_arch and target_arch in platform_data:
+			arch_version = platform_data[target_arch].get('nodos_version')
+			if arch_version:
+				return arch_version
+		
+		# Then check for platform-level version
+		platform_version = platform_data.get('nodos_version')
 		if platform_version:
 			return platform_version
 	
@@ -144,21 +163,32 @@ def download_nodos(bundle_info, nodos_version):
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
 
-def get_bundled_packages(bundle_info, bundles, target_platform=None):
-	"""Get bundled packages for a bundle, with platform-specific overrides.
+def get_bundled_packages(bundle_info, bundles, target_platform=None, target_arch=None):
+	"""Get bundled packages for a bundle, with platform and architecture-specific overrides.
 	
-	Packages can have a 'platforms' sub-element with platform-specific overrides:
+	Packages can have a 'platforms' sub-element with platform and arch-specific overrides:
 	- name: nos.reflect
 	  version: 1.7.13.b1112
 	  platforms:
 	    linux:
 	      version: 1.6.5.b980
+	      x86_64:
+	        version: 1.6.6.b981
 	    windows:
 	      disabled: true
+	
+	Lookup order:
+	1. platforms[platform][arch][property]
+	2. platforms[platform][property]
+	3. base property
 	"""
 	if target_platform is None:
 		# Determine platform from system
 		target_platform = get_platform_name()
+	
+	if target_arch is None:
+		# Determine architecture from system
+		target_arch = get_architecture_name()
 	
 	bundled_packages = list(bundle_info.get("bundled_packages", []))
 	if "includes" in bundle_info:
@@ -181,7 +211,10 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 			others = list(conf.get("bundled_packages", []))
 			bundled_packages = others + bundled_packages
 
-	# Process packages with platform-specific overrides
+	# Get default github_url from bundle_info (for packages that don't specify one)
+	default_github_url = bundle_info.get('default_package_github_url')
+
+	# Process packages with platform and architecture-specific overrides
 	packages_map = OrderedDict()
 	for package in bundled_packages:
 		package_name = package["name"]
@@ -189,27 +222,49 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None):
 		# Start with the base package data (exclude platforms key)
 		pkg_data = {k: v for k, v in package.items() if k != PLATFORMS_KEY}
 		
+		# Apply default github_url if package doesn't have one
+		if 'github_url' not in pkg_data and default_github_url:
+			pkg_data['github_url'] = default_github_url
+		
 		# Check for platform-specific overrides
 		if PLATFORMS_KEY in package and target_platform in package[PLATFORMS_KEY]:
-			platform_overrides = package[PLATFORMS_KEY][target_platform]
+			platform_data = package[PLATFORMS_KEY][target_platform]
 			
-			# Check if disabled for this platform
-			if platform_overrides.get('disabled'):
-				logger.info(f"Skipping disabled package: {package_name}")
-				# Remove from map if it was added earlier (allows disabling inherited packages)
-				packages_map.pop(package_name, None)
-				continue
-			
-			# Apply platform-specific overrides
-			for key, value in platform_overrides.items():
-				pkg_data[key] = value
+			# Check for architecture-specific overrides first
+			if target_arch and target_arch in platform_data:
+				arch_overrides = platform_data[target_arch]
+				
+				# Check if disabled for this platform+arch
+				if arch_overrides.get('disabled'):
+					logger.info(f"Skipping disabled package: {package_name} (platform={target_platform}, arch={target_arch})")
+					packages_map.pop(package_name, None)
+					continue
+				
+				# Apply architecture-specific overrides
+				for key, value in arch_overrides.items():
+					pkg_data[key] = value
+			else:
+				# No arch-specific override, use platform-level overrides
+				# Check if disabled for this platform
+				if platform_data.get('disabled'):
+					logger.info(f"Skipping disabled package: {package_name} (platform={target_platform})")
+					# Remove from map if it was added earlier (allows disabling inherited packages)
+					packages_map.pop(package_name, None)
+					continue
+				
+				# Apply platform-specific overrides (non-arch keys only)
+				for key, value in platform_data.items():
+					# Skip arch-specific sub-keys
+					if key not in ['x86_64', 'aarch64']:
+						pkg_data[key] = value
 		
 		# Add or update the package in the map
 		packages_map[package_name] = pkg_data
 	
 	return packages_map
+	return packages_map
 
-def download_packages(bundle_info, bundles, nodos_version, target_platform=None):
+def download_packages(bundle_info, bundles, nodos_version, target_platform=None, target_arch=None):
 	logger.info("Deleting old modules")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Samples/")
@@ -221,7 +276,7 @@ def download_packages(bundle_info, bundles, nodos_version, target_platform=None)
 		logger.error(f"nosman rescan returned with {result.returncode}")
 		exit(result.returncode)
 	
-	packages_map = get_bundled_packages(bundle_info, bundles, target_platform)
+	packages_map = get_bundled_packages(bundle_info, bundles, target_platform, target_arch)
 
 	downloading_packages_str = ""
 	for package in packages_map.keys():
@@ -259,6 +314,7 @@ def download_packages(bundle_info, bundles, nodos_version, target_platform=None)
 		if "type" not in package or package["type"] != "sample":
 			included_plugins.append(package)
 	profile[loaded_plugins_key].extend(included_plugins)
+	import json
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)
 
@@ -275,6 +331,7 @@ def package(bundle_key, bundle_info, nodos_version):
 		if not os.path.exists(engine_settings_path):
 			logger.error(f"Engine settings file not found in both {engine_folder}/Config and {engine_folder}/Config/Defaults")
 			exit(1)
+	import json
 	with open(engine_settings_path, "r") as f:
 		engine_settings = json.load(f)
 		engine_settings["remote_modules"] = bundle_info["module_index_urls"]
@@ -297,27 +354,21 @@ def get_previous_bundles(previous_commit, version=None):
 		previous_commit: Git commit hash or tag
 		version: Optional version string (e.g., "1.4") to look for YAML file
 	"""
-	# Load YAML file if version is provided
-	if version:
-		yaml_filename = f"nodos-{version}.yaml"
-		result = run(["git", "show", f"{previous_commit}:{yaml_filename}"], capture_output=True, text=True)
-		if result.returncode == 0:
-			previous_bundles_yaml = yaml.safe_load(result.stdout)
-			if previous_bundles_yaml.get("bundles") is None:
-				logger.error(f"Failed to read {yaml_filename} from commit {previous_commit}. Missing 'bundles' key")
-				return None
-			return previous_bundles_yaml["bundles"]
+	if not version:
+		logger.error("Version must be provided to retrieve previous bundles")
+		return None
 	
-	# Fallback to JSON
-	result = run(["git", "show", f"{previous_commit}:bundles.json"], capture_output=True, text=True)
+	yaml_filename = f"nodos-{version}.yaml"
+	result = run(["git", "show", f"{previous_commit}:{yaml_filename}"], capture_output=True, text=True)
 	if result.returncode != 0:
-		logger.error(f"Failed to retrieve bundles.json from commit {previous_commit}. Error: {result.stderr}")
+		logger.error(f"Failed to retrieve {yaml_filename} from commit {previous_commit}. Error: {result.stderr}")
 		return None
-	previous_bundles_json = json.loads(result.stdout)
-	if previous_bundles_json.get("bundles") is None:
-		logger.error(f"Failed to read bundles.json from commit {previous_commit}. Missing 'bundles' key")
+	
+	previous_bundles_yaml = yaml.safe_load(result.stdout)
+	if previous_bundles_yaml.get("bundles") is None:
+		logger.error(f"Failed to read {yaml_filename} from commit {previous_commit}. Missing 'bundles' key")
 		return None
-	return previous_bundles_json["bundles"]
+	return previous_bundles_yaml["bundles"]
 
 def fill_github_url_static_info(url):
 	arch, os = platform.machine().lower(), platform.system().lower()
@@ -325,7 +376,7 @@ def fill_github_url_static_info(url):
 		arch = "x86_64"
 	return url.replace("%%arch%%", arch).replace("%%os%%", os)
 
-def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, target_platform=None):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, target_platform=None, target_arch=None):
 	short_name = bundle_info.get("short_name")
 	if short_name is None:
 		logger.info("Missing short name in bundle info, choosing short name as bundle key")
@@ -342,13 +393,13 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
-	packages = get_bundled_packages(bundle_info, bundles, target_platform)
+	packages = get_bundled_packages(bundle_info, bundles, target_platform, target_arch)
 
 	# Retrieve the previous bundle info
 	previous_commit = getenv("PREVIOUS_COMMIT", False)
 	previous_bundles = None
 	if previous_commit is not None:
-		# Extract version from nodos_version for TOML lookup
+		# Extract version from nodos_version for YAML lookup
 		version_str = f"{major}.{minor}"
 		previous_bundles = get_previous_bundles(previous_commit, version_str)
 	previous_packages = None
@@ -363,8 +414,8 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 			if previous_bundle_info is None:
 				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
 			else:
-				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles, target_platform)
-				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles, target_platform)
+				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles, target_platform, target_arch)
+				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles, target_platform, target_arch)
 
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Engine\n"
@@ -480,10 +531,6 @@ if __name__ == "__main__":
 					 	help="The key of the bundle to package",
 						action="store",
 						required=False)
-	parser.add_argument("--bundles-json-path",
-					 	help="The path to the bundles.json file (legacy)",
-						action="store",
-						required=False)
 	parser.add_argument("--bundles-yaml-path",
 					 	help="The path to the bundles YAML file",
 						action="store",
@@ -536,6 +583,7 @@ if __name__ == "__main__":
 	bundles = None
 	bundle_info = None
 	target_platform = args.target_platform
+	target_arch = None  # Will be auto-detected if not specified
 
 	# Determine which file format to use
 	if args.bundles_yaml_path:
@@ -549,17 +597,6 @@ if __name__ == "__main__":
 				logger.error(f"Failed to read {args.bundles_yaml_path}. Missing 'bundles' key")
 				exit(1)
 			bundles = bundles_data.get("bundles")
-	elif args.bundles_json_path:
-		# Load JSON file (legacy)
-		with open(args.bundles_json_path, 'r') as f:
-			bundles_json = json.load(f)
-			if bundles_json is None:
-				logger.error("Failed to read bundles.json")
-				exit(1)
-			if bundles_json.get("bundles") is None:
-				logger.error("Failed to read bundles.json. Missing 'bundles' key")
-				exit(1)
-			bundles = bundles_json.get("bundles")
 	elif args.version:
 		# Auto-detect YAML file based on version
 		yaml_path = f"nodos-{args.version}.yaml"
@@ -576,7 +613,7 @@ if __name__ == "__main__":
 				exit(1)
 			bundles = bundles_data.get("bundles")
 	else:
-		logger.error("Either --version, --bundles-yaml-path, or --bundles-json-path must be specified")
+		logger.error("Either --version or --bundles-yaml-path must be specified")
 		exit(1)
 
 	if args.bundle_key:
@@ -584,7 +621,7 @@ if __name__ == "__main__":
 
 	nodos_version = None
 	if bundle_info:
-		nodos_version = get_nodos_version(bundle_info, bundles, target_platform)
+		nodos_version = get_nodos_version(bundle_info, bundles, target_platform, target_arch)
 
 	if bundles is None:
 		logger.error("Failed to read bundles. Missing 'bundles' key")
@@ -604,7 +641,7 @@ if __name__ == "__main__":
 		if bundle_info is None or nodos_version is None:
 			logger.error("Bundle key and version required for --download-packages")
 			exit(1)
-		download_packages(bundle_info, bundles, nodos_version, target_platform)
+		download_packages(bundle_info, bundles, nodos_version, target_platform, target_arch)
 
 	if args.pack:
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:
@@ -616,4 +653,4 @@ if __name__ == "__main__":
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:
 			logger.error("Bundle key and version required for --gh-release")
 			exit(1)
-		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, target_platform)
+		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, target_platform, target_arch)

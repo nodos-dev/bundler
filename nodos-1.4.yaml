@@ -14,7 +14,7 @@ bundles:
     x86_64-windows: 3.0.0
     x86_64-linux: 3.0.0
   engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
-  module_index_urls:
+  plugin_index_urls:
   - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
     name: nodos
     is_active: true
@@ -24,68 +24,68 @@ bundles:
   - minimal
   bundled_packages:
   - name: nos.sys.shaderc
-    x86_64-windows: 2.1.1
-    x86_64-linux: 2.1.1
+    x86_64-windows: 2.1
+    x86_64-linux: 2.1
   - name: nos.sys.vulkan
-    x86_64-windows: 8.0.0
-    x86_64-linux: 8.0.0
+    x86_64-windows: 8.0
+    x86_64-linux: 8.0
   - name: nos.audio
-    x86_64-windows: 1.0.0
-    x86_64-linux: 1.0.0
+    x86_64-windows: 1.0
+    x86_64-linux: 1.0
   - name: nos.sys.settings
-    x86_64-windows: 3.0.0
-    x86_64-linux: 3.0.0
+    x86_64-windows: 3.0
+    x86_64-linux: 3.0
   - name: nos.filters
-    x86_64-windows: 3.0.0
-    x86_64-linux: 3.0.0
+    x86_64-windows: 3.0
+    x86_64-linux: 3.0
   - name: nos.math
-    x86_64-windows: 2.0.0
-    x86_64-linux: 2.0.0
+    x86_64-windows: 2.0
+    x86_64-linux: 2.0
   - name: nos.utilities
-    x86_64-windows: 4.0.0
-    x86_64-linux: 4.0.0
+    x86_64-windows: 4.0
+    x86_64-linux: 4.0
   - name: nos.mediaio
-    x86_64-windows: 4.0.0
-    x86_64-linux: 4.0.0
+    x86_64-windows: 4.0
+    x86_64-linux: 4.0
   - name: nos.webcam
-    x86_64-windows: 3.0.0
+    x86_64-windows: 3.0
   - name: nos.sys.animation
-    x86_64-windows: 3.0.0
-    x86_64-linux: 3.0.0
+    x86_64-windows: 3.0
+    x86_64-linux: 3.0
   - name: nos.animation
-    x86_64-windows: 1.0.0
-    x86_64-linux: 1.0.0
+    x86_64-windows: 1.0
+    x86_64-linux: 1.0
   - name: nos.webrtc
-    x86_64-windows: 2.0.0
-    x86_64-linux: 2.0.0
+    x86_64-windows: 2.0
+    x86_64-linux: 2.0
   - name: nos.str
-    x86_64-windows: 1.0.0
-    x86_64-linux: 1.0.0
+    x86_64-windows: 1.0
+    x86_64-linux: 1.0
   - name: nos.sys.device
-    x86_64-windows: 2.0.0
-    x86_64-linux: 2.0.0
+    x86_64-windows: 2.0
+    x86_64-linux: 2.0
   - name: nos.rive
     x86_64-windows: 0.3
     x86_64-linux: 0.3
   - name: nos.sync
-    x86_64-windows: 11.1.0
-    x86_64-linux: 11.1.0
+    x86_64-windows: 11.1
+    x86_64-linux: 11.1
 
 - name: broadcast
   includes:
   - standard
   nodos:
-    x86_64-windows: 1.4.0
-    x86_64-linux: 1.4.0
+    x86_64-windows: 1.4
+    x86_64-linux: 1.4
   bundled_packages:
   - name: nos.aja
-    x86_64-windows: 4.0.0
+    x86_64-windows: 4.0
   - name: nos.sys.decklink
-    x86_64-windows: 4.0.0
+    x86_64-windows: 4.0
   - name: nos.decklink
-    x86_64-windows: 3.0.0
+    x86_64-windows: 3.0
   - name: nos.track
-    x86_64-windows: 3.0.0
-    x86_64-linux: 3.0.0
+    x86_64-windows: 3.0
+    x86_64-linux: 3.0
   - name: nos.display
-    x86_64-windows: 0.13.0
+    x86_64-windows: 0.13

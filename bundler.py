@@ -18,6 +18,29 @@ ARTIFACTS_FOLDER = "./Artifacts/"
 COMPRESSED_FILE_EXTENSION = ".zip"
 PLATFORMS_KEY = "platforms"  # Key for platform-specific overrides
 
+class BundlesYamlLoader(yaml.SafeLoader):
+	pass
+
+def _remove_implicit_resolver(loader_cls, tag_to_remove):
+	for ch, resolvers in list(loader_cls.yaml_implicit_resolvers.items()):
+		loader_cls.yaml_implicit_resolvers[ch] = [
+			resolver for resolver in resolvers if resolver[0] != tag_to_remove
+		]
+
+_remove_implicit_resolver(BundlesYamlLoader, "tag:yaml.org,2002:int")
+_remove_implicit_resolver(BundlesYamlLoader, "tag:yaml.org,2002:float")
+
+def load_bundles_data(path):
+	with open(path, 'r') as f:
+		bundles_data = yaml.load(f, Loader=BundlesYamlLoader)
+	if bundles_data is None:
+		logger.error(f"Failed to read {path}")
+		exit(1)
+	if bundles_data.get("bundles") is None:
+		logger.error(f"Failed to read {path}. Missing 'bundles' key")
+		exit(1)
+	return bundles_data
+
 def force_delete_folder(folder_path):
     """Forcefully deletes a folder, handling permission issues."""
     if not os.path.exists(folder_path):
@@ -393,15 +416,20 @@ def package(bundle_key, bundle_info, nodos_version, bundles):
 	import json
 	with open(engine_settings_path, "r") as f:
 		engine_settings = json.load(f)
-		module_index_urls = get_inheritable_value(bundle_info, "module_index_urls", bundles)
+		major, minor = get_nodos_version_major_minor(nodos_version)
+		use_plugins_keys = int(major) > 1 or (int(major) == 1 and int(minor) >= 4)
+		index_urls_key = "plugin_index_urls" if use_plugins_keys else "module_index_urls"
+		engine_index_urls_key = "remote_plugins" if use_plugins_keys else "remote_modules"
+
+		module_index_urls = get_inheritable_value(bundle_info, index_urls_key, bundles)
 		engine_index_url = get_inheritable_value(bundle_info, "engine_index_url", bundles)
 		if module_index_urls is None:
-			logger.error("Missing module_index_urls in bundle or included bundles")
+			logger.error(f"Missing {index_urls_key} in bundle or included bundles")
 			exit(1)
 		if engine_index_url is None:
 			logger.error("Missing engine_index_url in bundle or included bundles")
 			exit(1)
-		engine_settings["remote_modules"] = module_index_urls
+		engine_settings[engine_index_urls_key] = module_index_urls
 		engine_settings["engine_index_url"] = engine_index_url
 
 	with open(engine_settings_path, "w") as f:
@@ -564,40 +592,24 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	bundles = None
 	bundle_info = None
 	platform_arch_key = None  # Will be auto-detected if not specified
 
 	if args.bundles_yaml_path:
 		# Load YAML file
-		with open(args.bundles_yaml_path, 'r') as f:
-			bundles_data = yaml.load(f, Loader=yaml.BaseLoader)
-			if bundles_data is None:
-				logger.error(f"Failed to read {args.bundles_yaml_path}")
-				exit(1)
-			if bundles_data.get("bundles") is None:
-				logger.error(f"Failed to read {args.bundles_yaml_path}. Missing 'bundles' key")
-				exit(1)
-			bundles = bundles_data.get("bundles")
+		bundles_data = load_bundles_data(args.bundles_yaml_path)
 	elif args.version:
 		# Auto-detect YAML file based on version
 		yaml_path = f"nodos-{args.version}.yaml"
 		if not os.path.exists(yaml_path):
 			logger.error(f"Bundle file {yaml_path} not found")
 			exit(1)
-		with open(yaml_path, 'r') as f:
-			bundles_data = yaml.load(f, Loader=yaml.BaseLoader)
-			if bundles_data is None:
-				logger.error(f"Failed to read {yaml_path}")
-				exit(1)
-			if bundles_data.get("bundles") is None:
-				logger.error(f"Failed to read {yaml_path}. Missing 'bundles' key")
-				exit(1)
-			bundles = bundles_data.get("bundles")
+		bundles_data = load_bundles_data(yaml_path)
+		
 	else:
 		logger.error("Either --version or --bundles-yaml-path must be specified")
 		exit(1)
-
+	bundles = bundles_data.get("bundles")
 	# Override platform_arch_key if target_platform is specified
 	if args.target_platform:
 		# target_platform could be "linux" or "windows"

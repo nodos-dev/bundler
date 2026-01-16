@@ -26,7 +26,7 @@ Bundles are defined as a list with explicit names. Each bundle has fields in thi
 1. `name` - Bundle identifier
 2. `short_name` - Short name for release
 3. `nodos` - Nodos version per platform-architecture
-4. `bundled_packages` - List of packages
+4. `bundled_packages` - Map of packages keyed by package name
 5. `engine_index_url` - Engine index URL
 6. `module_index_urls` - Module index URLs
 
@@ -53,13 +53,13 @@ bundles:
     x86_64-windows: 1.3.2
     x86_64-linux: 1.3.0
   bundled_packages:
-  - name: nos.reflect
-    x86_64-windows: 1.7.13
-    x86_64-linux: 1.6.5
+    nos.reflect:
+      x86_64-windows: 1.7.13
+      x86_64-linux: 1.6.5
   
-  - name: nos.math
-    x86_64-windows: 1.23.0
-    x86_64-linux: 1.23.0
+    nos.math:
+      x86_64-windows: 1.23.0
+      x86_64-linux: 1.23.0
   
   engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
   module_index_urls:
@@ -73,9 +73,9 @@ bundles:
     x86_64-windows: 1.3.2
     x86_64-linux: 1.3.0
   bundled_packages:
-  - name: nos.filters
-    x86_64-windows: 1.5.5
-    x86_64-linux: 1.5.2
+    nos.filters:
+      x86_64-windows: 1.5.5
+      x86_64-linux: 1.5.2
   engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
   module_index_urls:
   - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index

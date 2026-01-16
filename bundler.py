@@ -277,11 +277,28 @@ def download_nodos(bundle_info, nodos_version):
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
 
+def normalize_bundled_packages(bundled_packages):
+	if bundled_packages is None:
+		return OrderedDict()
+	if isinstance(bundled_packages, dict):
+		return OrderedDict(bundled_packages)
+	if isinstance(bundled_packages, list):
+		normalized = OrderedDict()
+		for package in bundled_packages:
+			package_name = package.get("name")
+			if not package_name:
+				logger.error("Bundled package entry missing name")
+				exit(1)
+			normalized[package_name] = {k: v for k, v in package.items() if k != "name"}
+		return normalized
+	logger.error(f"Unsupported bundled_packages type: {type(bundled_packages)}")
+	exit(1)
+
 def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 	"""Get bundled packages for a bundle using flat platform-arch keys.
 	
-	Packages use flat keys like:
-	- name: nos.reflect
+	Packages use map keys like:
+	nos.reflect:
 	  x86_64-windows: 1.7.13
 	  x86_64-linux: 1.6.5
 	
@@ -295,7 +312,7 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 	if platform_arch_key is None:
 		platform_arch_key = get_platform_arch_key()
 	
-	bundled_packages = list(bundle_info.get("bundled_packages", []))
+	bundled_packages = OrderedDict()
 	if "includes" in bundle_info:
 		queue = list(bundle_info["includes"])
 		includes = list([])
@@ -308,22 +325,24 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 				exit(1)
 			queue.extend(other_conf.get("includes", []))
 		logger.info(f"Adding modules from: {' '.join(includes)}")
-		for include in includes:
+		for include in reversed(includes):
 			conf = get_bundle_info(include, bundles)
 			if conf is None:
 				logger.error(f"Include bundle key {include} not found in bundles")
 				exit(1)
-			others = list(conf.get("bundled_packages", []))
-			bundled_packages = others + bundled_packages
+			others = normalize_bundled_packages(conf.get("bundled_packages", {}))
+			for package_name, package_data in others.items():
+				bundled_packages[package_name] = package_data
+
+	local_packages = normalize_bundled_packages(bundle_info.get("bundled_packages", {}))
+	for package_name, package_data in local_packages.items():
+		bundled_packages[package_name] = package_data
 
 	# Process packages with flat platform-arch structure
 	packages_map = OrderedDict()
-	for package in bundled_packages:
-		package_name = package["name"]
-		
+	for package_name, package in bundled_packages.items():
 		# Check if version is specified for this platform-arch
 		version = package.get(platform_arch_key)
-		
 		# Optional type field
 		package_type = package.get("type")
 
@@ -378,7 +397,7 @@ def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=Non
 			exit(result.returncode)
 		resolved_version = resolve_package_version(package_name, package_version)
 		rename_package_prefix_folder(out_dir, package_version, resolved_version)
-		incl = {"name": package_name, "version": resolved_version}
+		incl = {"name": package_name, "version": resolved_version, "type": package_type}
 		included_packages.append(incl)
 	# Write included modules to Profile.json
 	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
@@ -394,7 +413,7 @@ def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=Non
 	included_plugins = []
 	for package in included_packages:
 		if "type" not in package or package["type"] != "sample":
-			included_plugins.append(package)
+			included_plugins.append({"name": package["name"], "version": package["version"]})
 	profile[loaded_plugins_key].extend(included_plugins)
 	with open(f"{profile_json_path}", "w") as f:
 		json.dump(profile, f, indent=2)

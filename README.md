@@ -1,19 +1,22 @@
 # Nodos Bundler
+
 Nodos Bundler is a tool to bundle a nodos version with modules and release it as a github release and a nodos bundle release.
 
-# Usage
+## Usage
 
 Requirements:
+
 - Python 3.7+
 - [`nodos` CLI tool](https://github.com/nodos-dev/nodos)
 
 Environment variables:
+
 - `BUILD_NUMBER`: The build number of the release
 - `PREVIOUS_COMMIT`: The commit hash of the previous release (Optional)
 
 ## Bundle Configuration
 
-Bundles are now configured using YAML files instead of JSON. Each Nodos version has its own YAML file:
+Bundles are configured using YAML files. Each Nodos version has its own YAML file:
 - `nodos-1.2.yaml` - Bundles for Nodos 1.2
 - `nodos-1.3.yaml` - Bundles for Nodos 1.3
 - `nodos-1.4.yaml` - Bundles for Nodos 1.4
@@ -69,11 +72,6 @@ python ./bundler.py --version="1.4" --bundle-key="broadcast" --target-platform="
 ### Using YAML file path:
 ```bash
 python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --target-platform="linux" --download-nodos --download-packages --pack
-```
-
-### Legacy JSON support:
-```bash
-python ./bundler.py --bundles-json-path="./bundles.json" --bundle-key="broadcast_1.3" --download-nodos --download-packages --pack
 ```
 
 ## GitHub Workflow

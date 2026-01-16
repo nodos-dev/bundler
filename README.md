@@ -16,60 +16,79 @@ Environment variables:
 ## Bundle Configuration
 
 Bundles are configured using YAML files. Each Nodos version has its own YAML file:
-- `nodos-1.2.yaml` - Bundles for Nodos 1.2
-- `nodos-1.3.yaml` - Bundles for Nodos 1.3
-- `nodos-1.4.yaml` - Bundles for Nodos 1.4
+- `nodos-1.2.yaml` - Bundles for Nodos 1.2 (x86_64-windows only)
+- `nodos-1.3.yaml` - Bundles for Nodos 1.3 (x86_64-windows, x86_64-linux)
+- `nodos-1.4.yaml` - Bundles for Nodos 1.4 (x86_64-windows, x86_64-linux)
 
 ### Bundle Structure
 
-Each bundle is defined without version suffixes. For example, instead of `broadcast_1.4`, use just `broadcast`.
+Bundles are defined as a list with explicit names. Each bundle has fields in this order:
+1. `name` - Bundle identifier
+2. `short_name` - Short name for release
+3. `nodos` - Nodos version per platform-architecture
+4. `bundled_packages` - List of packages
+5. `engine_index_url` - Engine index URL
+6. `module_index_urls` - Module index URLs
 
-### Flat Platform-Architecture Configuration
+### Platform-Architecture Keys
 
-The bundler uses a flat structure with platform-architecture keys:
+The bundler uses flat platform-architecture keys:
 
-**Supported platform-architecture combinations:**
-- `x64-windows` - Windows 64-bit
-- `x64-linux` - Linux 64-bit
-- `aarch64-linux` - Linux ARM64
+**Supported combinations:**
+- `x86_64-windows` - Windows x86_64
+- `x86_64-linux` - Linux x86_64
+- `aarch64-linux` - Linux ARM64 (reserved for future use)
 
-#### For Versions 1.2-1.3 (Explicit Versions)
+**Version-specific platform support:**
+- Version 1.2: `x86_64-windows` only
+- Version 1.3+: `x86_64-windows` and `x86_64-linux`
 
-```yaml
-bundles:
-  minimal:
-    short_name: minimal
-    nodos:
-      x64-windows: 1.3.2.b4623
-      x64-linux: 1.3.0.b4294
-      aarch64-linux: 1.3.0.b4294
-    bundled_packages:
-    - name: nos.reflect
-      x64-windows: 1.7.13.b1112
-      x64-linux: 1.6.5.b980
-      aarch64-linux: 1.6.5.b980
-    
-    - name: nos.math
-      x64-windows: 1.23.0.b1104
-      x64-linux: 1.23.0.b1104
-      aarch64-linux: 1.23.0.b1104
-```
-
-#### For Version 1.4+ (Auto-Query via nosman)
-
-For version 1.4 and above, you can omit versions and the bundler will query them automatically using `nosman info`:
+#### Example Bundle Configuration
 
 ```yaml
 bundles:
-  minimal:
-    short_name: minimal
-    nodos: {}  # Empty dict - will query latest via nosman
-    bundled_packages:
-    - name: nos.reflect   # Will query latest via nosman info
-    - name: nos.math      # Will query latest via nosman info
+- name: minimal
+  short_name: minimal
+  nodos:
+    x86_64-windows: 1.3.2
+    x86_64-linux: 1.3.0
+  bundled_packages:
+  - name: nos.reflect
+    x86_64-windows: 1.7.13
+    x86_64-linux: 1.6.5
+  
+  - name: nos.math
+    x86_64-windows: 1.23.0
+    x86_64-linux: 1.23.0
+  
+  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+  module_index_urls:
+  - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+    name: nodos
+    is_active: true
+
+- name: standard
+  short_name: standard
+  nodos:
+    x86_64-windows: 1.3.2
+    x86_64-linux: 1.3.0
+  bundled_packages:
+  - name: nos.filters
+    x86_64-windows: 1.5.5
+    x86_64-linux: 1.5.2
+  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+  module_index_urls:
+  - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+    name: nodos
+    is_active: true
+  includes:
+  - minimal
 ```
 
-**Note:** If a version is not specified for a platform-arch combination, it will be queried automatically via `nosman info <package>`.
+**Version Formats:**
+- Versions can be less specific (e.g., "1.4.0" or "8.0")
+- All package versions are explicitly specified per platform-architecture
+- Packages without a version for a platform-arch are skipped for that platform
 
 ## Command Line Usage
 
@@ -87,5 +106,5 @@ python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadca
 
 The GitHub workflow accepts:
 - **version**: Choose from 1.2, 1.3, 1.4
-- **bundle_keyword**: Choose from minimal, standard, broadcast, full, ai
+- **bundle_keyword**: Any bundle name defined in the YAML file (e.g., minimal, standard, broadcast, full, ai)
 - **previous_tag**: Optional previous release tag or commit

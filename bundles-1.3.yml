@@ -1,0 +1,257 @@
+bundles:
+  minimal_1.3:
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    short_name: minimal
+    nodos_version: 1.3.2.b4623
+    nodos_github_url: https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%
+    bundled_packages:
+    - name: nos.sys.variables
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.1.b928
+        x64-linux: 1.0.1.b980
+    - name: nos.reflect
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.7.13.b1112
+        x64-linux: 1.6.5.b980
+  full_1.3:
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    short_name: full
+    bundled_packages:
+    - name: nos.sys.ai
+      versions:
+        x64-windows: 3.1.0.b247
+        x64-linux: 3.1.0.b247
+    - 'name:': nos.sys.cuda
+      versions:
+        x64-windows: 2.1.0.b247
+    - name: nos.sys.tensor
+      versions:
+        x64-windows: 2.1.0.b247
+        x64-linux: 2.1.0.b247
+    - name: nos.ai.model_nodes
+      versions:
+        x64-windows: 2.1.0.b247
+        x64-linux: 2.1.0.b247
+    - name: nos.interop
+      versions:
+        x64-windows: 2.1.0.b247
+        x64-linux: 2.1.0.b247
+    - name: nos.ml.onnx
+      versions:
+        x64-windows: 2.2.0.b247
+        x64-linux: 2.2.0.b247
+    - name: nos.ml.tensors
+      versions:
+        x64-windows: 2.2.0.b247
+        x64-linux: 2.2.0.b247
+    includes:
+    - broadcast_1.3
+  standard_1.3:
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    short_name: standard
+    bundled_packages:
+    - name: nos.sys.shaderc
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.1.0.b953
+        x64-linux: 1.1.0.b980
+    - name: nos.sys.vulkan
+      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 6.7.4.b738
+        x64-linux: 6.3.6.b652
+    - name: nos.sys.settings
+      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.3.0.b804
+        x64-linux: 0.3.0.b804
+    - name: nos.filters
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.5.5.b1037
+        x64-linux: 1.5.2.b980
+    - name: nos.math
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.9.3.b907
+        x64-linux: 1.9.3.b980
+    - name: nos.utilities
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 3.14.5.b1149
+        x64-linux: 3.9.7.b980
+    - name: nos.mediaio
+      github_url: https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.7.0.b700
+        x64-linux: 2.5.0.b664
+    - name: nos.sys.mediaio
+      github_url: https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.4.1.b669
+        x64-linux: 0.4.0.b664
+    - name: nos.webcam
+      github_url: https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.3.2.b646
+    - name: nos.sys.animation
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.5.2.b1018
+        x64-linux: 1.5.1.b980
+    - name: nos.animation
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.3.2.b928
+    - name: nos.webrtc
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.2.3.b1141
+    - name: nos.str
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.3.1.b1106
+    - name: nos.sys.device
+      github_url: https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.3.4.b24
+        x64-linux: 0.3.3.b15
+    - name: nos.rive
+      github_url: https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.3.0.b20
+    - name: nos.sample.dxapp
+      github_url: https::github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      type: sample
+      versions:
+        x64-windows: 1.1.6.b57
+    - name: nos.sync
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 3.1.1.b1023
+    includes:
+    - minimal_1.3
+  broadcast_1.3:
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    short_name: broadcast
+    bundled_packages:
+    - name: nos.aja
+      github_url: https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.7.0.b789
+        x64-linux: 2.5.2.b700
+    - name: nos.sys.decklink
+      github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.2.6.b136
+    - name: nos.decklink
+      github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.2.18.b149
+    - name: nos.track
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.9.3.b961
+        x64-linux: 1.9.3.b980
+    - name: nos.display
+      github_url: https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.4.0.b52
+    - name: nos.sys.lino
+      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.5.b1114
+    includes:
+    - standard_1.3
+  ai_1.3:
+    module_index_urls:
+    - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+      name: nodos
+      is_active: true
+    engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+    short_name: ai
+    bundled_packages:
+    - name: nos.ml.ai_nodes
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.2.0.b277
+    - name: nos.ai.model_nodes
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.2.1.b277
+    - name: nos.cuda
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.2.0.b277
+    - name: nos.interop
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.2.0.b277
+    - name: nos.ml.onnx
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.3.0.b277
+    - name: nos.ml.tensors
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.3.0.b277
+    - name: nos.ml.tokenizer
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.1.0.b277
+    - name: nos.sys.ai
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 3.2.0.b277
+    - name: nos.sys.cuda
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.2.0.b277
+    - name: nos.sys.ai.models.depth_anything
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.0.b277
+    - name: nos.sys.ai.models.depth_anything
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.0.b277
+    - name: nos.sys.ai.models.depth_anything_v2
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.0.b277
+    - name: nos.sys.ai.models.rmbg
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.0.b277
+    - name: nos.sys.ai.models.rt4ksr
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 1.0.0.b277
+    - name: nos.sys.ai.models.rvm
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 0.1.0.b277
+    - name: nos.sys.tensor
+      github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+      versions:
+        x64-windows: 2.2.0.b277
+    includes:
+    - broadcast_1.3

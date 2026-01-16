@@ -148,6 +148,173 @@ def get_release_artifacts(dir):
 	files = glob.glob(f"{dir}/*{get_compressed_file_extension()}")
 	return files
 
+def read_bundles_file(path, file_contents=None):
+	try:
+		if file_contents is None:
+			with open(path, "r") as f:
+				file_contents = f.read()
+		if path.lower().endswith((".yaml", ".yml")):
+			bundles_doc = yaml.safe_load(file_contents)
+		else:
+			bundles_doc = json.loads(file_contents)
+	except Exception as e:
+		logger.error(f"Failed to parse {path}. Error: {e}")
+		return None
+	if bundles_doc is None or bundles_doc.get("bundles") is None:
+		logger.error(f"Failed to read {path}. Missing 'bundles' key")
+		return None
+	return bundles_doc["bundles"]
+
+def get_bundles_paths(bundles_path):
+	if bundles_path is None:
+		return []
+	if os.path.isdir(bundles_path):
+		return sorted(glob.glob(os.path.join(bundles_path, "bundles*.yml")) + glob.glob(os.path.join(bundles_path, "bundles*.yaml")))
+	if "*" in bundles_path or "?" in bundles_path:
+		return sorted(glob.glob(bundles_path))
+	if os.path.isfile(bundles_path):
+		base = os.path.basename(bundles_path)
+		if base.startswith("bundles") and bundles_path.lower().endswith((".yaml", ".yml")):
+			parent = os.path.dirname(bundles_path) or "."
+			return sorted(glob.glob(os.path.join(parent, "bundles*.yml")) + glob.glob(os.path.join(parent, "bundles*.yaml")))
+		return [bundles_path]
+	return []
+
+def load_bundles_from_paths(paths):
+	bundles = OrderedDict()
+	for path in paths:
+		bundles_in_file = read_bundles_file(path)
+		if bundles_in_file is None:
+			return None
+		for key, value in bundles_in_file.items():
+			if key in bundles:
+				logger.error(f"Duplicate bundle key {key} found in {path}")
+				return None
+			bundles[key] = value
+	return bundles
+
+def is_full_version(version):
+	parts = version.split(".")
+	if len(parts) < 3:
+		return False
+	for i, part in enumerate(parts):
+		if i == 3:
+			if part.startswith("b"):
+				return part[1:].isdigit()
+			return part.isdigit()
+		if not part.isdigit():
+			return False
+	return True
+
+def parse_semver(version):
+	parts = version.split(".")
+	try:
+		major = int(parts[0])
+	except (IndexError, ValueError):
+		return None
+	minor = None
+	patch = None
+	build = None
+	if len(parts) > 1:
+		try:
+			minor = int(parts[1])
+		except ValueError:
+			return None
+	if len(parts) > 2:
+		try:
+			patch = int(parts[2])
+		except ValueError:
+			return None
+	if len(parts) > 3:
+		part = parts[3]
+		if part.startswith("b"):
+			part = part[1:]
+		try:
+			build = int(part)
+		except ValueError:
+			return None
+	return (major, minor, patch, build)
+
+def matches_prefix(version, prefix):
+	version_parts = parse_semver(version)
+	prefix_parts = parse_semver(prefix)
+	if version_parts is None or prefix_parts is None:
+		return False
+	v_major, v_minor, v_patch, v_build = version_parts
+	p_major, p_minor, p_patch, p_build = prefix_parts
+	if v_major != p_major:
+		return False
+	if p_minor is None:
+		return True
+	if v_minor != p_minor:
+		return False
+	if p_patch is None:
+		return True
+	if v_patch != p_patch:
+		return False
+	if p_build is None:
+		return True
+	return v_build == p_build
+
+def version_sort_key(version):
+	parts = parse_semver(version)
+	if parts is None:
+		return (-1, -1, -1, -1)
+	major, minor, patch, build = parts
+	return (major, minor or -1, patch or -1, build or -1)
+
+def resolve_nodos_version_from_workspace(version_prefix):
+	if is_full_version(version_prefix):
+		return version_prefix
+	engine_dir = os.path.join(WORKSPACE_FOLDER, "Engine")
+	if not os.path.isdir(engine_dir):
+		return None
+	candidates = []
+	for entry in os.listdir(engine_dir):
+		full_path = os.path.join(engine_dir, entry)
+		if not os.path.isdir(full_path):
+			continue
+		if matches_prefix(entry, version_prefix):
+			candidates.append(entry)
+	if not candidates:
+		return None
+	return sorted(candidates, key=version_sort_key, reverse=True)[0]
+
+def ensure_full_nodos_version(nodos_version, action_name):
+	resolved = resolve_nodos_version_from_workspace(nodos_version)
+	if resolved is None:
+		logger.error(f"Failed to resolve Nodos version for {action_name}. Run with --download-nodos first.")
+		exit(1)
+	if not is_full_version(resolved):
+		logger.error(f"Resolved Nodos version {resolved} is not a full version for {action_name}.")
+		exit(1)
+	return resolved
+
+def get_installed_package_version(package_name, version_prefix):
+	args = ["./nodos", "-w", WORKSPACE_FOLDER, "info", package_name, version_prefix, "--relaxed"]
+	result = run(args, capture_output=True, text=True, env=os.environ.copy())
+	if result.returncode != 0:
+		logger.error(f"nosman info returned with {result.returncode}: {result.stderr}")
+		exit(result.returncode)
+	try:
+		info = json.loads(result.stdout)
+	except json.JSONDecodeError as e:
+		logger.error(f"Failed to parse nosman info output for {package_name}: {e}")
+		exit(1)
+	return info["info"]["id"]["version"]
+
+def resolve_package_versions(packages_map):
+	resolved = OrderedDict()
+	for package in packages_map.values():
+		package_name = package["name"]
+		version = package["version"]
+		if not is_full_version(version):
+			version = get_installed_package_version(package_name, version)
+		resolved_package = dict(package)
+		resolved_package["version"] = version
+		resolved[package_name] = resolved_package
+	return resolved
+
 def download_nodos(bundle_info, nodos_version):
 	force_delete_folder(WORKSPACE_FOLDER)
 	logger.info("Reading Nodos version from bundle")
@@ -158,6 +325,11 @@ def download_nodos(bundle_info, nodos_version):
 	if result.returncode != 0:
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
+	resolved = resolve_nodos_version_from_workspace(nodos_version)
+	if resolved is None:
+		logger.error(f"Failed to resolve installed Nodos version for prefix {nodos_version}")
+		exit(1)
+	return resolved
 
 def get_bundled_packages(bundle_info, bundles):
 	bundled_packages = list(bundle_info["bundled_packages"] if "bundled_packages" in bundle_info else [])
@@ -200,6 +372,11 @@ def download_packages(bundle_info, bundles, nodos_version):
 		logger.error(f"nosman rescan returned with {result.returncode}")
 		exit(result.returncode)
 	
+	resolved_nodos_version = resolve_nodos_version_from_workspace(nodos_version)
+	if resolved_nodos_version is None:
+		logger.error(f"Failed to resolve installed Nodos version for prefix {nodos_version}. Run with --download-nodos first.")
+		exit(1)
+
 	packages_map = get_bundled_packages(bundle_info, bundles)
 
 	downloading_packages_str = ""
@@ -210,24 +387,27 @@ def download_packages(bundle_info, bundles, nodos_version):
 	included_packages = []
 	for package in packages_map.values():
 		package_name = package["name"]
-		package_version = package["version"]
-		logger.info(f"Downloading package {package_name} version {package_version} using nosman")
+		requested_version = package["version"]
+		logger.info(f"Downloading package {package_name} version {requested_version} using nosman")
 		out_dir = f"./Module/{package_name}"
 		if "type" in package and package["type"] == "sample":
 			out_dir = f"./Samples/{package_name}"
-		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
+		result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, requested_version, "--out-dir", out_dir, "--prefix", requested_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
 		if result.returncode != 0:
 			logger.error(f"nosman install returned with {result.returncode}")
 			exit(result.returncode)
-		incl = {"name": package_name, "version": package_version}
+		resolved_version = requested_version
+		if not is_full_version(requested_version):
+			resolved_version = get_installed_package_version(package_name, requested_version)
+		incl = {"name": package_name, "version": resolved_version}
 		if "type" in package:
 			incl["type"] = "sample"
 		included_packages.append(incl)
 	# Write included modules to Profile.json
-	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{nodos_version}/Config/Profile.json"
+	profile_json_path = f"{WORKSPACE_FOLDER}/Engine/{resolved_nodos_version}/Config/Profile.json"
 	profile = {}
 	loaded_plugins_key = "loaded_plugins"
-	major, minor, patch = get_semver_from_version(nodos_version)
+	major, minor, patch = get_semver_from_version(resolved_nodos_version)
 	# If version lower than 1.4.0 use loaded_modules key
 	if int(major) < 1 or (int(major) == 1 and int(minor) < 4):
 		loaded_plugins_key = "loaded_modules"
@@ -269,26 +449,34 @@ def package(bundle_key, bundle_info, nodos_version):
 		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
+def is_bundles_filename(path):
+	base = os.path.basename(path).lower()
+	return base.startswith("bundles") and base.endswith((".yaml", ".yml", ".json"))
+
 def get_previous_bundles(previous_commit):
-	# Retrieve the previous bundles file from the specified commit
-	for path in ("bundles.yaml", "bundles.yml", "bundles.json"):
-		result = run(["git", "show", f"{previous_commit}:{path}"], capture_output=True, text=True)
-		if result.returncode != 0:
-			continue
-		try:
-			if path.endswith((".yaml", ".yml")):
-				previous_bundles_doc = yaml.safe_load(result.stdout)
-			else:
-				previous_bundles_doc = json.loads(result.stdout)
-		except Exception as e:
-			logger.error(f"Failed to parse {path} from commit {previous_commit}. Error: {e}")
+	result = run(["git", "ls-tree", "-r", "--name-only", previous_commit], capture_output=True, text=True)
+	if result.returncode != 0:
+		logger.error(f"Failed to list files for commit {previous_commit}")
+		return None
+	paths = [line.strip() for line in result.stdout.splitlines() if is_bundles_filename(line.strip())]
+	if not paths:
+		logger.error(f"Failed to retrieve bundles file from commit {previous_commit}.")
+		return None
+	bundles = OrderedDict()
+	for path in paths:
+		show = run(["git", "show", f"{previous_commit}:{path}"], capture_output=True, text=True)
+		if show.returncode != 0:
+			logger.error(f"Failed to read {path} from commit {previous_commit}")
 			return None
-		if previous_bundles_doc.get("bundles") is None:
-			logger.error(f"Failed to read {path} from commit {previous_commit}. Missing 'bundles' key")
+		previous_bundles = read_bundles_file(path, show.stdout)
+		if previous_bundles is None:
 			return None
-		return previous_bundles_doc["bundles"]
-	logger.error(f"Failed to retrieve bundles file from commit {previous_commit}.")
-	return None
+		for key, value in previous_bundles.items():
+			if key in bundles:
+				logger.error(f"Duplicate bundle key {key} found in {path} from commit {previous_commit}")
+				return None
+			bundles[key] = value
+	return bundles
 
 def fill_github_url_static_info(url):
 	arch, os = platform.machine().lower(), platform.system().lower()
@@ -313,7 +501,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
-	packages = get_bundled_packages(bundle_info, bundles)
+	packages = resolve_package_versions(get_bundled_packages(bundle_info, bundles))
 
 	# Retrieve the previous bundle info
 	previous_commit = getenv("PREVIOUS_COMMIT", False)
@@ -338,17 +526,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Engine\n"
 	if previous_nodos_version is not None and previous_nodos_version != nodos_version:
-		nodos_github_url = get_nodos_github_url(bundle_info, bundles)
-		if nodos_github_url is not None:
-			comparison_url = fill_github_url_static_info(nodos_github_url).replace("%%old_version%%", previous_nodos_version).replace("%%new_version%%", nodos_version)
-			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version}, [Compare]({comparison_url}))\n"
-		else:			
-			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version})\n"
+		release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version})\n"
 	else:
 		release_notes += f"* Engine version: {nodos_version}\n"
-
-
-	nodos_github_url = get_nodos_github_url(bundle_info, bundles)
 
 	release_notes += f"### Modules\n"
 
@@ -358,28 +538,11 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		if previous_packages is not None:
 			old_version = previous_packages.get(package['name'], {}).get('version')
 		if old_version and old_version != package['version']:
-			if 'github_url' in package:
-				old_build = old_version.split(".b")[-1]
-				new_build = package['version'].split(".b")[-1]
-				comparison_url = fill_github_url_static_info(package['github_url']).replace("%%old_build%%", old_build).replace("%%new_build%%", new_build)
-				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version}, [Compare]({comparison_url}))\n"
-			else:
-				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version})\n"
+			release_notes += f"* {package['name']} - {package['version']} (prev: {old_version})\n"
 		elif old_version:
 			release_notes += f"* {package['name']} - {package['version']} (no change)\n"
 		else:
 			release_notes += f"* {package['name']} - {package['version']} (new)\n"
-
-	if previous_commit is not None:
-		#check if this is a tag
-		if previous_commit.startswith("v"):
-			release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_commit}\n"
-		else:
-			#try to find the tag of the previous commit
-			result = run(["git", "describe", "--tags", "--abbrev=0", previous_commit], capture_output=True, text=True)
-			if result.returncode == 0:
-				previous_tag = result.stdout.strip()
-				release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_tag}\n"
 
 
 	ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]
@@ -500,19 +663,15 @@ if __name__ == "__main__":
 	bundle_info = None
 
 	bundles_path = args.bundles_path or args.bundles_json_path or args.bundles_json
-	with open(bundles_path, 'r') as f:
-		if bundles_path.lower().endswith((".yaml", ".yml")):
-			bundles_json = yaml.safe_load(f)
-		else:
-			bundles_json = json.load(f)
-		if bundles_json is None:
-			logger.error("Failed to read bundles file")
-			exit(1)
-		if bundles_json.get("bundles") is None:
-			logger.error("Failed to read bundles file. Missing 'bundles' key")
-			exit(1)
-		bundles = bundles_json.get("bundles")
-		bundle_info = get_bundle_info(args.bundle_key, bundles)
+	bundles_paths = get_bundles_paths(bundles_path)
+	if not bundles_paths:
+		logger.error(f"Failed to find bundles files from {bundles_path}")
+		exit(1)
+	bundles = load_bundles_from_paths(bundles_paths)
+	if bundles is None:
+		logger.error("Failed to read bundles file(s)")
+		exit(1)
+	bundle_info = get_bundle_info(args.bundle_key, bundles)
 
 	nodos_version = get_nodos_version(bundle_info, bundles)
 
@@ -525,13 +684,16 @@ if __name__ == "__main__":
 		exit(1)
 
 	if args.download_nodos:
-		download_nodos(bundle_info, nodos_version)
+		nodos_version = download_nodos(bundle_info, nodos_version)
 
 	if args.download_packages:
+		nodos_version = ensure_full_nodos_version(nodos_version, "package download")
 		download_packages(bundle_info, bundles, nodos_version)
 
 	if args.pack:
+		nodos_version = ensure_full_nodos_version(nodos_version, "packaging")
 		package(args.bundle_key, bundle_info, nodos_version)
 
 	if args.gh_release:
+		nodos_version = ensure_full_nodos_version(nodos_version, "release notes")
 		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key)

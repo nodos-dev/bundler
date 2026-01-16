@@ -2,7 +2,6 @@ Artifacts/
 workspace/
 nodos.exe
 nodos
-bundles.json
-*.toml
 __pycache__/
 *.pyc
+.vscode/

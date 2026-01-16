@@ -1,8 +1,8 @@
 bundles:
 - name: minimal
   nodos:
-    x86_64-windows: 1.4.0
-    x86_64-linux: 1.4.0
+    x86_64-windows: 1.4
+    x86_64-linux: 1.4
   bundled_packages:
   - name: nos.transfer
     x86_64-windows: 0.1.0

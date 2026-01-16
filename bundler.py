@@ -137,7 +137,20 @@ def get_nodos_version(bundle_info, bundles, platform_arch_key=None):
 	
 	exit(1)
 
-def get_semver_from_version(version):
+def get_nodos_version_major_minor(version):
+	if version is None:
+		logger.error("Missing version info. Make sure to set VERSION")
+		exit(1)
+	version_parts = version.split(".")
+	if len(version_parts) < 2:
+		logger.error(f"Invalid version format: {version}")
+		exit(1)
+	# First 2 parts are major, minor
+	major = version_parts[0]
+	minor = version_parts[1]
+	return major, minor
+
+def get_semver_from_full_version(version):
 	if version is None:
 		logger.error("Missing version info. Make sure to set VERSION")
 		exit(1)
@@ -349,7 +362,7 @@ def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=Non
 	profile_json_path = f"{absolute_workspace}/Engine/{engine_version}/Config/Profile.json"
 	profile = {}
 	loaded_plugins_key = "loaded_plugins"
-	major, minor, patch = get_semver_from_version(nodos_version)
+	major, minor = get_nodos_version_major_minor(nodos_version)
 	# If version lower than 1.4.0 use loaded_modules key
 	if int(major) < 1 or (int(major) == 1 and int(minor) < 4):
 		loaded_plugins_key = "loaded_modules"
@@ -394,7 +407,7 @@ def package(bundle_key, bundle_info, nodos_version, bundles):
 	with open(engine_settings_path, "w") as f:
 		json.dump(engine_settings, f, indent=2)
 
-	major, minor, patch = get_semver_from_version(nodos_version)
+	major, minor, patch = get_semver_from_full_version(engine_version)
 	# Zip everything under workspace_folder
 	archive_format = "zip"
 	if platform.system() == "Linux":
@@ -413,7 +426,8 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		exit(1)
 	for path in artifacts:
 		logger.info(f"Release artifact: {path}")
-	major, minor, patch = get_semver_from_version(nodos_version)
+	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
+	major, minor, patch = get_semver_from_full_version(engine_version)
 	build_number = get_build_number()
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
@@ -427,7 +441,6 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 		packages = OrderedDict((pkg["name"], {"name": pkg["name"], "version": pkg["version"]}) for pkg in profile_plugins)
 
 	# Create simple release notes
-	engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
 	release_notes = f"## Nodos {engine_version}\n\n"
 	release_notes += f"### Engine\n"
 	release_notes += f"Version: {engine_version}\n\n"

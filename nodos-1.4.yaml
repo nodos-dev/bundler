@@ -6,14 +6,10 @@ bundles:
     - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
       name: nodos
       is_active: true
-    nodos_github_url: https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%
-    nodos_version: 1.4.0.b4528
     bundled_packages:
-    - version: 2.0.0.b1104
-      name: nos.sys.variables
-    - version: 2.0.0.b1104
-      name: nos.reflect
-    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.sys.variables
+    - name: nos.reflect
+    nodos: {}
   standard:
     short_name: standard
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -24,43 +20,21 @@ bundles:
     includes:
     - minimal
     bundled_packages:
-    - version: 2.0.0.b1102
-      name: nos.sys.shaderc
-    - version: 7.0.0.b718
-      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.vulkan
-    - version: 2.0.0.b834
-      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.settings
-    - version: 2.0.0.b1104
-      name: nos.filters
-    - version: 1.23.0.b1104
-      name: nos.math
-    - version: 3.28.0.b1104
-      name: nos.utilities
-    - version: 3.0.0.b693
-      github_url: https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.mediaio
-    - version: 2.0.0.b666
-      github_url: https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.webcam
-    - version: 2.0.0.b1104
-      name: nos.sys.animation
-    - version: 0.12.0.b1104
-      name: nos.animation
-    - version: 1.12.0.b1104
-      name: nos.webrtc
-    - version: 0.11.2.b1104
-      name: nos.str
-    - version: 1.0.0.b41
-      github_url: https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.device
-    - version: 0.13.0.b28
-      github_url: https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.rive
-    - version: 10.1.1.b1104
-      name: nos.sync
-    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.sys.shaderc
+    - name: nos.sys.vulkan
+    - name: nos.sys.settings
+    - name: nos.filters
+    - name: nos.math
+    - name: nos.utilities
+    - name: nos.mediaio
+    - name: nos.webcam
+    - name: nos.sys.animation
+    - name: nos.animation
+    - name: nos.webrtc
+    - name: nos.str
+    - name: nos.sys.device
+    - name: nos.rive
+    - name: nos.sync
   broadcast:
     short_name: broadcast
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -71,20 +45,9 @@ bundles:
     includes:
     - standard
     bundled_packages:
-    - version: 3.0.0.b783
-      github_url: https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.aja
-    - version: 3.0.0.b146
-      name: nos.sys.decklink
-    - version: 2.0.0.b146
-      name: nos.decklink
-    - version: 2.0.0.b1104
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.track
-    - version: 0.12.0.b47
-      github_url: https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.display
-    - version: 7.1.0
-      github_url: https://github.com/nodos-dev/ffmpeg-deps/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.ffmpeg.deps
-    default_package_github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.aja
+    - name: nos.sys.decklink
+    - name: nos.decklink
+    - name: nos.track
+    - name: nos.display
+    - name: nos.sys.ffmpeg.deps

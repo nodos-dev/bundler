@@ -6,23 +6,19 @@ bundles:
     - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
       name: nodos
       is_active: true
-    nodos_github_url: https://github.com/mediaz/nodos/compare/v%%old_version%%-%%arch%%-%%os%%...v%%new_version%%-%%arch%%-%%os%%
-    nodos_version: 1.3.2.b4623
     bundled_packages:
-    - version: 1.0.1.b928
-      name: nos.sys.variables
-      platforms:
-        linux:
-          version: 1.0.1.b980
-    - version: 1.7.13.b1112
-      name: nos.reflect
-      platforms:
-        linux:
-          version: 1.6.5.b980
-    platforms:
-      linux:
-        nodos_version: 1.3.0.b4294
-    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.sys.variables
+      x64-windows: 1.0.1.b928
+      x64-linux: 1.0.1.b980
+      aarch64-linux: 1.0.1.b980
+    - name: nos.reflect
+      x64-windows: 1.7.13.b1112
+      x64-linux: 1.6.5.b980
+      aarch64-linux: 1.6.5.b980
+    nodos:
+      x64-windows: 1.3.2.b4623
+      x64-linux: 1.3.0.b4294
+      aarch64-linux: 1.3.0.b4294
   standard:
     short_name: standard
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -33,81 +29,72 @@ bundles:
     includes:
     - minimal
     bundled_packages:
-    - version: 1.1.0.b953
-      name: nos.sys.shaderc
-      platforms:
-        linux:
-          version: 1.1.0.b980
-    - version: 6.7.4.b738
-      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.vulkan
-      platforms:
-        linux:
-          version: 6.3.6.b652
-    - version: 0.3.0.b804
-      github_url: https://github.com/mediaz/nos-sys-vulkan/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.settings
-    - version: 1.5.5.b1037
-      name: nos.filters
-      platforms:
-        linux:
-          version: 1.5.2.b980
-    - version: 1.9.3.b907
-      name: nos.math
-      platforms:
-        linux:
-          version: 1.9.3.b980
-    - version: 3.14.5.b1149
-      name: nos.utilities
-      platforms:
-        linux:
-          version: 3.9.7.b980
-    - version: 2.7.0.b700
-      github_url: https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.mediaio
-      platforms:
-        linux:
-          version: 2.5.0.b664
-    - version: 0.4.1.b669
-      github_url: https://github.com/nodos-dev/mediaio/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.mediaio
-      platforms:
-        linux:
-          version: 0.4.0.b664
-    - version: 1.3.2.b646
-      github_url: https://github.com/nodos-dev/webcam/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.webcam
-      platforms:
-        linux:
-          disabled: true
-    - version: 1.5.2.b1018
-      name: nos.sys.animation
-      platforms:
-        linux:
-          version: 1.5.1.b980
-    - version: 0.3.2.b928
-      name: nos.animation
-    - version: 1.2.3.b1141
-      name: nos.webrtc
-    - version: 0.3.1.b1106
-      name: nos.str
-    - version: 0.3.4.b24
-      github_url: https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.device
-      platforms:
-        linux:
-          version: 0.3.3.b15
-          github_url: https://github.com/nodos-dev/sys-device/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-    - version: 0.3.0.b20
-      github_url: https://github.com/nodos-dev/rive/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.rive
-    - version: 1.1.6.b57
-      github_url: https://github.com/nodos-dev/dx-app-sample/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      type: sample
-      name: nos.sample.dxapp
-    - version: 3.1.1.b1023
-      name: nos.sync
-    default_package_github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.sys.shaderc
+      x64-windows: 1.1.0.b953
+      x64-linux: 1.1.0.b980
+      aarch64-linux: 1.1.0.b980
+    - name: nos.sys.vulkan
+      x64-windows: 6.7.4.b738
+      x64-linux: 6.3.6.b652
+      aarch64-linux: 6.3.6.b652
+    - name: nos.sys.settings
+      x64-windows: 0.3.0.b804
+      x64-linux: 0.3.0.b804
+      aarch64-linux: 0.3.0.b804
+    - name: nos.filters
+      x64-windows: 1.5.5.b1037
+      x64-linux: 1.5.2.b980
+      aarch64-linux: 1.5.2.b980
+    - name: nos.math
+      x64-windows: 1.9.3.b907
+      x64-linux: 1.9.3.b980
+      aarch64-linux: 1.9.3.b980
+    - name: nos.utilities
+      x64-windows: 3.14.5.b1149
+      x64-linux: 3.9.7.b980
+      aarch64-linux: 3.9.7.b980
+    - name: nos.mediaio
+      x64-windows: 2.7.0.b700
+      x64-linux: 2.5.0.b664
+      aarch64-linux: 2.5.0.b664
+    - name: nos.sys.mediaio
+      x64-windows: 0.4.1.b669
+      x64-linux: 0.4.0.b664
+      aarch64-linux: 0.4.0.b664
+    - name: nos.webcam
+      x64-windows: 1.3.2.b646
+    - name: nos.sys.animation
+      x64-windows: 1.5.2.b1018
+      x64-linux: 1.5.1.b980
+      aarch64-linux: 1.5.1.b980
+    - name: nos.animation
+      x64-windows: 0.3.2.b928
+      x64-linux: 0.3.2.b928
+      aarch64-linux: 0.3.2.b928
+    - name: nos.webrtc
+      x64-windows: 1.2.3.b1141
+      x64-linux: 1.2.3.b1141
+      aarch64-linux: 1.2.3.b1141
+    - name: nos.str
+      x64-windows: 0.3.1.b1106
+      x64-linux: 0.3.1.b1106
+      aarch64-linux: 0.3.1.b1106
+    - name: nos.sys.device
+      x64-windows: 0.3.4.b24
+      x64-linux: 0.3.3.b15
+      aarch64-linux: 0.3.3.b15
+    - name: nos.rive
+      x64-windows: 0.3.0.b20
+      x64-linux: 0.3.0.b20
+      aarch64-linux: 0.3.0.b20
+    - name: nos.sample.dxapp
+      x64-windows: 1.1.6.b57
+      x64-linux: 1.1.6.b57
+      aarch64-linux: 1.1.6.b57
+    - name: nos.sync
+      x64-windows: 3.1.1.b1023
+      x64-linux: 3.1.1.b1023
+      aarch64-linux: 3.1.1.b1023
   broadcast:
     short_name: broadcast
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -118,41 +105,22 @@ bundles:
     includes:
     - standard
     bundled_packages:
-    - version: 2.7.0.b789
-      github_url: https://github.com/nodos-dev/aja/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.aja
-      platforms:
-        linux:
-          version: 2.5.2.b700
-    - version: 2.2.6.b136
-      name: nos.sys.decklink
-      platforms:
-        linux:
-          disabled: true
-    - version: 1.2.18.b149
-      name: nos.decklink
-      platforms:
-        linux:
-          disabled: true
-    - version: 1.9.3.b961
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.track
-      platforms:
-        linux:
-          version: 1.9.3.b980
-    - version: 0.4.0.b52
-      github_url: https://github.com/nodos-dev/display/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.display
-      platforms:
-        linux:
-          disabled: true
-    - version: 1.0.5.b1114
-      github_url: https://github.com/nodos-dev/modules/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
-      name: nos.sys.lino
-      platforms:
-        linux:
-          disabled: true
-    default_package_github_url: https://github.com/nodos-dev/decklink/compare/build.dev-%%os%%-%%old_build%%...build.dev-%%os%%-%%new_build%%
+    - name: nos.aja
+      x64-windows: 2.7.0.b789
+      x64-linux: 2.5.2.b700
+      aarch64-linux: 2.5.2.b700
+    - name: nos.sys.decklink
+      x64-windows: 2.2.6.b136
+    - name: nos.decklink
+      x64-windows: 1.2.18.b149
+    - name: nos.track
+      x64-windows: 1.9.3.b961
+      x64-linux: 1.9.3.b980
+      aarch64-linux: 1.9.3.b980
+    - name: nos.display
+      x64-windows: 0.4.0.b52
+    - name: nos.sys.lino
+      x64-windows: 1.0.5.b1114
   ai:
     short_name: ai
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -163,37 +131,66 @@ bundles:
     includes:
     - broadcast
     bundled_packages:
-    - version: 1.2.0.b277
-      name: nos.ml.ai_nodes
-    - version: 2.2.1.b277
-      name: nos.ai.model_nodes
-    - version: 1.2.0.b277
-      name: nos.cuda
-    - version: 2.2.0.b277
-      name: nos.interop
-    - version: 2.3.0.b277
-      name: nos.ml.onnx
-    - version: 2.3.0.b277
-      name: nos.ml.tensors
-    - version: 1.1.0.b277
-      name: nos.ml.tokenizer
-    - version: 3.2.0.b277
-      name: nos.sys.ai
-    - version: 2.2.0.b277
-      name: nos.sys.cuda
-    - version: 1.0.0.b277
-      name: nos.sys.ai.models.depth_anything
-    - version: 1.0.0.b277
-      name: nos.sys.ai.models.depth_anything_v2
-    - version: 1.0.0.b277
-      name: nos.sys.ai.models.rmbg
-    - version: 1.0.0.b277
-      name: nos.sys.ai.models.rt4ksr
-    - version: 0.1.0.b277
-      name: nos.sys.ai.models.rvm
-    - version: 2.2.0.b277
-      name: nos.sys.tensor
-    default_package_github_url: https://github.com/mediaz/nosAI/compare/build.nodos-1.3-%%os%%-%%old_build%%...build.nodos-1.3-%%os%%-%%new_build%%
+    - name: nos.ml.ai_nodes
+      x64-windows: 1.2.0.b277
+      x64-linux: 1.2.0.b277
+      aarch64-linux: 1.2.0.b277
+    - name: nos.ai.model_nodes
+      x64-windows: 2.2.1.b277
+      x64-linux: 2.2.1.b277
+      aarch64-linux: 2.2.1.b277
+    - name: nos.cuda
+      x64-windows: 1.2.0.b277
+      x64-linux: 1.2.0.b277
+      aarch64-linux: 1.2.0.b277
+    - name: nos.interop
+      x64-windows: 2.2.0.b277
+      x64-linux: 2.2.0.b277
+      aarch64-linux: 2.2.0.b277
+    - name: nos.ml.onnx
+      x64-windows: 2.3.0.b277
+      x64-linux: 2.3.0.b277
+      aarch64-linux: 2.3.0.b277
+    - name: nos.ml.tensors
+      x64-windows: 2.3.0.b277
+      x64-linux: 2.3.0.b277
+      aarch64-linux: 2.3.0.b277
+    - name: nos.ml.tokenizer
+      x64-windows: 1.1.0.b277
+      x64-linux: 1.1.0.b277
+      aarch64-linux: 1.1.0.b277
+    - name: nos.sys.ai
+      x64-windows: 3.2.0.b277
+      x64-linux: 3.2.0.b277
+      aarch64-linux: 3.2.0.b277
+    - name: nos.sys.cuda
+      x64-windows: 2.2.0.b277
+      x64-linux: 2.2.0.b277
+      aarch64-linux: 2.2.0.b277
+    - name: nos.sys.ai.models.depth_anything
+      x64-windows: 1.0.0.b277
+      x64-linux: 1.0.0.b277
+      aarch64-linux: 1.0.0.b277
+    - name: nos.sys.ai.models.depth_anything_v2
+      x64-windows: 1.0.0.b277
+      x64-linux: 1.0.0.b277
+      aarch64-linux: 1.0.0.b277
+    - name: nos.sys.ai.models.rmbg
+      x64-windows: 1.0.0.b277
+      x64-linux: 1.0.0.b277
+      aarch64-linux: 1.0.0.b277
+    - name: nos.sys.ai.models.rt4ksr
+      x64-windows: 1.0.0.b277
+      x64-linux: 1.0.0.b277
+      aarch64-linux: 1.0.0.b277
+    - name: nos.sys.ai.models.rvm
+      x64-windows: 0.1.0.b277
+      x64-linux: 0.1.0.b277
+      aarch64-linux: 0.1.0.b277
+    - name: nos.sys.tensor
+      x64-windows: 2.2.0.b277
+      x64-linux: 2.2.0.b277
+      aarch64-linux: 2.2.0.b277
   full:
     short_name: full
     engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
@@ -204,17 +201,31 @@ bundles:
     includes:
     - broadcast
     bundled_packages:
-    - version: 3.1.0.b247
-      name: nos.sys.ai
-    - version: 2.1.0.b247
-      name: nos.sys.cuda
-    - version: 2.1.0.b247
-      name: nos.sys.tensor
-    - version: 2.1.0.b247
-      name: nos.ai.model_nodes
-    - version: 2.1.0.b247
-      name: nos.interop
-    - version: 2.2.0.b247
-      name: nos.ml.onnx
-    - version: 2.2.0.b247
-      name: nos.ml.tensors
+    - name: nos.sys.ai
+      x64-windows: 3.1.0.b247
+      x64-linux: 3.1.0.b247
+      aarch64-linux: 3.1.0.b247
+    - name: nos.sys.cuda
+      x64-windows: 2.1.0.b247
+      x64-linux: 2.1.0.b247
+      aarch64-linux: 2.1.0.b247
+    - name: nos.sys.tensor
+      x64-windows: 2.1.0.b247
+      x64-linux: 2.1.0.b247
+      aarch64-linux: 2.1.0.b247
+    - name: nos.ai.model_nodes
+      x64-windows: 2.1.0.b247
+      x64-linux: 2.1.0.b247
+      aarch64-linux: 2.1.0.b247
+    - name: nos.interop
+      x64-windows: 2.1.0.b247
+      x64-linux: 2.1.0.b247
+      aarch64-linux: 2.1.0.b247
+    - name: nos.ml.onnx
+      x64-windows: 2.2.0.b247
+      x64-linux: 2.2.0.b247
+      aarch64-linux: 2.2.0.b247
+    - name: nos.ml.tensors
+      x64-windows: 2.2.0.b247
+      x64-linux: 2.2.0.b247
+      aarch64-linux: 2.2.0.b247

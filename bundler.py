@@ -37,19 +37,18 @@ def get_current_target_platform():
         arch = "x86_64"
     return f"{arch}-{os}"
 
-def get_platform_name():
-    """Get the normalized platform name (windows, linux, etc.)"""
-    os_name = platform.system().lower()
-    return os_name
-
-def get_architecture_name():
-    """Get the normalized architecture name (x86_64, aarch64, etc.)"""
+def get_platform_arch_key():
+    """Get the platform-arch key (x64-windows, x64-linux, aarch64-linux, etc.)"""
     arch = platform.machine().lower()
-    if arch == "amd64":
-        arch = "x86_64"
+    os_name = platform.system().lower()
+    
+    # Normalize architecture
+    if arch in ["amd64", "x86_64"]:
+        arch = "x64"
     elif arch == "arm64":
         arch = "aarch64"
-    return arch
+    
+    return f"{arch}-{os_name}"
 
 def getenv(var_name, fail_on_missing=True):
 	val = os.getenv(var_name)
@@ -99,34 +98,44 @@ def get_inheritable_value(bundle_info, key, bundles):
 			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
 	return value
 
-def get_nodos_github_url(bundle_info, bundles):
-	return get_inheritable_value(bundle_info, "nodos_github_url", bundles)
 
 
-def get_nodos_version(bundle_info, bundles, target_platform=None, target_arch=None):
-	"""Get the nodos version for a bundle, with platform and architecture-specific override support.
+def get_nodos_version(bundle_info, bundles, platform_arch_key=None):
+	"""Get the nodos version for a bundle.
 	
-	Lookup order:
-	1. bundle_info['platforms'][platform][arch]['nodos_version']
-	2. bundle_info['platforms'][platform]['nodos_version']
-	3. bundle_info['nodos_version']
+	For versions < 1.4: reads from bundle_info['nodos'][platform_arch_key]
+	For versions >= 1.4: queries via nosman info
+	
+	Args:
+		bundle_info: Bundle configuration dict
+		bundles: All bundles dict  
+		platform_arch_key: Platform-arch key like 'x64-windows', 'x64-linux', etc.
 	"""
-	# Check for platform-specific version in nested structure
-	if target_platform and PLATFORMS_KEY in bundle_info:
-		platform_data = bundle_info[PLATFORMS_KEY].get(target_platform, {})
-		
-		# Check for architecture-specific version first
-		if target_arch and target_arch in platform_data:
-			arch_version = platform_data[target_arch].get('nodos_version')
-			if arch_version:
-				return arch_version
-		
-		# Then check for platform-level version
-		platform_version = platform_data.get('nodos_version')
-		if platform_version:
-			return platform_version
+	if platform_arch_key is None:
+		platform_arch_key = get_platform_arch_key()
 	
-	# Fall back to default version
+	# Check if nodos dict has version info
+	nodos_dict = get_inheritable_value(bundle_info, "nodos", bundles)
+	if nodos_dict and isinstance(nodos_dict, dict):
+		version = nodos_dict.get(platform_arch_key)
+		if version:
+			return version
+		
+		# If no version specified, query via nosman info
+		logger.info(f"No version specified for nodos on {platform_arch_key}, querying via nosman info")
+		result = run(["./nodos", "info", "nodos"], capture_output=True, text=True)
+		if result.returncode == 0:
+			# Parse nosman info output to get latest version
+			# Format: "nodos: version x.y.z.bN"
+			import re
+			match = re.search(r'version\s+(\S+)', result.stdout)
+			if match:
+				return match.group(1)
+		
+		logger.error(f"Failed to determine nodos version for {platform_arch_key}")
+		exit(1)
+	
+	# Fallback for old structure (should not happen after migration)
 	return get_inheritable_value(bundle_info, "nodos_version", bundles)
 
 def get_semver_from_version(version):
@@ -163,32 +172,24 @@ def download_nodos(bundle_info, nodos_version):
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)
 
-def get_bundled_packages(bundle_info, bundles, target_platform=None, target_arch=None):
-	"""Get bundled packages for a bundle, with platform and architecture-specific overrides.
+def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
+	"""Get bundled packages for a bundle using flat platform-arch keys.
 	
-	Packages can have a 'platforms' sub-element with platform and arch-specific overrides:
+	Packages use flat keys like:
 	- name: nos.reflect
-	  version: 1.7.13.b1112
-	  platforms:
-	    linux:
-	      version: 1.6.5.b980
-	      x86_64:
-	        version: 1.6.6.b981
-	    windows:
-	      disabled: true
+	  x64-windows: 1.7.13.b1112
+	  x64-linux: 1.6.5.b980
+	  aarch64-linux: 1.6.5.b980
 	
-	Lookup order:
-	1. platforms[platform][arch][property]
-	2. platforms[platform][property]
-	3. base property
+	For versions without explicit version (1.4+), queries via nosman info.
+	
+	Args:
+		bundle_info: Bundle configuration dict
+		bundles: All bundles dict
+		platform_arch_key: Platform-arch key like 'x64-windows', 'x64-linux', etc.
 	"""
-	if target_platform is None:
-		# Determine platform from system
-		target_platform = get_platform_name()
-	
-	if target_arch is None:
-		# Determine architecture from system
-		target_arch = get_architecture_name()
+	if platform_arch_key is None:
+		platform_arch_key = get_platform_arch_key()
 	
 	bundled_packages = list(bundle_info.get("bundled_packages", []))
 	if "includes" in bundle_info:
@@ -211,59 +212,47 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None, target_arch
 			others = list(conf.get("bundled_packages", []))
 			bundled_packages = others + bundled_packages
 
-	# Get default github_url from bundle_info (for packages that don't specify one)
-	default_github_url = bundle_info.get('default_package_github_url')
-
-	# Process packages with platform and architecture-specific overrides
+	# Process packages with flat platform-arch structure
 	packages_map = OrderedDict()
 	for package in bundled_packages:
 		package_name = package["name"]
 		
-		# Start with the base package data (exclude platforms key)
-		pkg_data = {k: v for k, v in package.items() if k != PLATFORMS_KEY}
+		# Check if version is specified for this platform-arch
+		version = package.get(platform_arch_key)
 		
-		# Apply default github_url if package doesn't have one
-		if 'github_url' not in pkg_data and default_github_url:
-			pkg_data['github_url'] = default_github_url
-		
-		# Check for platform-specific overrides
-		if PLATFORMS_KEY in package and target_platform in package[PLATFORMS_KEY]:
-			platform_data = package[PLATFORMS_KEY][target_platform]
-			
-			# Check for architecture-specific overrides first
-			if target_arch and target_arch in platform_data:
-				arch_overrides = platform_data[target_arch]
-				
-				# Check if disabled for this platform+arch
-				if arch_overrides.get('disabled'):
-					logger.info(f"Skipping disabled package: {package_name} (platform={target_platform}, arch={target_arch})")
-					packages_map.pop(package_name, None)
+		if version:
+			# Version explicitly specified
+			pkg_data = {
+				'name': package_name,
+				'version': version
+			}
+		else:
+			# No version specified, query via nosman info
+			logger.info(f"Querying version for {package_name} on {platform_arch_key} via nosman info")
+			result = run(["./nodos", "info", package_name], capture_output=True, text=True)
+			if result.returncode == 0:
+				# Parse nosman info output to get latest version
+				import re
+				match = re.search(r'version\s+(\S+)', result.stdout)
+				if match:
+					version = match.group(1)
+					pkg_data = {
+						'name': package_name,
+						'version': version
+					}
+				else:
+					logger.warning(f"Could not parse version for {package_name}, skipping")
 					continue
-				
-				# Apply architecture-specific overrides
-				for key, value in arch_overrides.items():
-					pkg_data[key] = value
 			else:
-				# No arch-specific override, use platform-level overrides
-				# Check if disabled for this platform
-				if platform_data.get('disabled'):
-					logger.info(f"Skipping disabled package: {package_name} (platform={target_platform})")
-					# Remove from map if it was added earlier (allows disabling inherited packages)
-					packages_map.pop(package_name, None)
-					continue
-				
-				# Apply platform-specific overrides (non-arch keys only)
-				for key, value in platform_data.items():
-					# Skip arch-specific sub-keys
-					if key not in ['x86_64', 'aarch64']:
-						pkg_data[key] = value
+				logger.warning(f"Package {package_name} not available for {platform_arch_key}, skipping")
+				continue
 		
 		# Add or update the package in the map
 		packages_map[package_name] = pkg_data
 	
 	return packages_map
 
-def download_packages(bundle_info, bundles, nodos_version, target_platform=None, target_arch=None):
+def download_packages(bundle_info, bundles, nodos_version, platform_arch_key=None):
 	logger.info("Deleting old modules")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
 	force_delete_folder(f"{WORKSPACE_FOLDER}/Samples/")
@@ -275,7 +264,7 @@ def download_packages(bundle_info, bundles, nodos_version, target_platform=None,
 		logger.error(f"nosman rescan returned with {result.returncode}")
 		exit(result.returncode)
 	
-	packages_map = get_bundled_packages(bundle_info, bundles, target_platform, target_arch)
+	packages_map = get_bundled_packages(bundle_info, bundles, platform_arch_key)
 
 	downloading_packages_str = ""
 	for package in packages_map.keys():
@@ -346,36 +335,7 @@ def package(bundle_key, bundle_info, nodos_version):
 		archive_format = "gztar"
 	shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{get_current_target_platform()}", archive_format, f"{WORKSPACE_FOLDER}")
 
-def get_previous_bundles(previous_commit, version=None):
-	"""Retrieve the previous bundles from the specified commit.
-	
-	Args:
-		previous_commit: Git commit hash or tag
-		version: Optional version string (e.g., "1.4") to look for YAML file
-	"""
-	if not version:
-		logger.error("Version must be provided to retrieve previous bundles")
-		return None
-	
-	yaml_filename = f"nodos-{version}.yaml"
-	result = run(["git", "show", f"{previous_commit}:{yaml_filename}"], capture_output=True, text=True)
-	if result.returncode != 0:
-		logger.error(f"Failed to retrieve {yaml_filename} from commit {previous_commit}. Error: {result.stderr}")
-		return None
-	
-	previous_bundles_yaml = yaml.safe_load(result.stdout)
-	if previous_bundles_yaml.get("bundles") is None:
-		logger.error(f"Failed to read {yaml_filename} from commit {previous_commit}. Missing 'bundles' key")
-		return None
-	return previous_bundles_yaml["bundles"]
-
-def fill_github_url_static_info(url):
-	arch, os = platform.machine().lower(), platform.system().lower()
-	if arch == "amd64":
-		arch = "x86_64"
-	return url.replace("%%arch%%", arch).replace("%%os%%", os)
-
-def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, target_platform=None, target_arch=None):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch_key=None):
 	short_name = bundle_info.get("short_name")
 	if short_name is None:
 		logger.info("Missing short name in bundle info, choosing short name as bundle key")
@@ -392,76 +352,18 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
 	tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{get_current_target_platform()}"
 	title = f"{tag}"
 
-	packages = get_bundled_packages(bundle_info, bundles, target_platform, target_arch)
+	if platform_arch_key is None:
+		platform_arch_key = get_platform_arch_key()
 
-	# Retrieve the previous bundle info
-	previous_commit = getenv("PREVIOUS_COMMIT", False)
-	previous_bundles = None
-	if previous_commit is not None:
-		# Extract version from nodos_version for YAML lookup
-		version_str = f"{major}.{minor}"
-		previous_bundles = get_previous_bundles(previous_commit, version_str)
-	previous_packages = None
-	previous_nodos_version = None
-	if previous_bundles is None:
-		logger.error(f"Failed to read bundles from commit {previous_commit}")
-	else:
-		if previous_bundles.get(bundle_key) is None:
-			logger.error(f"Bundle key {bundle_key} not found in bundles from commit {previous_commit}")
-		else:
-			previous_bundle_info = previous_bundles.get(bundle_key)
-			if previous_bundle_info is None:
-				logger.error(f"Failed to read bundle info for key {bundle_key} from commit {previous_commit}")
-			else:
-				previous_packages = get_bundled_packages(previous_bundle_info, previous_bundles, target_platform, target_arch)
-				previous_nodos_version = get_nodos_version(previous_bundle_info, previous_bundles, target_platform, target_arch)
+	packages = get_bundled_packages(bundle_info, bundles, platform_arch_key)
 
+	# Create simple release notes
 	release_notes = f"## Nodos {nodos_version}\n\n"
 	release_notes += f"### Engine\n"
-	if previous_nodos_version is not None and previous_nodos_version != nodos_version:
-		nodos_github_url = get_nodos_github_url(bundle_info, bundles)
-		if nodos_github_url is not None:
-			comparison_url = fill_github_url_static_info(nodos_github_url).replace("%%old_version%%", previous_nodos_version).replace("%%new_version%%", nodos_version)
-			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version}, [Compare]({comparison_url}))\n"
-		else:			
-			release_notes += f"* Engine version: {nodos_version} (prev: {previous_nodos_version})\n"
-	else:
-		release_notes += f"* Engine version: {nodos_version}\n"
-
-
-	nodos_github_url = get_nodos_github_url(bundle_info, bundles)
-
-	release_notes += f"### Modules\n"
-
-
-	for package in packages.values():
-		old_version = None
-		if previous_packages is not None:
-			old_version = previous_packages.get(package['name'], {}).get('version')
-		if old_version and old_version != package['version']:
-			if 'github_url' in package:
-				old_build = old_version.split(".b")[-1]
-				new_build = package['version'].split(".b")[-1]
-				comparison_url = fill_github_url_static_info(package['github_url']).replace("%%old_build%%", old_build).replace("%%new_build%%", new_build)
-				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version}, [Compare]({comparison_url}))\n"
-			else:
-				release_notes += f"* {package['name']} - {package['version']} (prev: {old_version})\n"
-		elif old_version:
-			release_notes += f"* {package['name']} - {package['version']} (no change)\n"
-		else:
-			release_notes += f"* {package['name']} - {package['version']} (new)\n"
-
-	if previous_commit is not None:
-		#check if this is a tag
-		if previous_commit.startswith("v"):
-			release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_commit}\n"
-		else:
-			#try to find the tag of the previous commit
-			result = run(["git", "describe", "--tags", "--abbrev=0", previous_commit], capture_output=True, text=True)
-			if result.returncode == 0:
-				previous_tag = result.stdout.strip()
-				release_notes += f"\n\n Previous release: {gh_release_repo}/releases/tag/{previous_tag}\n"
-
+	release_notes += f"Version: {nodos_version}\n\n"
+	release_notes += f"### Modules ({len(packages)})\n"
+	for pkg_name, pkg_data in packages.items():
+		release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
 
 	ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]
 	if target_branch != "":
@@ -581,8 +483,7 @@ if __name__ == "__main__":
 
 	bundles = None
 	bundle_info = None
-	target_platform = args.target_platform
-	target_arch = None  # Will be auto-detected if not specified
+	platform_arch_key = None  # Will be auto-detected if not specified
 
 	# Determine which file format to use
 	if args.bundles_yaml_path:
@@ -615,12 +516,18 @@ if __name__ == "__main__":
 		logger.error("Either --version or --bundles-yaml-path must be specified")
 		exit(1)
 
+	# Override platform_arch_key if target_platform is specified
+	if args.target_platform:
+		# target_platform could be "linux" or "windows"
+		# We need to determine arch and combine them
+		platform_arch_key = get_platform_arch_key()  # Still auto-detect arch
+
 	if args.bundle_key:
 		bundle_info = get_bundle_info(args.bundle_key, bundles)
 
 	nodos_version = None
 	if bundle_info:
-		nodos_version = get_nodos_version(bundle_info, bundles, target_platform, target_arch)
+		nodos_version = get_nodos_version(bundle_info, bundles, platform_arch_key)
 
 	if bundles is None:
 		logger.error("Failed to read bundles. Missing 'bundles' key")
@@ -640,7 +547,7 @@ if __name__ == "__main__":
 		if bundle_info is None or nodos_version is None:
 			logger.error("Bundle key and version required for --download-packages")
 			exit(1)
-		download_packages(bundle_info, bundles, nodos_version, target_platform, target_arch)
+		download_packages(bundle_info, bundles, nodos_version, platform_arch_key)
 
 	if args.pack:
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:
@@ -652,4 +559,4 @@ if __name__ == "__main__":
 		if bundle_info is None or nodos_version is None or args.bundle_key is None:
 			logger.error("Bundle key and version required for --gh-release")
 			exit(1)
-		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, target_platform, target_arch)
+		create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch_key)

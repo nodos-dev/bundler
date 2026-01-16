@@ -25,11 +25,11 @@ Bundles are configured using YAML files. Each Nodos version has its own YAML fil
 
 Each bundle is defined without version suffixes. For example, instead of `broadcast_1.4`, use just `broadcast`.
 
-### Platform-Specific Configuration
+### Platform and Architecture-Specific Configuration
 
-The bundler supports platform-specific overrides for both packages and nodos versions:
+The bundler supports platform and architecture-specific overrides:
 
-#### Platform-Specific Nodos Version
+#### Architecture-Specific Nodos Version
 
 ```yaml
 bundles:
@@ -38,20 +38,27 @@ bundles:
     nodos_version: 1.3.2.b4623  # Default version
     platforms:
       linux:
-        nodos_version: 1.3.0.b4294  # Linux-specific override
+        nodos_version: 1.3.0.b4294  # Linux override (all architectures)
+        x86_64:
+          nodos_version: 1.3.1.b4300  # Linux x86_64 specific
+        aarch64:
+          nodos_version: 1.3.0.b4295  # Linux aarch64 specific
 ```
 
-#### Platform-Specific Packages
+#### Architecture-Specific Packages
 
 ```yaml
 bundles:
   minimal:
+    default_package_github_url: https://github.com/nodos-dev/modules/...
     bundled_packages:
     - name: nos.reflect
       version: 1.7.13.b1112  # Default version
       platforms:
         linux:
-          version: 1.6.5.b980  # Linux-specific version
+          version: 1.6.5.b980  # Linux override
+          x86_64:
+            version: 1.6.6.b981  # Linux x86_64 specific
   
   standard:
     bundled_packages:
@@ -59,8 +66,14 @@ bundles:
       version: 2.0.0.b666  # Default version
       platforms:
         linux:
-          disabled: true  # Disabled on Linux
+          disabled: true  # Disabled on all Linux architectures
+
+    - name: nos.custom
+      github_url: https://github.com/custom/repo/...  # Custom URL
+      version: 1.0.0
 ```
+
+**Note:** Packages without a `github_url` inherit the `default_package_github_url` from the bundle level.
 
 ## Command Line Usage
 

@@ -262,7 +262,6 @@ def get_bundled_packages(bundle_info, bundles, target_platform=None, target_arch
 		packages_map[package_name] = pkg_data
 	
 	return packages_map
-	return packages_map
 
 def download_packages(bundle_info, bundles, nodos_version, target_platform=None, target_arch=None):
 	logger.info("Deleting old modules")

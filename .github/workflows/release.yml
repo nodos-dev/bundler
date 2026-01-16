@@ -20,13 +20,7 @@ on:
         description: 'Bundle Keyword'
         required: true
         default: "broadcast"
-        type: choice
-        options:
-          - minimal
-          - standard
-          - broadcast
-          - full
-          - ai
+        type: string
       target_platform:
         description: 'Target Platform'
         required: true

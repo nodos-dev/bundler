@@ -38,13 +38,13 @@ def get_current_target_platform():
     return f"{arch}-{os}"
 
 def get_platform_arch_key():
-    """Get the platform-arch key (x64-windows, x64-linux, aarch64-linux, etc.)"""
+    """Get the platform-arch key (x86_64-windows, x86_64-linux, aarch64-linux, etc.)"""
     arch = platform.machine().lower()
     os_name = platform.system().lower()
     
     # Normalize architecture
     if arch in ["amd64", "x86_64"]:
-        arch = "x64"
+        arch = "x86_64"
     elif arch == "arm64":
         arch = "aarch64"
     
@@ -74,10 +74,19 @@ def get_build_number():
 	return build_number
 
 def get_bundle_info(bundle_key, bundles):
-	if bundles.get(bundle_key) is None:
+	"""Get bundle info from list of bundles by name"""
+	if isinstance(bundles, list):
+		for bundle in bundles:
+			if bundle.get("name") == bundle_key:
+				return bundle
 		logger.error(f"Bundle key {bundle_key} not found in bundles")
 		return None
-	return bundles[bundle_key]
+	else:
+		# Legacy dict-based structure (fallback)
+		if bundles.get(bundle_key) is None:
+			logger.error(f"Bundle key {bundle_key} not found in bundles")
+			return None
+		return bundles[bundle_key]
 
 def get_inheritable_value(bundle_info, key, bundles):
 	value = bundle_info.get(key)
@@ -88,14 +97,14 @@ def get_inheritable_value(bundle_info, key, bundles):
 		queue = list(bundle_info["includes"])
 		while len(queue) > 0:
 			current = queue.pop(0)
-			other_conf = bundles.get(current)
+			other_conf = get_bundle_info(current, bundles)
 			if other_conf is None:
 				logger.error(f"Depending bundle key {current} not found in bundles")
 				exit(1)
 			value = other_conf.get(key)
 			if value is not None:
 				return value
-			queue.extend(other_conf["includes"] if "includes" in other_conf else [])
+			queue.extend(other_conf.get("includes", []))
 	return value
 
 
@@ -103,13 +112,13 @@ def get_inheritable_value(bundle_info, key, bundles):
 def get_nodos_version(bundle_info, bundles, platform_arch_key=None):
 	"""Get the nodos version for a bundle.
 	
-	For versions < 1.4: reads from bundle_info['nodos'][platform_arch_key]
-	For versions >= 1.4: queries via nosman info
+	Reads version from bundle_info['nodos'][platform_arch_key].
+	Versions can be less specific (e.g., "8.0" instead of "8.0.1.b495").
 	
 	Args:
 		bundle_info: Bundle configuration dict
 		bundles: All bundles dict  
-		platform_arch_key: Platform-arch key like 'x64-windows', 'x64-linux', etc.
+		platform_arch_key: Platform-arch key like 'x86_64-windows', 'x86_64-linux', etc.
 	"""
 	if platform_arch_key is None:
 		platform_arch_key = get_platform_arch_key()
@@ -121,22 +130,11 @@ def get_nodos_version(bundle_info, bundles, platform_arch_key=None):
 		if version:
 			return version
 		
-		# If no version specified, query via nosman info
-		logger.info(f"No version specified for nodos on {platform_arch_key}, querying via nosman info")
-		result = run(["./nodos", "info", "nodos"], capture_output=True, text=True)
-		if result.returncode == 0:
-			# Parse nosman info output to get latest version
-			# Format: "nodos: version x.y.z.bN"
-			import re
-			match = re.search(r'version\s+(\S+)', result.stdout)
-			if match:
-				return match.group(1)
-		
-		logger.error(f"Failed to determine nodos version for {platform_arch_key}")
+		logger.error(f"No version specified for nodos on {platform_arch_key}")
 		exit(1)
 	
-	# Fallback for old structure (should not happen after migration)
-	return get_inheritable_value(bundle_info, "nodos_version", bundles)
+	logger.error(f"Missing nodos version configuration")
+	exit(1)
 
 def get_semver_from_version(version):
 	if version is None:
@@ -177,16 +175,15 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 	
 	Packages use flat keys like:
 	- name: nos.reflect
-	  x64-windows: 1.7.13.b1112
-	  x64-linux: 1.6.5.b980
-	  aarch64-linux: 1.6.5.b980
+	  x86_64-windows: 1.7.13
+	  x86_64-linux: 1.6.5
 	
-	For versions without explicit version (1.4+), queries via nosman info.
+	Versions can be less specific (e.g., "1.7" instead of "1.7.13.b1112").
 	
 	Args:
 		bundle_info: Bundle configuration dict
 		bundles: All bundles dict
-		platform_arch_key: Platform-arch key like 'x64-windows', 'x64-linux', etc.
+		platform_arch_key: Platform-arch key like 'x86_64-windows', 'x86_64-linux', etc.
 	"""
 	if platform_arch_key is None:
 		platform_arch_key = get_platform_arch_key()
@@ -198,14 +195,14 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 		while len(queue) > 0:
 			current = queue.pop(0)
 			includes.extend([current])
-			other_conf = bundles.get(current)
+			other_conf = get_bundle_info(current, bundles)
 			if other_conf is None:
 				logger.error(f"Depending bundle key {current} not found in bundles")
 				exit(1)
 			queue.extend(other_conf.get("includes", []))
 		logger.info(f"Adding modules from: {' '.join(includes)}")
 		for include in includes:
-			conf = bundles.get(include)
+			conf = get_bundle_info(include, bundles)
 			if conf is None:
 				logger.error(f"Include bundle key {include} not found in bundles")
 				exit(1)
@@ -226,29 +223,11 @@ def get_bundled_packages(bundle_info, bundles, platform_arch_key=None):
 				'name': package_name,
 				'version': version
 			}
+			# Add or update the package in the map
+			packages_map[package_name] = pkg_data
 		else:
-			# No version specified, query via nosman info
-			logger.info(f"Querying version for {package_name} on {platform_arch_key} via nosman info")
-			result = run(["./nodos", "info", package_name], capture_output=True, text=True)
-			if result.returncode == 0:
-				# Parse nosman info output to get latest version
-				import re
-				match = re.search(r'version\s+(\S+)', result.stdout)
-				if match:
-					version = match.group(1)
-					pkg_data = {
-						'name': package_name,
-						'version': version
-					}
-				else:
-					logger.warning(f"Could not parse version for {package_name}, skipping")
-					continue
-			else:
-				logger.warning(f"Package {package_name} not available for {platform_arch_key}, skipping")
-				continue
-		
-		# Add or update the package in the map
-		packages_map[package_name] = pkg_data
+			# No version specified for this platform-arch, skip
+			logger.warning(f"Package {package_name} not available for {platform_arch_key}, skipping")
 	
 	return packages_map
 

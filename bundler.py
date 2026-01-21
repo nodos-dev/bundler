@@ -213,6 +213,13 @@ def resolve_package_version(package_name, package_version):
         logger.info(f"Resolved {package_name} {package_version} -> {resolved_version}")
     return resolved_version
 
+def resolve_package_versions(packages):
+    resolved = OrderedDict()
+    for pkg_name, pkg_data in packages.items():
+        resolved_version = resolve_package_version(pkg_name, pkg_data["version"])
+        resolved[pkg_name] = {"name": pkg_name, "version": resolved_version, "type": pkg_data.get("type")}
+    return resolved
+
 def rename_package_prefix_folder(base_dir, requested_version, resolved_version):
     if requested_version == resolved_version:
         return
@@ -474,17 +481,23 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
     tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{platform_arch.key()}"
     title = f"{tag}"
 
-    packages = get_bundled_packages(bundle_info, bundles, platform_arch)
-    profile_plugins = read_profile_plugins(WORKSPACE_FOLDER, nodos_version)
-    if len(profile_plugins) > 0:
-        packages = OrderedDict((pkg["name"], {"name": pkg["name"], "version": pkg["version"]}) for pkg in profile_plugins)
+    bundled_packages = get_bundled_packages(bundle_info, bundles, platform_arch)
+    resolved_packages = resolve_package_versions(bundled_packages)
+
+    resolved_modules = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") != "sample" )
+    resolved_samples = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") == "sample" )
 
     # Create simple release notes
     release_notes = f"## Nodos {engine_version}\n\n"
     release_notes += f"### Engine\n"
-    release_notes += f"Version: {engine_version}\n\n"
-    release_notes += f"### Modules ({len(packages)})\n"
-    for pkg_name, pkg_data in packages.items():
+    release_notes += f"- Version: {engine_version}\n\n"
+    release_notes += f"### Modules ({len(resolved_modules)})\n"
+    for pkg_name, pkg_data in resolved_modules.items():
+        release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
+
+    if len(resolved_samples) > 0:
+        release_notes += f"\n### Samples ({len(resolved_samples)})\n"
+    for pkg_name, pkg_data in resolved_samples.items():
         release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
 
     ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]

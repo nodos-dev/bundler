@@ -1,0 +1,171 @@
+bundles:
+- name: minimal
+  nodos:
+    x86_64-windows: 1.3.2.b4623
+    x86_64-linux: 1.3.0.b4294
+  bundled_packages:
+    nos.sys.variables:
+      x86_64-windows: 1.0.1.b928
+      x86_64-linux: 1.0.1.b980
+    nos.reflect:
+      x86_64-windows: 1.7.13.b1112
+      x86_64-linux: 1.6.5.b980
+  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+  module_index_urls:
+  - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
+    name: nodos
+    is_active: true
+
+- name: standard
+  includes:
+  - minimal
+  bundled_packages:
+    nos.sys.shaderc:
+      x86_64-windows: 1.1.0.b953
+      x86_64-linux: 1.1.0.b980
+    nos.sys.vulkan:
+      x86_64-windows: 6.7.4.b738
+      x86_64-linux: 6.3.6.b652
+    nos.sys.settings:
+      x86_64-windows: 0.3.0.b804
+      x86_64-linux: 0.3.0.b804
+    nos.filters:
+      x86_64-windows: 1.5.5.b1037
+      x86_64-linux: 1.5.2.b980
+    nos.math:
+      x86_64-windows: 1.9.3.b907
+      x86_64-linux: 1.9.3.b980
+    nos.utilities:
+      x86_64-windows: 3.14.5.b1149
+      x86_64-linux: 3.9.7.b980
+    nos.mediaio:
+      x86_64-windows: 2.7.0.b700
+      x86_64-linux: 2.5.0.b664
+    nos.sys.mediaio:
+      x86_64-windows: 0.4.1.b669
+      x86_64-linux: 0.4.0.b664
+    nos.webcam:
+      x86_64-windows: 1.3.2.b646
+    nos.sys.animation:
+      x86_64-windows: 1.5.2.b1018
+      x86_64-linux: 1.5.1.b980
+    nos.animation:
+      x86_64-windows: 0.3.2.b928
+      x86_64-linux: 0.3.2.b928
+    nos.webrtc:
+      x86_64-windows: 1.2.3.b1141
+      x86_64-linux: 1.2.3.b1141
+    nos.str:
+      x86_64-windows: 0.3.1.b1106
+      x86_64-linux: 0.3.1.b1106
+    nos.sys.device:
+      x86_64-windows: 0.3.4.b24
+      x86_64-linux: 0.3.3.b15
+    nos.rive:
+      x86_64-windows: 0.3.0.b20
+      x86_64-linux: 0.3.0.b20
+    nos.sample.dxapp:
+      type: sample
+      x86_64-windows: 1.1.6.b57
+      x86_64-linux: 1.1.6.b57
+    nos.sync:
+      x86_64-windows: 3.1.1.b1023
+      x86_64-linux: 3.1.1.b1023
+
+- name: broadcast
+  includes:
+  - standard
+  nodos:
+    x86_64-windows: 1.3.2.b4623
+    x86_64-linux: 1.3.0.b4294
+  bundled_packages:
+    nos.aja:
+      x86_64-windows: 2.7.1.b808
+      x86_64-linux: 2.5.2.b700
+    nos.sys.decklink:
+      x86_64-windows: 2.2.6.b136
+    nos.decklink:
+      x86_64-windows: 1.2.18.b149
+    nos.track:
+      x86_64-windows: 1.9.3.b961
+      x86_64-linux: 1.9.3.b980
+    nos.display:
+      x86_64-windows: 0.4.0.b52
+    nos.sys.lino:
+      x86_64-windows: 1.0.5.b1114
+
+- name: ai
+  includes:
+  - broadcast
+  bundled_packages:
+    nos.ml.ai_nodes:
+      x86_64-windows: 1.2.0.b277
+      x86_64-linux: 1.2.0.b277
+    nos.ai.model_nodes:
+      x86_64-windows: 2.2.1.b277
+      x86_64-linux: 2.2.1.b277
+    nos.cuda:
+      x86_64-windows: 1.2.0.b277
+      x86_64-linux: 1.2.0.b277
+    nos.interop:
+      x86_64-windows: 2.2.0.b277
+      x86_64-linux: 2.2.0.b277
+    nos.ml.onnx:
+      x86_64-windows: 2.3.0.b277
+      x86_64-linux: 2.3.0.b277
+    nos.ml.tensors:
+      x86_64-windows: 2.3.0.b277
+      x86_64-linux: 2.3.0.b277
+    nos.ml.tokenizer:
+      x86_64-windows: 1.1.0.b277
+      x86_64-linux: 1.1.0.b277
+    nos.sys.ai:
+      x86_64-windows: 3.2.0.b277
+      x86_64-linux: 3.2.0.b277
+    nos.sys.cuda:
+      x86_64-windows: 2.2.0.b277
+      x86_64-linux: 2.2.0.b277
+    nos.sys.ai.models.depth_anything:
+      x86_64-windows: 1.0.0.b277
+      x86_64-linux: 1.0.0.b277
+    nos.sys.ai.models.depth_anything_v2:
+      x86_64-windows: 1.0.0.b277
+      x86_64-linux: 1.0.0.b277
+    nos.sys.ai.models.rmbg:
+      x86_64-windows: 1.0.0.b277
+      x86_64-linux: 1.0.0.b277
+    nos.sys.ai.models.rt4ksr:
+      x86_64-windows: 1.0.0.b277
+      x86_64-linux: 1.0.0.b277
+    nos.sys.ai.models.rvm:
+      x86_64-windows: 0.1.0.b277
+      x86_64-linux: 0.1.0.b277
+    nos.sys.tensor:
+      x86_64-windows: 2.2.0.b277
+      x86_64-linux: 2.2.0.b277
+
+- name: full
+  includes:
+  - broadcast
+  bundled_packages:
+    nos.sys.ai:
+      x86_64-windows: 3.1.0.b247
+      x86_64-linux: 3.1.0.b247
+    nos.sys.cuda:
+      x86_64-windows: 2.1.0.b247
+      x86_64-linux: 2.1.0.b247
+    nos.sys.tensor:
+      x86_64-windows: 2.1.0.b247
+      x86_64-linux: 2.1.0.b247
+    nos.ai.model_nodes:
+      x86_64-windows: 2.1.0.b247
+      x86_64-linux: 2.1.0.b247
+    nos.interop:
+      x86_64-windows: 2.1.0.b247
+      x86_64-linux: 2.1.0.b247
+    nos.ml.onnx:
+      x86_64-windows: 2.2.0.b247
+      x86_64-linux: 2.2.0.b247
+    nos.ml.tensors:
+      x86_64-windows: 2.2.0.b247
+      x86_64-linux: 2.2.0.b247

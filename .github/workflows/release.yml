@@ -7,10 +7,20 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      bundle_key:
-        description: 'Bundle Name'
+      version:
+        description: 'Nodos Version'
         required: true
-        default: "broadcast_1.4"
+        default: "1.4"
+        type: choice
+        options:
+          - "1.2"
+          - "1.3"
+          - "1.4"
+      bundle_keyword:
+        description: 'Bundle Keyword'
+        required: true
+        default: "broadcast"
+        type: string
       target_platform:
         description: 'Target Platform'
         required: true
@@ -64,7 +74,9 @@ jobs:
           echo "runner-tags=$runner_tags" >> $GITHUB_OUTPUT
 
   bundle:
-    name: Bundle Nodos (${{ github.event.inputs.bundle_key }})
+    name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }})
+    permissions:
+      contents: write  # Required for creating releases
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
     runs-on: ${{ fromJson(needs.prepare-strategy.outputs.runner-tags) }}
@@ -104,17 +116,17 @@ jobs:
       - name: Download Nodos
         id: create_installer
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-nodos
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --download-nodos
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Download Packages
         id: download_packages
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --download-packages
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --download-packages
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --pack
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --pack
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Copy Bundle to Distribution Machine
         shell: pwsh
@@ -126,5 +138,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./bundler.py --bundle-key="${{ github.event.inputs.bundle_key}}" --bundles-json="./bundles.json" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" 
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --gh-release  --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" 
         working-directory: ./bundler-${{ github.ref_name }}/

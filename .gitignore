@@ -1,3 +1,7 @@
 Artifacts/
 workspace/
 nodos.exe
+nodos
+__pycache__/
+*.pyc
+.vscode/

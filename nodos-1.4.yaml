@@ -1,0 +1,95 @@
+bundles:
+- name: minimal
+  nodos:
+    x86_64-windows: 1.4
+    x86_64-linux: 1.4
+  bundled_packages:
+    nos.transfer:
+      x86_64-windows: 0.1.0
+      x86_64-linux: 0.1.0
+    nos.sys.variables:
+      x86_64-windows: 3.0.0
+      x86_64-linux: 3.0.0
+    nos.reflect:
+      x86_64-windows: 3.0.0
+      x86_64-linux: 3.0.0
+  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+  plugin_index_urls:
+  - url: https://raw.githubusercontent.com/nodos-dev/index/main/index
+    name: nodos
+    is_active: true
+
+- name: standard
+  includes:
+  - minimal
+  bundled_packages:
+    nos.sys.shaderc:
+      x86_64-windows: 2.1
+      x86_64-linux: 2.1
+    nos.sys.vulkan:
+      x86_64-windows: 8.0
+      x86_64-linux: 8.0
+    nos.audio:
+      x86_64-windows: 1.0
+      x86_64-linux: 1.0
+    nos.sys.settings:
+      x86_64-windows: 3.0
+      x86_64-linux: 3.0
+    nos.filters:
+      x86_64-windows: 3.0
+      x86_64-linux: 3.0
+    nos.math:
+      x86_64-windows: 2.0
+      x86_64-linux: 2.0
+    nos.utilities:
+      x86_64-windows: 4.0
+      x86_64-linux: 4.0
+    nos.mediaio:
+      x86_64-windows: 4.0
+      x86_64-linux: 4.0
+    nos.webcam:
+      x86_64-windows: 3.0
+    nos.sys.animation:
+      x86_64-windows: 3.0
+      x86_64-linux: 3.0
+    nos.animation:
+      x86_64-windows: 1.0
+      x86_64-linux: 1.0
+    nos.webrtc:
+      x86_64-windows: 2.0
+      x86_64-linux: 2.0
+    nos.str:
+      x86_64-windows: 1.0
+      x86_64-linux: 1.0
+    nos.sys.device:
+      x86_64-windows: 2.0
+      x86_64-linux: 2.0
+    nos.rive:
+      x86_64-windows: 0.3
+      x86_64-linux: 0.3
+    nos.sync:
+      x86_64-windows: 11.1
+      x86_64-linux: 11.1
+    nos.sample.dxapp:
+      type: sample
+      x86_64-windows: 1.1
+      x86_64-linux: 1.1
+
+- name: broadcast
+  includes:
+  - standard
+  nodos:
+    x86_64-windows: 1.4
+    x86_64-linux: 1.4
+  bundled_packages:
+    nos.aja:
+      x86_64-windows: 4.0
+    nos.sys.decklink:
+      x86_64-windows: 4.0
+    nos.decklink:
+      x86_64-windows: 3.0
+    nos.track:
+      x86_64-windows: 3.0
+      x86_64-linux: 3.0
+    nos.display:
+      x86_64-windows: 0.13

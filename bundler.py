@@ -120,7 +120,7 @@ def download_nodos(bundle_info, nodos_version):
 
 	logger.info(f"Downloading Nodos version {nodos_version} using nosman")
 	# Download Nodos
-	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "get", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
+	result = run(["./nodos", "-w", WORKSPACE_FOLDER, "get", "--name", "nodos", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
 	if result.returncode != 0:
 		logger.error(f"nosman get returned with {result.returncode}")
 		exit(result.returncode)

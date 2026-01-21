@@ -8,6 +8,7 @@ import yaml
 import glob
 import platform
 import json
+import re
 from collections import OrderedDict
 
 
@@ -274,6 +275,103 @@ def get_release_artifacts(dir, platform_arch : PlatformArch):
     files = glob.glob(f"{dir}/*{platform_arch.compressed_file_extension()}")
     return files
 
+def find_latest_bundle_release_tag(gh_release_repo, engine_version, short_name, platform_arch : PlatformArch):
+    major, minor, patch = get_semver_from_full_version(engine_version)
+    tag_prefix = f"v{major}.{minor}"
+    tag_suffix = f"-{short_name}-{platform_arch.key()}"
+    jq_filter = (
+        f"map(select(.tagName | startswith(\"{tag_prefix}\") and endswith(\"{tag_suffix}\")))"
+        " | sort_by(.createdAt) | reverse | .[0].tagName"
+    )
+    ghargs = ["gh", "release", "list", "--json", "tagName,createdAt", "--jq", jq_filter]
+    if gh_release_repo:
+        ghargs.extend(["--repo", gh_release_repo])
+    result = run(ghargs, capture_output=True, text=True, env=os.environ.copy())
+    if result.returncode != 0:
+        logger.warning(f"Failed to list GitHub releases: {result.stderr.strip()}")
+        return ""
+    tag = result.stdout.strip().strip('"')
+    if not tag or tag == "null":
+        return ""
+    logger.info(f"Found matching release tag: {tag}")
+    return tag
+
+def fetch_github_release_info(gh_release_repo, release_tag):
+    if not release_tag:
+        return {}
+    ghargs = ["gh", "release", "view"]
+    if release_tag:
+        ghargs.append(release_tag)
+    ghargs.extend(["--json", "body,name,url,tagName"])
+    if gh_release_repo:
+        ghargs.extend(["--repo", gh_release_repo])
+    result = run(ghargs, capture_output=True, text=True, env=os.environ.copy())
+    if result.returncode != 0:
+        logger.warning(f"Failed to fetch GitHub release info: {result.stderr.strip()}")
+        return {}
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        logger.warning(f"Failed to parse GitHub release info: {exc}")
+        return {}
+    return payload
+
+def _parse_name_version_line(line):
+    match = re.match(r"(.+?)\s*[:\-]\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", line)
+    if match is None:
+        match = re.match(r"(.+?)\s+([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", line)
+    if match is None:
+        return None, None
+    return match.group(1).strip(), match.group(2).strip()
+
+def parse_release_notes_versions(release_notes_text):
+    versions = {"engine": None, "modules": {}, "samples": {}}
+    if not release_notes_text:
+        return versions
+    section = None
+    for line in release_notes_text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        lower = stripped.lower()
+        if lower.startswith("###"):
+            if "engine" in lower:
+                section = "engine"
+            elif "modules" in lower or "plugins" in lower:
+                section = "modules"
+            elif "samples" in lower:
+                section = "samples"
+            else:
+                section = None
+            continue
+        if section is None:
+            continue
+        entry = stripped[1:].strip() if stripped[0] in "-*+" else stripped
+        if section == "engine":
+            match = re.search(r"(?:version|engine)\s*[:\-]?\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", entry, re.IGNORECASE)
+            if match is None:
+                match = re.match(r"^([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", entry)
+            if match is not None:
+                versions["engine"] = match.group(1)
+        else:
+            name, version = _parse_name_version_line(entry)
+            if name and version:
+                versions[section][name] = version
+    return versions
+
+def _format_version_change(new_version, old_version):
+    if old_version:
+        if old_version == new_version:
+            return f"{new_version} (no change)"
+        return f"{new_version} <- {old_version}"
+    return f"{new_version} (new)"
+
+def _lookup_old_version(version_map, version_map_casefold, name):
+    old_version = version_map.get(name)
+    if old_version:
+        return old_version
+    return version_map_casefold.get(name.casefold())
+
 def download_nodos(bundle_info, nodos_version):
     force_delete_folder(WORKSPACE_FOLDER)
     logger.info("Reading Nodos version from bundle")
@@ -463,7 +561,7 @@ def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : Pla
     # Zip everything under workspace_folder
     shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{platform_arch.key()}", platform_arch.compression_type(), f"{WORKSPACE_FOLDER}")
 
-def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_prev_tag, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
     short_name = bundle_info.get("short_name")
     if short_name is None:
         logger.info("Missing short name in bundle info, choosing short name as bundle key")
@@ -487,18 +585,40 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, dry_run_rele
     resolved_modules = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") != "sample" )
     resolved_samples = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") == "sample" )
 
-    # Create simple release notes
+    previous_tag = gh_release_prev_tag
+    if not previous_tag:
+        previous_tag = find_latest_bundle_release_tag(release_repo, engine_version, short_name, platform_arch)
+    previous_release_info = fetch_github_release_info(release_repo, previous_tag)
+    previous_release_notes = previous_release_info.get("body", "") if previous_release_info else ""
+    previous_versions = parse_release_notes_versions(previous_release_notes)
+    previous_modules = previous_versions.get("modules", {})
+    previous_modules_casefold = {name.casefold(): version for name, version in previous_modules.items()}
+    previous_samples = previous_versions.get("samples", {})
+    previous_samples_casefold = {name.casefold(): version for name, version in previous_samples.items()}
+
+    # Create release notes with version changes
     release_notes = f"## Nodos {engine_version}\n\n"
     release_notes += f"### Engine\n"
-    release_notes += f"- Version: {engine_version}\n\n"
+    release_notes += f"- Version: {_format_version_change(engine_version, previous_versions.get('engine'))}\n\n"
     release_notes += f"### Modules ({len(resolved_modules)})\n"
     for pkg_name, pkg_data in resolved_modules.items():
-        release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
+        old_version = _lookup_old_version(previous_modules, previous_modules_casefold, pkg_name)
+        release_notes += f"- {pkg_name}: {_format_version_change(pkg_data['version'], old_version)}\n"
 
     if len(resolved_samples) > 0:
         release_notes += f"\n### Samples ({len(resolved_samples)})\n"
     for pkg_name, pkg_data in resolved_samples.items():
-        release_notes += f"- {pkg_name}: {pkg_data['version']}\n"
+        old_version = _lookup_old_version(previous_samples, previous_samples_casefold, pkg_name)
+        release_notes += f"- {pkg_name}: {_format_version_change(pkg_data['version'], old_version)}\n"
+
+    if previous_release_info:
+        previous_title = previous_release_info.get("name") or previous_release_info.get("tagName") or previous_tag
+        previous_url = previous_release_info.get("url")
+        if not previous_url and release_repo and previous_tag:
+            previous_url = f"https://github.com/{release_repo}/releases/tag/{previous_tag}"
+        if previous_title and previous_url:
+            release_notes += "\n### Previous Release\n"
+            release_notes += f"- [{previous_title}]({previous_url})\n"
 
     ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]
     if target_branch != "":
@@ -592,6 +712,11 @@ if __name__ == "__main__":
                         default='',
                         help="The branch to create the release on. If empty, the current branch will be used.")
 
+    parser.add_argument('--gh-release-prev-tag',
+                        action='store',
+                        default='',
+                        help="The tag of the previous release to compare against. If empty, the latest release is used.")
+
     parser.add_argument('--dry-run-release',
                         action='store_true',
                         default=False)
@@ -674,4 +799,4 @@ if __name__ == "__main__":
         if bundle_info is None or nodos_version is None or args.bundle_key is None:
             logger.error("Bundle key and version required for --gh-release")
             exit(1)
-        create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch)
+        create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.gh_release_prev_tag, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch)

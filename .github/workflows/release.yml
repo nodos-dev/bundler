@@ -103,6 +103,11 @@ jobs:
           token: ${{ env.GH_TOKEN }}
           path: ./bundler-${{ github.ref_name }}
           fetch-depth: 01
+      - name: Install Python Dependencies
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+        working-directory: ./bundler-${{ github.ref_name }}
       - name: Copy Nosman
         shell: bash
         run: |

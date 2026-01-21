@@ -36,6 +36,7 @@ The bundler uses flat platform-architecture keys:
 
 **Supported combinations:**
 - `x86_64-windows` - Windows x86_64
+- `aarch64-windows` - Windows ARM64 (reserved for future use)
 - `x86_64-linux` - Linux x86_64
 - `aarch64-linux` - Linux ARM64 (reserved for future use)
 
@@ -85,22 +86,16 @@ bundles:
   - minimal
 ```
 
-**Version Formats:**
-- Versions can be less specific (e.g., "1.4.0" or "8.0")
-- All package versions are explicitly specified per platform-architecture
-- Packages without a version for a platform-arch are skipped for that platform
-- Package versions are resolved to full versions after install using `nodos info <package> <version> --relaxed` for Profile.json, release notes, and folder names
-
 ## Command Line Usage
 
 ### Using version and bundle keyword (recommended):
 ```bash
-python ./bundler.py --version="1.4" --bundle-key="broadcast" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev"
+python ./bundler.py --version="1.4" --bundle-key="broadcast" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --dry-run
 ```
 
 ### Using YAML file path:
 ```bash
-python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --download-nodos --download-packages --pack
+python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --download-nodos --download-packages --pack --dry-run
 ```
 
 ## GitHub Workflow

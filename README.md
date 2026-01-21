@@ -16,40 +16,37 @@ Environment variables:
 ## Bundle Configuration
 
 Bundles are configured using YAML files. Each Nodos version has its own YAML file:
-- `nodos-1.2.yaml` - Bundles for Nodos 1.2 (x86_64-windows only)
-- `nodos-1.3.yaml` - Bundles for Nodos 1.3 (x86_64-windows, x86_64-linux)
-- `nodos-1.4.yaml` - Bundles for Nodos 1.4 (x86_64-windows, x86_64-linux)
+
+- `nodos-1.2.yaml` - Bundles for Nodos 1.2
+- `nodos-1.3.yaml` - Bundles for Nodos 1.3
+- `nodos-1.4.yaml` - Bundles for Nodos 1.4
 
 ### Bundle Structure
 
-Bundles are defined as a list with explicit names. Each bundle has fields in this order:
+Bundles are defined as a list with explicit names. Possible fields:
+
 1. `name` - Bundle identifier
-2. `short_name` - Short name for release
+2. `short_name` - Short name for release (Optional)
 3. `nodos` - Nodos version per platform-architecture
 4. `bundled_packages` - Map of packages keyed by package name
 5. `engine_index_url` - Engine index URL
 6. `module_index_urls` - Module index URLs
+7. `includes` - List of other bundle names to include (Optional). This also works in a inheritance manner for some fields, ie. `nodos` or `engine_index_url` from the included bundle will be used if not defined in the current bundle. `bundled_packages` are merged favoring the current bundle.
 
 ### Platform-Architecture Keys
 
 The bundler uses flat platform-architecture keys:
 
-**Supported combinations:**
 - `x86_64-windows` - Windows x86_64
-- `aarch64-windows` - Windows ARM64 (reserved for future use)
+- `aarch64-windows` - Windows ARM64
 - `x86_64-linux` - Linux x86_64
-- `aarch64-linux` - Linux ARM64 (reserved for future use)
-
-**Version-specific platform support:**
-- Version 1.2: `x86_64-windows` only
-- Version 1.3+: `x86_64-windows` and `x86_64-linux`
+- `aarch64-linux` - Linux ARM64
 
 #### Example Bundle Configuration
 
 ```yaml
 bundles:
 - name: minimal
-  short_name: minimal
   nodos:
     x86_64-windows: 1.3.2
     x86_64-linux: 1.3.0
@@ -57,11 +54,9 @@ bundles:
     nos.reflect:
       x86_64-windows: 1.7.13
       x86_64-linux: 1.6.5
-  
     nos.math:
       x86_64-windows: 1.23.0
       x86_64-linux: 1.23.0
-  
   engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
   module_index_urls:
   - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
@@ -69,38 +64,24 @@ bundles:
     is_active: true
 
 - name: standard
-  short_name: standard
-  nodos:
-    x86_64-windows: 1.3.2
-    x86_64-linux: 1.3.0
+  includes:
+  - minimal
   bundled_packages:
     nos.filters:
       x86_64-windows: 1.5.5
       x86_64-linux: 1.5.2
-  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
-  module_index_urls:
-  - url: https://raw.githubusercontent.com/mediaz/nodos-index/main/index
-    name: nodos
-    is_active: true
-  includes:
-  - minimal
 ```
 
 ## Command Line Usage
 
-### Using version and bundle keyword (recommended):
+Using version and bundle keyword:
+
 ```bash
 python ./bundler.py --version="1.4" --bundle-key="broadcast" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --dry-run
 ```
 
-### Using YAML file path:
+Using YAML file path:
+
 ```bash
 python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --download-nodos --download-packages --pack --dry-run
 ```
-
-## GitHub Workflow
-
-The GitHub workflow accepts:
-- **version**: Choose from 1.2, 1.3, 1.4
-- **bundle_keyword**: Any bundle name defined in the YAML file (e.g., minimal, standard, broadcast, full, ai)
-- **previous_tag**: Optional previous release tag or commit

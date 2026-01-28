@@ -317,12 +317,21 @@ def fetch_github_release_info(gh_release_repo, release_tag):
     return payload
 
 def _parse_name_version_line(line):
-    match = re.match(r"(.+?)\s*[:\-]\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", line)
+    match = re.match(r"(.+?)\s*[:\-]\s*(.+)$", line)
     if match is None:
         match = re.match(r"(.+?)\s+([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", line)
-    if match is None:
+        if match is None:
+            return None, None
+        return match.group(1).strip(), match.group(2).strip()
+    name = match.group(1).strip()
+    version_part = match.group(2).strip()
+    version_match = re.match(
+        r"([0-9A-Za-z][0-9A-Za-z\.\-+_]*)(?:\s*<-\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*))?(?:\s*\([^)]+\))?$",
+        version_part,
+    )
+    if version_match is None:
         return None, None
-    return match.group(1).strip(), match.group(2).strip()
+    return name, version_match.group(1).strip()
 
 def parse_release_notes_versions(release_notes_text):
     versions = {"engine": None, "modules": {}, "samples": {}}

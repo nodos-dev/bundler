@@ -172,6 +172,7 @@ bundles:
   - broadcast
   bundled_packages:
     nos.app.gaussian.splatting:
+      type: sample
       x86_64-windows: 0.1.0
     nos.graphics:
       x86_64-windows: 0.1.0

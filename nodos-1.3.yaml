@@ -71,6 +71,8 @@ bundles:
     nos.sync:
       x86_64-windows: 3.1.1.b1023
       x86_64-linux: 3.1.1.b1023
+    nos.graphics:
+      x86_64-windows: 0.2.0
 
 - name: broadcast
   includes:
@@ -173,6 +175,4 @@ bundles:
   bundled_packages:
     nos.app.gaussian.splatting:
       type: sample
-      x86_64-windows: 0.1.0
-    nos.graphics:
       x86_64-windows: 0.1.0

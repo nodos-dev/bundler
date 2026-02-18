@@ -79,8 +79,8 @@ bundles:
   - standard
   bundled_packages:
     nos.aja:
-      x86_64-windows: 2.7.1.b808
-      x86_64-linux: 2.5.2.b700
+      x86_64-windows: 2.8.0.b811
+      x86_64-linux: 2.8.0.b811
     nos.sys.decklink:
       x86_64-windows: 2.2.6.b136
     nos.decklink:

@@ -8,7 +8,7 @@ bundles:
       x86_64-windows: 1.0.1.b928
       x86_64-linux: 1.0.1.b980
     nos.reflect:
-      x86_64-windows: 1.7.14.b1175
+      x86_64-windows: 1.7.15.b1185
       x86_64-linux: 1.6.5.b980
   engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
   module_index_urls:
@@ -36,7 +36,7 @@ bundles:
       x86_64-windows: 1.9.3.b907
       x86_64-linux: 1.9.3.b980
     nos.utilities:
-      x86_64-windows: 3.14.6.b1176
+      x86_64-windows: 3.14.7.b1185
       x86_64-linux: 3.9.7.b980
     nos.mediaio:
       x86_64-windows: 2.7.0.b700
@@ -79,7 +79,7 @@ bundles:
   - standard
   bundled_packages:
     nos.aja:
-      x86_64-windows: 2.8.0.b811
+      x86_64-windows: 2.9.0.b817
       x86_64-linux: 2.8.0.b811
     nos.sys.decklink:
       x86_64-windows: 2.2.6.b136

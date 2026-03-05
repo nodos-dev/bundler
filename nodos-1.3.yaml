@@ -176,3 +176,10 @@ bundles:
     nos.app.gaussian.splatting:
       type: sample
       x86_64-windows: 0.1.0
+
+- name: rive
+  includes:
+  - broadcast
+  bundled_packages:
+    nos.rive:
+      x86_64-windows: 0.3.0.b34

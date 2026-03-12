@@ -717,9 +717,14 @@ def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : Pla
     with open(engine_settings_path, "w") as f:
         json.dump(engine_settings, f, indent=2)
 
-    major, minor, patch = get_semver_from_full_version(engine_version)
+    bundle_version = get_bundle_version(bundle_info)
+    artifact_version = get_bundle_publish_version(nodos_version, bundle_version, get_build_number())
     # Zip everything under workspace_folder
-    shutil.make_archive(f"{ARTIFACTS_FOLDER}/Nodos-{major}.{minor}.{patch}.b{get_build_number()}-bundle-{bundle_key}-{platform_arch.key()}", platform_arch.compression_type(), f"{WORKSPACE_FOLDER}")
+    shutil.make_archive(
+        f"{ARTIFACTS_FOLDER}/Nodos-{artifact_version}-bundle-{bundle_key}-{platform_arch.key()}",
+        platform_arch.compression_type(),
+        f"{WORKSPACE_FOLDER}"
+    )
 
 def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_prev_tag, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
     short_name = bundle_info.get("short_name")
@@ -734,7 +739,6 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
     for path in artifacts:
         logger.info(f"Release artifact: {path}")
     engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
-    engine_major, engine_minor, engine_patch = get_semver_from_full_version(engine_version)
     build_number = get_build_number()
     releases = list_github_releases(release_repo)
     bundle_version = get_bundle_version(bundle_info)
@@ -805,9 +809,8 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
     if skip_nosman_publish:
         return
 
-    artifact_engine_version = f"{engine_major}.{engine_minor}.{engine_patch}.b{build_number}"
     bundle_publish_version = get_bundle_publish_version(nodos_version, bundle_version, build_number)
-    nodos_zip_prefix = f"Nodos-{artifact_engine_version}"
+    nodos_zip_prefix = f"Nodos-{bundle_publish_version}"
 
     artifacts_abspath = [os.path.abspath(path) for path in artifacts]
     package_name = bundle_info.get("package_name")
@@ -820,7 +823,8 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
         file_name = os.path.basename(path)
         if not file_name.startswith(nodos_zip_prefix):
             continue
-        # If file_name is of format Nodos-{major}.{minor}.{patch}.b{build_number}-bundle-{dist_key}.zip, it is a bundled distribution. Get the dist_key from it.
+        # If file_name is of format Nodos-{major}.{minor}.{bundle_version}.b{build_number}-bundle-{dist_key}.zip,
+        # it is a bundled distribution. Get the dist_key from it.
         dist_key = None
         if file_name.startswith(f"{nodos_zip_prefix}-bundle-"):
             dist_key = file_name.split("-bundle-")[1].split(platform_arch.compressed_file_extension())[0]

@@ -106,34 +106,125 @@ def get_build_number():
         exit(1)
     return build_number
 
-def get_bundle_info(bundle_key, bundles):
-    """Get bundle info from list of bundles by name"""
-    if isinstance(bundles, list):
-        for bundle in bundles:
-            if bundle.get("name") == bundle_key:
-                return bundle
-        logger.error(f"Bundle key {bundle_key} not found in bundles")
+def normalize_bundle_version(value, fail_on_missing=True):
+    if value is None:
+        if fail_on_missing:
+            logger.error("Missing bundle version")
+            exit(1)
         return None
-    else:
-        # Legacy dict-based structure (fallback)
-        if bundles.get(bundle_key) is None:
+    bundle_version_str = str(value).strip()
+    if not bundle_version_str.isdigit():
+        logger.error(f"Invalid bundle version: {value}. Bundle version must be a non-negative integer")
+        exit(1)
+    bundle_version = int(bundle_version_str)
+    if bundle_version < 0:
+        logger.error(f"Invalid bundle version: {value}. Bundle version must be zero or greater")
+        exit(1)
+    return bundle_version
+
+def _get_matching_bundles(bundle_key, bundles):
+    if isinstance(bundles, list):
+        return [bundle for bundle in bundles if bundle.get("name") == bundle_key]
+    if bundles.get(bundle_key) is None:
+        return []
+    return [bundles[bundle_key]]
+
+def _format_available_bundle_versions(bundles):
+    versions = []
+    for bundle in bundles:
+        bundle_version = bundle.get("version")
+        if bundle_version is None:
+            versions.append("(missing)")
+        else:
+            versions.append(str(bundle_version))
+    return ", ".join(versions)
+
+def get_bundle_info(bundle_key, bundles, bundle_version=None, fail_on_missing=True):
+    """Get bundle info from list of bundles by name and optional bundle version."""
+    matching_bundles = _get_matching_bundles(bundle_key, bundles)
+    if len(matching_bundles) == 0:
+        if fail_on_missing:
             logger.error(f"Bundle key {bundle_key} not found in bundles")
+        return None
+
+    normalized_requested_version = normalize_bundle_version(bundle_version, fail_on_missing=False)
+    if normalized_requested_version is not None:
+        version_matches = [
+            bundle for bundle in matching_bundles
+            if normalize_bundle_version(bundle.get("version")) == normalized_requested_version
+        ]
+        if len(version_matches) == 1:
+            return version_matches[0]
+        if len(version_matches) > 1:
+            if fail_on_missing:
+                logger.error(f"Multiple bundle entries found for {bundle_key} version {normalized_requested_version}")
             return None
-        return bundles[bundle_key]
+        if fail_on_missing:
+            available_versions = _format_available_bundle_versions(matching_bundles)
+            logger.error(
+                f"Bundle key {bundle_key} with version {normalized_requested_version} not found in bundles. "
+                f"Available versions: {available_versions}"
+            )
+        return None
+
+    if len(matching_bundles) == 1:
+        return matching_bundles[0]
+
+    if fail_on_missing:
+        available_versions = _format_available_bundle_versions(matching_bundles)
+        logger.error(
+            f"Multiple bundle entries found for {bundle_key}. Specify --bundle-version. "
+            f"Available versions: {available_versions}"
+        )
+    return None
+
+def parse_include_ref(include_ref):
+    if isinstance(include_ref, str):
+        return include_ref, None
+    if isinstance(include_ref, dict):
+        include_name = include_ref.get("name")
+        if not include_name:
+            logger.error("Include entry missing name")
+            exit(1)
+        include_version = include_ref.get("version")
+        return include_name, normalize_bundle_version(include_version, fail_on_missing=False)
+    logger.error(f"Unsupported include type: {type(include_ref)}")
+    exit(1)
+
+def format_include_ref(include_ref):
+    include_name, include_version = parse_include_ref(include_ref)
+    if include_version is None:
+        return include_name
+    return f"{include_name}@{include_version}"
+
+def resolve_included_bundle_info(include_ref, bundles, requested_bundle_version):
+    include_name, include_version = parse_include_ref(include_ref)
+    if include_version is not None:
+        return get_bundle_info(include_name, bundles, include_version)
+    bundle_info = get_bundle_info(include_name, bundles, requested_bundle_version, fail_on_missing=False)
+    if bundle_info is not None:
+        return bundle_info
+    return get_bundle_info(include_name, bundles)
 
 def get_inheritable_value(bundle_info, key, bundles):
     value = bundle_info.get(key)
     if value is not None:
         return value
     # Try to get value from the bundle's includes
+    requested_bundle_version = get_bundle_version(bundle_info)
     if "includes" in bundle_info:
         queue = list(bundle_info["includes"])
+        visited = set()
         while len(queue) > 0:
-            current = queue.pop(0)
-            other_conf = get_bundle_info(current, bundles)
+            include_ref = queue.pop(0)
+            other_conf = resolve_included_bundle_info(include_ref, bundles, requested_bundle_version)
             if other_conf is None:
-                logger.error(f"Depending bundle key {current} not found in bundles")
+                logger.error(f"Depending bundle {format_include_ref(include_ref)} not found in bundles")
                 exit(1)
+            bundle_identity = (other_conf.get("name"), get_bundle_version(other_conf))
+            if bundle_identity in visited:
+                continue
+            visited.add(bundle_identity)
             value = other_conf.get(key)
             if value is not None:
                 return value
@@ -275,25 +366,73 @@ def get_release_artifacts(dir, platform_arch : PlatformArch):
     files = glob.glob(f"{dir}/*{platform_arch.compressed_file_extension()}")
     return files
 
-def find_latest_bundle_release_tag(gh_release_repo, engine_version, short_name, platform_arch : PlatformArch):
-    major, minor, patch = get_semver_from_full_version(engine_version)
-    tag_prefix = f"v{major}.{minor}"
-    tag_suffix = f"-{short_name}-{platform_arch.key()}"
-    jq_filter = (
-        f"map(select(.tagName | startswith(\"{tag_prefix}\") and endswith(\"{tag_suffix}\")))"
-        " | sort_by(.createdAt) | reverse | .[0].tagName"
-    )
-    ghargs = ["gh", "release", "list", "--json", "tagName,createdAt", "--jq", jq_filter]
+def list_github_releases(gh_release_repo):
+    ghargs = ["gh", "release", "list", "--limit", "200", "--json", "tagName,createdAt"]
     if gh_release_repo:
         ghargs.extend(["--repo", gh_release_repo])
     result = run(ghargs, capture_output=True, text=True, env=os.environ.copy())
     if result.returncode != 0:
         logger.warning(f"Failed to list GitHub releases: {result.stderr.strip()}")
+        return []
+    try:
+        releases = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        logger.warning(f"Failed to parse GitHub release list: {exc}")
+        return []
+    return releases
+
+def _matches_nodos_major_minor(tag, major, minor):
+    prefix = f"v{major}.{minor}"
+    if not tag.startswith(prefix):
+        return False
+    if len(tag) == len(prefix):
+        return True
+    return tag[len(prefix)] in [".", "-"]
+
+def _matches_bundle_release_tag(tag, major, minor, short_name, platform_arch : PlatformArch, bundle_version=None):
+    platform_suffix = f"-{platform_arch.key()}"
+    if not _matches_nodos_major_minor(tag, major, minor):
+        return False
+    if not tag.endswith(platform_suffix):
+        return False
+    tag_without_platform = tag[:-len(platform_suffix)]
+    if tag_without_platform.endswith(f"-{short_name}"):
+        return bundle_version is None or bundle_version == 1
+    if bundle_version is None:
+        return f"-{short_name}-v" in tag_without_platform
+    return f"-{short_name}-v{bundle_version}-" in tag_without_platform
+
+def find_matching_bundle_releases(releases, nodos_version, short_name, platform_arch : PlatformArch, bundle_version=None):
+    major, minor = get_nodos_version_major_minor(nodos_version)
+    matching_releases = [
+        release for release in releases
+        if _matches_bundle_release_tag(release.get("tagName", ""), major, minor, short_name, platform_arch, bundle_version)
+    ]
+    matching_releases.sort(key=lambda release: release.get("createdAt", ""), reverse=True)
+    return matching_releases
+
+def get_bundle_version(bundle_info):
+    bundle_version = bundle_info.get("version")
+    if bundle_version is None:
+        logger.error("Missing bundle version in bundle info. Add a 'version' field to the bundle YAML")
+        exit(1)
+    return normalize_bundle_version(bundle_version)
+
+def get_bundle_release_version(nodos_version, short_name, bundle_version):
+    major, minor = get_nodos_version_major_minor(nodos_version)
+    return f"{major}.{minor}-{short_name}-v{bundle_version}"
+
+def get_bundle_publish_version(nodos_version, bundle_version, build_number):
+    major, minor = get_nodos_version_major_minor(nodos_version)
+    return f"{major}.{minor}.{bundle_version}.b{build_number}"
+
+def find_latest_bundle_release_tag(releases, nodos_version, short_name, platform_arch : PlatformArch, bundle_version=None):
+    matching_releases = find_matching_bundle_releases(releases, nodos_version, short_name, platform_arch, bundle_version)
+    if len(matching_releases) == 0:
         return ""
-    tag = result.stdout.strip().strip('"')
-    if not tag or tag == "null":
-        return ""
-    logger.info(f"Found matching release tag: {tag}")
+    tag = matching_releases[0].get("tagName", "")
+    if tag:
+        logger.info(f"Found matching release tag: {tag}")
     return tag
 
 def fetch_github_release_info(gh_release_repo, release_tag):
@@ -426,22 +565,28 @@ def get_bundled_packages(bundle_info, bundles, platform_arch : PlatformArch):
     """
     
     bundled_packages = OrderedDict()
+    requested_bundle_version = get_bundle_version(bundle_info)
     if "includes" in bundle_info:
         queue = list(bundle_info["includes"])
-        includes = list([])
+        resolved_include_refs = []
+        visited = set()
         while len(queue) > 0:
-            current = queue.pop(0)
-            includes.extend([current])
-            other_conf = get_bundle_info(current, bundles)
-            if other_conf is None:
-                logger.error(f"Depending bundle key {current} not found in bundles")
-                exit(1)
-            queue.extend(other_conf.get("includes", []))
-        logger.info(f"Adding modules from: {' '.join(includes)}")
-        for include in reversed(includes):
-            conf = get_bundle_info(include, bundles)
+            include_ref = queue.pop(0)
+            conf = resolve_included_bundle_info(include_ref, bundles, requested_bundle_version)
             if conf is None:
-                logger.error(f"Include bundle key {include} not found in bundles")
+                logger.error(f"Depending bundle {format_include_ref(include_ref)} not found in bundles")
+                exit(1)
+            bundle_identity = (conf.get("name"), get_bundle_version(conf))
+            if bundle_identity in visited:
+                continue
+            visited.add(bundle_identity)
+            resolved_include_refs.append({"name": conf.get("name"), "version": get_bundle_version(conf)})
+            queue.extend(conf.get("includes", []))
+        logger.info(f"Adding modules from: {' '.join(format_include_ref(include_ref) for include_ref in resolved_include_refs)}")
+        for include_ref in reversed(resolved_include_refs):
+            conf = resolve_included_bundle_info(include_ref, bundles, requested_bundle_version)
+            if conf is None:
+                logger.error(f"Include bundle {format_include_ref(include_ref)} not found in bundles")
                 exit(1)
             others = normalize_bundled_packages(conf.get("bundled_packages", {}))
             for package_name, package_data in others.items():
@@ -583,9 +728,13 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
     for path in artifacts:
         logger.info(f"Release artifact: {path}")
     engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
-    major, minor, patch = get_semver_from_full_version(engine_version)
+    engine_major, engine_minor, engine_patch = get_semver_from_full_version(engine_version)
     build_number = get_build_number()
-    tag = f"v{major}.{minor}.{patch}.b{build_number}-{short_name}-{platform_arch.key()}"
+    releases = list_github_releases(release_repo)
+    bundle_version = get_bundle_version(bundle_info)
+    bundle_major, bundle_minor = get_nodos_version_major_minor(nodos_version)
+    bundle_release_version = get_bundle_release_version(nodos_version, short_name, bundle_version)
+    tag = f"v{bundle_release_version}-b{build_number}-{platform_arch.key()}"
     title = f"{tag}"
 
     bundled_packages = get_bundled_packages(bundle_info, bundles, platform_arch)
@@ -596,7 +745,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
 
     previous_tag = gh_release_prev_tag
     if not previous_tag:
-        previous_tag = find_latest_bundle_release_tag(release_repo, engine_version, short_name, platform_arch)
+        previous_tag = find_latest_bundle_release_tag(releases, nodos_version, short_name, platform_arch, bundle_version)
     previous_release_info = fetch_github_release_info(release_repo, previous_tag)
     previous_release_notes = previous_release_info.get("body", "") if previous_release_info else ""
     previous_versions = parse_release_notes_versions(previous_release_notes)
@@ -650,8 +799,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
     if skip_nosman_publish:
         return
 
-    version = f"{major}.{minor}.{patch}.b{build_number}"
-    nodos_zip_prefix = f"Nodos-{version}"
+    artifact_engine_version = f"{engine_major}.{engine_minor}.{engine_patch}.b{build_number}"
+    bundle_publish_version = get_bundle_publish_version(nodos_version, bundle_version, build_number)
+    nodos_zip_prefix = f"Nodos-{artifact_engine_version}"
 
     artifacts_abspath = [os.path.abspath(path) for path in artifacts]
     package_name = bundle_info.get("package_name")
@@ -670,8 +820,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
             dist_key = file_name.split("-bundle-")[1].split(platform_arch.compressed_file_extension())[0]
         # Use nosman to publish Nodos:
         logger.info("Running nosman publish")
+        logger.info(f"Publishing bundle version {bundle_publish_version}")
         nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, 
-                       "--name", package_name, "--version", f"{major}.{minor}.{patch}", "--version-suffix", f".b{build_number}", 
+                       "--name", package_name, "--version", f"{bundle_major}.{bundle_minor}.{bundle_version}", "--version-suffix", f".b{build_number}",
                        "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email", "bot@nodos.dev",
                        "--version-check", "loose"]
         if dry_run_release:
@@ -694,6 +845,10 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--bundle-key",
                          help="The key of the bundle to package",
+                        action="store",
+                        required=False)
+    parser.add_argument("--bundle-version",
+                         help="The bundle version to select when multiple entries share the same bundle name",
                         action="store",
                         required=False)
     parser.add_argument("--bundles-yaml-path",
@@ -772,7 +927,7 @@ if __name__ == "__main__":
     bundles = bundles_data.get("bundles")
 
     if args.bundle_key:
-        bundle_info = get_bundle_info(args.bundle_key, bundles)
+        bundle_info = get_bundle_info(args.bundle_key, bundles, args.bundle_version)
 
     nodos_version = None
     if bundle_info:

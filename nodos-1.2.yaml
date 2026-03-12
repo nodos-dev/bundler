@@ -1,5 +1,6 @@
 bundles:
 - name: minimal
+  version: 0
   nodos:
     x86_64-windows: 1.2.7.b4582
   bundled_packages:
@@ -18,6 +19,7 @@ bundles:
     is_active: false
 
 - name: standard
+  version: 0
   includes:
   - minimal
   bundled_packages:
@@ -55,6 +57,7 @@ bundles:
     is_active: false
 
 - name: broadcast
+  version: 7
   includes:
   - standard
   bundled_packages:
@@ -64,6 +67,7 @@ bundles:
       x86_64-windows: 1.6.0.b742
 
 - name: full
+  version: 0
   includes:
   - broadcast
   bundled_packages:

@@ -1,5 +1,6 @@
 bundles:
 - name: minimal
+  version: 0
   nodos:
     x86_64-windows: 1.4
     x86_64-linux: 1.4
@@ -20,6 +21,7 @@ bundles:
     is_active: true
 
 - name: standard
+  version: 0
   includes:
   - minimal
   bundled_packages:
@@ -76,6 +78,7 @@ bundles:
       x86_64-linux: 1.1
 
 - name: broadcast
+  version: 0
   includes:
   - standard
   nodos:

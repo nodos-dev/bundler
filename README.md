@@ -13,6 +13,28 @@ Environment variables:
 
 - `BUILD_NUMBER`: The build number of the release
 
+## Bundle Versioning
+
+Bundle releases use a bundle-oriented version string:
+
+- `{major}.{minor}` comes from the configured Nodos version for the bundle
+- `{short_name}` comes from the bundle `short_name` field, or falls back to the bundle name
+- `v{N}` comes from the bundle `version` field in the YAML
+- `b{BUILD_NUMBER}` is appended from the build environment
+
+Example:
+
+- `1.3-broadcast-v4-b4711`
+
+GitHub release tags include the platform suffix, for example:
+
+- `v1.3-broadcast-v4-b4711-x86_64-windows`
+
+The nosman package version keeps the bundle identity in the package name and uses the YAML bundle version as the patch component:
+
+- package name: `nodos.bundle.broadcast`
+- package version: `1.3.4.b4711`
+
 ## Bundle Configuration
 
 Bundles are configured using YAML files. Each Nodos version has its own YAML file:
@@ -27,11 +49,14 @@ Bundles are defined as a list with explicit names. Possible fields:
 
 1. `name` - Bundle identifier
 2. `short_name` - Short name for release (Optional)
-3. `nodos` - Nodos version per platform-architecture
-4. `bundled_packages` - Map of packages keyed by package name
-5. `engine_index_url` - Engine index URL
-6. `module_index_urls` - Module index URLs
-7. `includes` - List of other bundle names to include (Optional). This also works in a inheritance manner for some fields, ie. `nodos` or `engine_index_url` from the included bundle will be used if not defined in the current bundle. `bundled_packages` are merged favoring the current bundle.
+3. `version` - Bundle release version used for GitHub tags and nosman package patch version
+4. `nodos` - Nodos version per platform-architecture
+5. `bundled_packages` - Map of packages keyed by package name
+6. `engine_index_url` - Engine index URL
+7. `module_index_urls` - Module index URLs
+8. `includes` - List of other bundles to include (Optional). Each item can be a bundle name string or a `{ name, version }` object to pin a specific bundle version. This also works in a inheritance manner for some fields, ie. `nodos` or `engine_index_url` from the included bundle will be used if not defined in the current bundle. `bundled_packages` are merged favoring the current bundle.
+
+The YAML can contain multiple entries with the same `name` as long as their `version` values differ. When that happens, select the desired one with `--bundle-version`.
 
 ### Platform-Architecture Keys
 
@@ -47,6 +72,7 @@ The bundler uses flat platform-architecture keys:
 ```yaml
 bundles:
 - name: minimal
+  version: 1
   nodos:
     x86_64-windows: 1.3.2
     x86_64-linux: 1.3.0
@@ -64,12 +90,28 @@ bundles:
     is_active: true
 
 - name: standard
+  version: 1
   includes:
   - minimal
   bundled_packages:
     nos.filters:
       x86_64-windows: 1.5.5
       x86_64-linux: 1.5.2
+
+- name: standard
+  version: 2
+  includes:
+  - minimal
+  bundled_packages:
+    nos.filters:
+      x86_64-windows: 1.5.6
+      x86_64-linux: 1.5.3
+
+- name: broadcast
+  version: 4
+  includes:
+  - name: broadcast
+    version: 3
 ```
 
 ## Command Line Usage
@@ -77,11 +119,11 @@ bundles:
 Using version and bundle keyword:
 
 ```bash
-python ./bundler.py --version="1.4" --bundle-key="broadcast" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --dry-run
+python ./bundler.py --version="1.4" --bundle-key="broadcast" --bundle-version="4" --download-nodos --download-packages --pack --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="dev" --dry-run
 ```
 
 Using YAML file path:
 
 ```bash
-python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --download-nodos --download-packages --pack --dry-run
+python ./bundler.py --bundles-yaml-path="./nodos-1.3.yaml" --bundle-key="broadcast" --bundle-version="4" --download-nodos --download-packages --pack --dry-run
 ```

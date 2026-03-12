@@ -23,8 +23,7 @@ on:
         type: string
       bundle_version:
         description: 'Bundle Version'
-        required: true
-        default: "1"
+        required: false
         type: string
       target_platform:
         description: 'Target Platform'
@@ -79,7 +78,7 @@ jobs:
           echo "runner-tags=$runner_tags" >> $GITHUB_OUTPUT
 
   bundle:
-    name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }} v${{ github.event.inputs.bundle_version }})
+    name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }})
     permissions:
       contents: write  # Required for creating releases
     env:

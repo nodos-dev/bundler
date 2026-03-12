@@ -56,7 +56,7 @@ Bundles are defined as a list with explicit names. Possible fields:
 7. `module_index_urls` - Module index URLs
 8. `includes` - List of other bundles to include (Optional). Each item can be a bundle name string or a `{ name, version }` object to pin a specific bundle version. This also works in a inheritance manner for some fields, ie. `nodos` or `engine_index_url` from the included bundle will be used if not defined in the current bundle. `bundled_packages` are merged favoring the current bundle.
 
-The YAML can contain multiple entries with the same `name` as long as their `version` values differ. When that happens, select the desired one with `--bundle-version`.
+The YAML can contain multiple entries with the same `name` as long as their `version` values differ. Use `--bundle-version` to select a specific one. If `--bundle-version` is omitted, the bundler selects the highest available bundle version for that name.
 
 ### Platform-Architecture Keys
 

@@ -107,7 +107,7 @@ def get_build_number():
     return build_number
 
 def normalize_bundle_version(value, fail_on_missing=True):
-    if value is None:
+    if value is None or str(value).strip() == "":
         if fail_on_missing:
             logger.error("Missing bundle version")
             exit(1)
@@ -138,6 +138,12 @@ def _format_available_bundle_versions(bundles):
         else:
             versions.append(str(bundle_version))
     return ", ".join(versions)
+
+def _select_latest_bundle(matching_bundles):
+    return max(
+        matching_bundles,
+        key=lambda bundle: normalize_bundle_version(bundle.get("version"), fail_on_missing=False) or 0
+    )
 
 def get_bundle_info(bundle_key, bundles, bundle_version=None, fail_on_missing=True):
     """Get bundle info from list of bundles by name and optional bundle version."""
@@ -170,13 +176,13 @@ def get_bundle_info(bundle_key, bundles, bundle_version=None, fail_on_missing=Tr
     if len(matching_bundles) == 1:
         return matching_bundles[0]
 
+    latest_bundle = _select_latest_bundle(matching_bundles)
     if fail_on_missing:
-        available_versions = _format_available_bundle_versions(matching_bundles)
-        logger.error(
-            f"Multiple bundle entries found for {bundle_key}. Specify --bundle-version. "
-            f"Available versions: {available_versions}"
+        logger.info(
+            f"Multiple bundle entries found for {bundle_key}. "
+            f"Selecting latest version {get_bundle_version(latest_bundle)} by default"
         )
-    return None
+    return latest_bundle
 
 def parse_include_ref(include_ref):
     if isinstance(include_ref, str):

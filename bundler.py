@@ -277,6 +277,97 @@ def get_nodos_version_major_minor(version):
     minor = version_parts[1]
     return major, minor
 
+def parse_version_tuple(version_str):
+    """Parse a version string into a tuple of integers for comparison.
+
+    Handles formats like "6.0.0", "3.1", "2.7.0.b789" (build suffix stripped).
+    """
+    # Strip build suffix (e.g., ".b789")
+    version_str = re.sub(r'\.b\d+$', '', version_str)
+    parts = version_str.split(".")
+    return tuple(int(p) for p in parts)
+
+def is_version_compatible(bundled_ver, required_ver):
+    """Check semver compatibility: major must match, then minor.patch must be >=."""
+    if bundled_ver[0] != required_ver[0]:
+        return False
+    return bundled_ver >= required_ver
+
+def check_dependencies():
+    """Check that all bundled packages have their dependencies satisfied.
+
+    Reads .noscfg files from downloaded modules and verifies that each
+    dependency is present in the bundle with a version >= the required minimum.
+    """
+    module_dir = os.path.join(WORKSPACE_FOLDER, "Module")
+    if not os.path.isdir(module_dir):
+        logger.error(f"Module directory not found: {module_dir}")
+        exit(1)
+
+    # Build map of bundled package versions: {name: version_tuple}
+    bundled_versions = {}
+    noscfg_files = glob.glob(os.path.join(module_dir, "*", "*", "*.noscfg"))
+    noscfg_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nosplugin"))
+    noscfg_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nossys"))
+
+    package_configs = []
+    for noscfg_path in noscfg_files:
+        try:
+            with open(noscfg_path, "r") as f:
+                config = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Failed to read {noscfg_path}: {e}")
+            continue
+
+        info = config.get("info", {})
+        pkg_id = info.get("id", {})
+        pkg_name = pkg_id.get("name")
+        pkg_version = pkg_id.get("version")
+        if pkg_name and pkg_version:
+            bundled_versions[pkg_name] = parse_version_tuple(pkg_version)
+
+        deps = info.get("dependencies", [])
+        if deps:
+            package_configs.append((noscfg_path, pkg_name, pkg_version, deps))
+
+    if not bundled_versions:
+        logger.warning("No bundled packages found, skipping dependency check")
+        return
+
+    logger.info(f"Checking dependencies for {len(package_configs)} packages with dependencies")
+
+    errors = []
+    for noscfg_path, pkg_name, pkg_version, deps in package_configs:
+        for dep in deps:
+            dep_name = dep.get("name")
+            dep_min_version = dep.get("version")
+            if not dep_name or not dep_min_version:
+                continue
+
+            if dep_name not in bundled_versions:
+                errors.append(
+                    f"{pkg_name} ({pkg_version}) requires {dep_name} >= {dep_min_version}, "
+                    f"but {dep_name} is not in the bundle"
+                )
+                continue
+
+            bundled_ver = bundled_versions[dep_name]
+            required_ver = parse_version_tuple(dep_min_version)
+            if not is_version_compatible(bundled_ver, required_ver):
+                bundled_ver_str = ".".join(str(p) for p in bundled_ver)
+                errors.append(
+                    f"{pkg_name} ({pkg_version}) requires {dep_name} ~{dep_min_version}, "
+                    f"but bundle has {dep_name} {bundled_ver_str}"
+                )
+
+    if errors:
+        logger.error("Unsatisfied dependencies found:")
+        for error in errors:
+            logger.error(f"  - {error}")
+        exit(1)
+
+    logger.info("All dependencies satisfied")
+
 def get_semver_from_full_version(version):
     if version is None:
         logger.error("Missing version info. Make sure to set VERSION")
@@ -909,6 +1000,11 @@ if __name__ == "__main__":
                         default=False,
                         help="Download modules using nosman")
 
+    parser.add_argument('--skip-dependency-check',
+                        action='store_true',
+                        default=False,
+                        help="Skip checking that all bundled packages have their dependencies satisfied")
+
     parser.add_argument('--pack',
                         action='store_true',
                         default=False,
@@ -962,6 +1058,8 @@ if __name__ == "__main__":
             logger.error("Bundle key and version required for --download-packages")
             exit(1)
         download_packages(bundle_info, bundles, nodos_version, platform_arch)
+        if not args.skip_dependency_check:
+            check_dependencies()
 
     if args.pack:
         if bundle_info is None or nodos_version is None or args.bundle_key is None:

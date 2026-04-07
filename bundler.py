@@ -832,10 +832,9 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
         # Use nosman to publish Nodos:
         logger.info("Running nosman publish")
         logger.info(f"Publishing bundle version {bundle_publish_version}")
-        nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path, 
+        nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path,
                        "--name", package_name, "--version", f"{bundle_major}.{bundle_minor}.{bundle_version}", "--version-suffix", f".b{build_number}",
-                       "--type", "nodos", "--vendor", "Nodos", "--publisher-name", "Nodos", "--publisher-email", "bot@nodos.dev",
-                       "--version-check", "loose"]
+                       "--type", "nodos"]
         if dry_run_release:
             nosman_args.append("--dry-run")
         logger.info(f"Running nosman publish with args: {nosman_args}")

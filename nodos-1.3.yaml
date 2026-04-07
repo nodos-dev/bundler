@@ -100,6 +100,9 @@ bundles:
   includes:
   - name: broadcast
     version: 3
+  nodos:
+    x86_64-windows: 1.3.3.b4727
+    x86_64-linux: 1.3.3.b4727
   bundled_packages:
     nos.sys.device:
       x86_64-windows: 0.4.0.b60

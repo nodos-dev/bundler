@@ -205,9 +205,9 @@ bundles:
   - name: broadcast
     version: 4
   bundled_packages:
-    nos.app.gaussian.splatting:
+    nos.app.gsplat:
       type: sample
-      x86_64-windows: 0.1.0
+      x86_64-windows: 0.1.1
 
 - name: rive
   version: 0

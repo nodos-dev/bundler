@@ -200,7 +200,7 @@ bundles:
       x86_64-windows: 2.2.0.b247
       x86_64-linux: 2.2.0.b247
 
-- name: gaussian_splat
+- name: gsplat
   version: 0
   includes:
   - name: broadcast

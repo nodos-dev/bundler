@@ -218,3 +218,21 @@ bundles:
   bundled_packages:
     nos.rive:
       x86_64-windows: 0.3.0.b34
+
+- name: filmmaking
+  version: 0
+  includes:
+  - name: broadcast
+    version: 4
+  bundled_packages:
+    nos.utilities:
+      x86_64-windows: 3.15.0.b1222
+    nos.sys.track:
+      x86_64-windows: 1.1.0.b1222
+    nos.track:
+      x86_64-windows: 1.11.0.b1222
+    nos.mediaio:
+      x86_64-windows: 2.9.0.b727
+      x86_64-linux: 2.9.0.b727
+    nos.aja:
+      x86_64-windows: 2.11.0.b837

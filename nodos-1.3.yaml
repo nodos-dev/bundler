@@ -235,4 +235,7 @@ bundles:
       x86_64-windows: 2.9.0.b727
       x86_64-linux: 2.9.0.b727
     nos.aja:
-      x86_64-windows: 2.11.0.b837
+      x86_64-windows: 2.11.0.b838
+    nos.app.gsplat:
+      type: sample
+      x86_64-windows: 0.1.1

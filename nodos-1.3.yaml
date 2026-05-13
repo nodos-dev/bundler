@@ -244,3 +244,5 @@ bundles:
     nos.app.gsplat:
       type: sample
       x86_64-windows: 0.1.2
+    nos.cinemeta:
+      x86_64-windows: 0.1.0.b5

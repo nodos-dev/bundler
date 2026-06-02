@@ -2,7 +2,7 @@ bundles:
 - name: minimal
   version: 0
   nodos:
-    x86_64-windows: 1.3.3.b4755
+    x86_64-windows: 1.3.3.b4756
     x86_64-linux: 1.3.3.b4711
   bundled_packages:
     nos.sys.variables:

@@ -241,24 +241,26 @@ bundles:
   - name: broadcast
     version: 4
   nodos:
-    x86_64-windows: 1.3.3.b4747
+    x86_64-windows: 1.3.3.b4763
   bundled_packages:
     nos.utilities:
-      x86_64-windows: 3.15.0.b1226
+      x86_64-windows: 3.15.0.b1229
     nos.sys.track:
-      x86_64-windows: 1.1.0.b1226
+      x86_64-windows: 1.1.0.b1229
     nos.track:
-      x86_64-windows: 1.11.0.b1226
+      x86_64-windows: 1.11.0.b1229
     nos.mediaio:
-      x86_64-windows: 2.9.0.b730
-      x86_64-linux: 2.9.0.b730
+      x86_64-windows: 2.9.0.b732
+      x86_64-linux: 2.9.0.b732
     nos.sys.mediaio:
-      x86_64-windows: 0.5.0.b730
-      x86_64-linux: 0.5.0.b730
+      x86_64-windows: 0.5.0.b732
+      x86_64-linux: 0.5.0.b732
     nos.aja:
-      x86_64-windows: 2.11.0.b841
+      x86_64-windows: 2.11.0.b843
     nos.app.gsplat:
       type: sample
       x86_64-windows: 0.1.2
     nos.cinemeta:
-      x86_64-windows: 0.1.0.b5
+      x86_64-windows: 0.1.0.b7
+    nos.math:
+      x86_64-windows: 1.10.0.b1229

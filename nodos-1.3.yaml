@@ -107,8 +107,8 @@ bundles:
     nos.sys.device:
       x86_64-windows: 0.4.0.b60
     nos.aja:
-      x86_64-windows: 2.10.0.b834
-      x86_64-linux: 2.10.0.b834
+      x86_64-windows: 2.10.1.b844
+      x86_64-linux: 2.10.1.b844
     nos.sys.track:
       x86_64-windows: 1.0.0.b1213
     nos.track:

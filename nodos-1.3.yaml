@@ -109,12 +109,10 @@ bundles:
     nos.aja:
       x86_64-windows: 2.10.1.b844
       x86_64-linux: 2.10.1.b844
-    nos.sys.track:
-      x86_64-windows: 1.0.0.b1213
     nos.track:
-      x86_64-windows: 1.10.0.b1215
+      x86_64-windows: 1.10.1.b1233
     nos.graphics:
-      x86_64-windows: 0.4.0
+      x86_64-windows: 0.4.2.b1233
     nos.sys.decklink:
       x86_64-windows: 2.3.0.b179
     nos.decklink:

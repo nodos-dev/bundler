@@ -72,8 +72,6 @@ bundles:
     nos.sync:
       x86_64-windows: 3.2.0.b1188
       x86_64-linux: 3.1.1.b1023
-    nos.graphics:
-      x86_64-windows: 0.3.0
 
 - name: broadcast
   version: 3
@@ -111,8 +109,6 @@ bundles:
       x86_64-linux: 2.10.1.b844
     nos.track:
       x86_64-windows: 1.10.1.b1233
-    nos.graphics:
-      x86_64-windows: 0.4.2.b1233
     nos.sys.decklink:
       x86_64-windows: 2.3.0.b179
     nos.decklink:
@@ -223,6 +219,8 @@ bundles:
       x86_64-linux: 0.5.0.b730
     nos.aja:
       x86_64-windows: 2.11.0.b841
+    nos.graphics:
+      x86_64-windows: 0.4.2.b1233
 
 - name: rive
   version: 0
@@ -262,3 +260,5 @@ bundles:
       x86_64-windows: 0.1.0.b7
     nos.math:
       x86_64-windows: 1.10.0.b1229
+    nos.graphics:
+      x86_64-windows: 0.4.2.b1233

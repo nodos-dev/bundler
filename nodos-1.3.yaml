@@ -89,7 +89,7 @@ bundles:
       x86_64-windows: 1.9.3.b961
       x86_64-linux: 1.9.3.b980
     nos.display:
-      x86_64-windows: 0.4.0.b52
+      x86_64-windows: 0.4.1.b66
     nos.sys.lino:
       x86_64-windows: 1.0.5.b1114
 

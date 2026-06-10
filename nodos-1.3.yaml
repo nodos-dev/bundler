@@ -99,7 +99,7 @@ bundles:
   - name: broadcast
     version: 3
   nodos:
-    x86_64-windows: 1.3.4.b4778
+    x86_64-windows: 1.3.4.b4779
   bundled_packages:
     nos.sys.device:
       x86_64-windows: 0.4.0.b60
@@ -118,7 +118,7 @@ bundles:
   - name: broadcast
     version: 4
   nodos:
-    x86_64-windows: 1.3.4.b4778
+    x86_64-windows: 1.3.4.b4779
   bundled_packages:
     nos.sys.track:
       x86_64-windows: 1.0.0.b1240

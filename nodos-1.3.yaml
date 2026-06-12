@@ -41,7 +41,7 @@ bundles:
       x86_64-windows: 3.14.7.b1185
       x86_64-linux: 3.9.7.b980
     nos.mediaio:
-      x86_64-windows: 2.8.0.b725
+      x86_64-windows: 2.8.1.b735
       x86_64-linux: 2.8.0.b725
     nos.sys.mediaio:
       x86_64-windows: 0.4.1.b669

@@ -231,7 +231,7 @@ bundles:
     nos.sys.track:
       x86_64-windows: 1.1.0.b1241
     nos.track:
-      x86_64-windows: 1.12.0.b1241
+      x86_64-windows: 1.12.0.b1242
     nos.mediaio:
       x86_64-windows: 2.9.0.b736
     nos.sys.mediaio:
@@ -242,8 +242,8 @@ bundles:
       type: sample
       x86_64-windows: 0.1.2
     nos.cinemeta:
-      x86_64-windows: 0.1.0.b8
+      x86_64-windows: 0.1.0.b9
     nos.math:
       x86_64-windows: 1.11.0.b1241
     nos.graphics:
-      x86_64-windows: 0.5.0.b1241
+      x86_64-windows: 0.5.0.b1242

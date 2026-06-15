@@ -242,7 +242,7 @@ bundles:
       type: sample
       x86_64-windows: 0.1.2
     nos.cinemeta:
-      x86_64-windows: 0.1.0.b7
+      x86_64-windows: 0.1.0.b8
     nos.math:
       x86_64-windows: 1.11.0.b1241
     nos.graphics:

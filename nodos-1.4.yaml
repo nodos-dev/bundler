@@ -41,7 +41,7 @@ bundles:
       x86_64-windows: 3.0
       x86_64-linux: 3.0
     nos.math:
-      x86_64-windows: 2.0
+      x86_64-windows: 2.1
       x86_64-linux: 2.0
     nos.utilities:
       x86_64-windows: 4.0

@@ -42,6 +42,7 @@ env:
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
   PREVIOUS_RELEASE_TAG: ${{ github.event.inputs.previous_release_tag }}
+  NODOS_STORE_ACCESS_TOKEN: ${{ secrets.NODOS_STORE_ACCESS_TOKEN }}
 
 # TODO: Support parallel runs
 concurrency:
@@ -146,8 +147,6 @@ jobs:
       - name: Create Release
         id: release_nos_main_repo
         shell: pwsh
-        env:
-          NODOS_STORE_ACCESS_TOKEN: ${{ secrets.NODOS_STORE_ACCESS_TOKEN }}
         run: |
           python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" --gh-release-prev-tag="${{ github.event.inputs.previous_release_tag }}"
         working-directory: ./bundler-${{ github.ref_name }}/

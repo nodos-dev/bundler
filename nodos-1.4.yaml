@@ -14,9 +14,9 @@ bundles:
     nos.reflect:
       x86_64-windows: 3.0.0
       x86_64-linux: 3.0.0
-  engine_index_url: https://raw.githubusercontent.com/mediaz/engine-releases/main/index.json
+  engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
   plugin_index_urls:
-  - url: https://raw.githubusercontent.com/nodos-dev/index/main/index
+  - url: https://store.nodos.dev/api/v1/index
     name: nodos
     is_active: true
 

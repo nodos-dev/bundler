@@ -28,9 +28,7 @@ bundles:
     nos.sys.vulkan:
       x86_64-windows: 6.7.5.b757
       x86_64-linux: 6.3.6.b652
-    nos.sys.settings:
-      x86_64-windows: 0.3.0.b804
-      x86_64-linux: 0.3.0.b804
+    nos.sys.settings: 0.3.0.b804
     nos.filters:
       x86_64-windows: 1.5.5.b1037
       x86_64-linux: 1.5.2.b980
@@ -46,29 +44,20 @@ bundles:
     nos.sys.mediaio:
       x86_64-windows: 0.4.1.b669
       x86_64-linux: 0.4.0.b664
-    nos.webcam:
-      x86_64-windows: 1.3.2.b646
+    nos.webcam: 1.3.2.b646
     nos.sys.animation:
       x86_64-windows: 1.5.2.b1018
       x86_64-linux: 1.5.1.b980
-    nos.animation:
-      x86_64-windows: 0.3.2.b928
-      x86_64-linux: 0.3.2.b928
-    nos.webrtc:
-      x86_64-windows: 1.3.1.b1199
-    nos.str:
-      x86_64-windows: 0.3.1.b1106
-      x86_64-linux: 0.3.1.b1106
+    nos.animation: 0.3.2.b928
+    nos.webrtc: 1.3.1.b1199
+    nos.str: 0.3.1.b1106
     nos.sys.device:
       x86_64-windows: 0.4.0.b60
       x86_64-linux: 0.3.3.b15
-    nos.rive:
-      x86_64-windows: 0.3.0.b20
-      x86_64-linux: 0.3.0.b20
+    nos.rive: 0.3.0.b20
     nos.sample.dxapp:
+      version: 1.1.6.b57
       type: sample
-      x86_64-windows: 1.1.6.b57
-      x86_64-linux: 1.1.6.b57
     nos.sync:
       x86_64-windows: 3.2.0.b1188
       x86_64-linux: 3.1.1.b1023
@@ -78,20 +67,14 @@ bundles:
   includes:
   - standard
   bundled_packages:
-    nos.aja:
-      x86_64-windows: 2.10.0.b834
-      x86_64-linux: 2.10.0.b834
-    nos.sys.decklink:
-      x86_64-windows: 2.2.7.b177
-    nos.decklink:
-      x86_64-windows: 1.3.0.b178
+    nos.aja: 2.10.0.b834
+    nos.sys.decklink: 2.2.7.b177
+    nos.decklink: 1.3.0.b178
     nos.track:
       x86_64-windows: 1.9.3.b961
       x86_64-linux: 1.9.3.b980
-    nos.display:
-      x86_64-windows: 0.4.1.b66
-    nos.sys.lino:
-      x86_64-windows: 1.0.5.b1114
+    nos.display: 0.4.1.b66
+    nos.sys.lino: 1.0.5.b1114
 
 - name: broadcast
   version: 4
@@ -101,16 +84,11 @@ bundles:
   nodos:
     x86_64-windows: 1.3.4.b4779
   bundled_packages:
-    nos.sys.device:
-      x86_64-windows: 0.4.0.b60
-    nos.aja:
-      x86_64-windows: 2.10.1.b844
-    nos.track:
-      x86_64-windows: 1.10.1.b1233
-    nos.sys.decklink:
-      x86_64-windows: 2.3.0.b179
-    nos.decklink:
-      x86_64-windows: 1.3.1.b179
+    nos.sys.device: 0.4.0.b60
+    nos.aja: 2.10.1.b844
+    nos.track: 1.10.1.b1233
+    nos.sys.decklink: 2.3.0.b179
+    nos.decklink: 1.3.1.b179
 
 - name: broadcast
   version: 5
@@ -120,14 +98,10 @@ bundles:
   nodos:
     x86_64-windows: 1.3.4.b4779
   bundled_packages:
-    nos.sys.track:
-      x86_64-windows: 1.0.0.b1240
-    nos.track:
-      x86_64-windows: 1.11.0.b1240
-    nos.graphics:
-      x86_64-windows: 0.4.3.b1240
-    nos.aja:
-      x86_64-windows: 2.11.0.b845
+    nos.sys.track: 1.0.0.b1240
+    nos.track: 1.11.0.b1240
+    nos.graphics: 0.4.3.b1240
+    nos.aja: 2.11.0.b845
 
 - name: ai
   version: 0
@@ -190,24 +164,19 @@ bundles:
     x86_64-windows: 1.3.3.b4747
   bundled_packages:
     nos.app.gsplat:
+      version: 0.1.2
       type: sample
-      x86_64-windows: 0.1.2
-    nos.utilities:
-      x86_64-windows: 3.15.0.b1226
-    nos.sys.track:
-      x86_64-windows: 1.1.0.b1226
-    nos.track:
-      x86_64-windows: 1.11.0.b1226
+    nos.utilities: 3.15.0.b1226
+    nos.sys.track: 1.1.0.b1226
+    nos.track: 1.11.0.b1226
     nos.mediaio:
       x86_64-windows: 2.9.0.b730
       x86_64-linux: 2.9.0.b730
     nos.sys.mediaio:
       x86_64-windows: 0.5.0.b730
       x86_64-linux: 0.5.0.b730
-    nos.aja:
-      x86_64-windows: 2.11.0.b841
-    nos.graphics:
-      x86_64-windows: 0.4.2.b1233
+    nos.aja: 2.11.0.b841
+    nos.graphics: 0.4.2.b1233
 
 - name: rive
   version: 0
@@ -215,8 +184,7 @@ bundles:
   - name: broadcast
     version: 3
   bundled_packages:
-    nos.rive:
-      x86_64-windows: 0.3.0.b34
+    nos.rive: 0.3.0.b34
 
 - name: filmmaking
   version: 0
@@ -226,24 +194,19 @@ bundles:
   nodos:
     x86_64-windows: 1.3.4.b4784
   bundled_packages:
-    nos.utilities:
-      x86_64-windows: 3.15.0.b1241
-    nos.sys.track:
-      x86_64-windows: 1.1.0.b1241
-    nos.track:
-      x86_64-windows: 1.12.0.b1242
+    nos.utilities: 3.15.0.b1241
+    nos.sys.track: 1.1.0.b1241
+    nos.track: 1.12.0.b1242
     nos.mediaio:
       x86_64-windows: 2.9.0.b736
+      x86_64-linux: 2.9.0.b736
     nos.sys.mediaio:
       x86_64-windows: 0.5.0.b736
-    nos.aja:
-      x86_64-windows: 2.12.0.b846
+      x86_64-linux: 0.5.0.b736
+    nos.aja: 2.12.0.b846
     nos.app.gsplat:
+      version: 0.1.2
       type: sample
-      x86_64-windows: 0.1.2
-    nos.cinemeta:
-      x86_64-windows: 0.1.0.b9
-    nos.math:
-      x86_64-windows: 1.11.0.b1241
-    nos.graphics:
-      x86_64-windows: 0.5.0.b1242
+    nos.cinemeta: 0.1.0.b9
+    nos.math: 1.11.0.b1241
+    nos.graphics: 0.5.0.b1242

@@ -1,19 +1,9 @@
 bundles:
-- name: minimal
-  version: 0
-  nodos:
-    x86_64-windows: 1.4
-    x86_64-linux: 1.4
+  nodos: 1.4
   bundled_packages:
-    nos.transfer:
-      x86_64-windows: 0.1.0
-      x86_64-linux: 0.1.0
-    nos.sys.variables:
-      x86_64-windows: 3.0.0
-      x86_64-linux: 3.0.0
-    nos.reflect:
-      x86_64-windows: 3.0.0
-      x86_64-linux: 3.0.0
+    nos.transfer: 0.1.0
+    nos.sys.variables: 3.0.0
+    nos.reflect: 3.0.0
   engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
   plugin_index_urls:
   - url: https://store.nodos.dev/api/v1/index
@@ -25,84 +15,41 @@ bundles:
   includes:
   - minimal
   bundled_packages:
-    nos.sys.shaderc:
-      x86_64-windows: 2.1
-      x86_64-linux: 2.1
-    nos.sys.vulkan:
-      x86_64-windows: 8.0
-      x86_64-linux: 8.0
-    nos.audio:
-      x86_64-windows: 1.0
-      x86_64-linux: 1.0
-    nos.sys.settings:
-      x86_64-windows: 3.0
-      x86_64-linux: 3.0
-    nos.filters:
-      x86_64-windows: 3.0
-      x86_64-linux: 3.0
-    nos.math:
-      x86_64-windows: 2.1
-      x86_64-linux: 2.0
-    nos.utilities:
-      x86_64-windows: 4.0
-      x86_64-linux: 4.0
-    nos.mediaio:
-      x86_64-windows: 4.0
-      x86_64-linux: 4.0
-    nos.flow:
-      x86_64-windows: 1.0
-    nos.compositing:
-      x86_64-windows: 1.0
-    nos.imageprocessing:
-      x86_64-windows: 1.0
-    nos.resource:
-      x86_64-windows: 1.0
-    nos.webcam:
-      x86_64-windows: 3.0
-    nos.sys.animation:
-      x86_64-windows: 3.0
-      x86_64-linux: 3.0
-    nos.animation:
-      x86_64-windows: 1.0
-      x86_64-linux: 1.0
-    nos.webrtc:
-      x86_64-windows: 2.0
-      x86_64-linux: 2.0
-    nos.str:
-      x86_64-windows: 1.0
-      x86_64-linux: 1.0
-    nos.sys.device:
-      x86_64-windows: 2.0
-      x86_64-linux: 2.0
+    nos.sys.shaderc: 2.1
+    nos.sys.vulkan: 8.0
+    nos.audio: 1.0
+    nos.sys.settings: 3.0
+    nos.filters: 3.0
+    nos.math: 2.0
+    nos.utilities: 4.0
+    nos.mediaio: 4.0
+    nos.flow: 1.0
+    nos.compositing: 1.0
+    nos.imageprocessing: 1.0
+    nos.resource: 1.0
+    nos.webcam: 3.0
+    nos.sys.animation: 3.0
+    nos.animation: 1.0
+    nos.webrtc: 2.0
+    nos.str: 1.0
+    nos.sys.device: 2.0
     nos.rive:
       x86_64-windows: 1.0
       x86_64-linux: 0.3
-    nos.sync:
-      x86_64-windows: 11.1
-      x86_64-linux: 11.1
+    nos.sync: 11.1
     nos.sample.dxapp:
+      version: 1.1
       type: sample
-      x86_64-windows: 1.1
-      x86_64-linux: 1.1
 
 - name: broadcast
   version: 0
   includes:
   - standard
-  nodos:
-    x86_64-windows: 1.4
-    x86_64-linux: 1.4
+  nodos: 1.4
   bundled_packages:
-    nos.aja:
-      x86_64-windows: 4.0
-    nos.sys.decklink:
-      x86_64-windows: 4.0
-    nos.decklink:
-      x86_64-windows: 3.0
-    nos.track:
-      x86_64-windows: 3.0
-      x86_64-linux: 3.0
-    nos.display:
-      x86_64-windows: 1.0
-    nos.ndi:
-      x86_64-windows: 2.2
+    nos.aja: 4.0
+    nos.sys.decklink: 4.0
+    nos.decklink: 3.0
+    nos.track: 3.0
+    nos.display: 1.0
+    nos.ndi: 2.2

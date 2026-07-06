@@ -239,11 +239,14 @@ def get_inheritable_value(bundle_info, key, bundles):
 
 
 
-def get_nodos_version(bundle_info, bundles, platform_arch : PlatformArch):
+def get_nodos_version(bundle_info, bundles, platform_arch: PlatformArch):
     """Get the nodos version for a bundle.
-    
-    Reads version from bundle_info['nodos'][platform_arch.key()].
-    Versions can be less specific (e.g., "8.0" instead of "8.0.1.b495").
+
+    Reads version from bundle_info['nodos'].
+    Supports:
+    - Scalar: nodos: 1.4
+    - Dict with version key: nodos: {version: 1.4}
+    - Dict with platform keys: nodos: {x86_64-windows: 1.4}
     
     Args:
         bundle_info: Bundle configuration dict
@@ -252,16 +255,29 @@ def get_nodos_version(bundle_info, bundles, platform_arch : PlatformArch):
     """
     
     # Check if nodos dict has version info
-    nodos_dict = get_inheritable_value(bundle_info, "nodos", bundles)
-    if nodos_dict and isinstance(nodos_dict, dict):
-        version = nodos_dict.get(platform_arch.key())
+    nodos_config = get_inheritable_value(bundle_info, "nodos", bundles)
+    if not nodos_config:
+        logger.error(f"Missing nodos version configuration for {platform_arch.key()}")
+        exit(1)
+
+    if isinstance(nodos_config, str):
+        return nodos_config
+
+    if isinstance(nodos_config, dict):
+        # Check if platform-specific version is provided
+        version = nodos_config.get(platform_arch.key())
         if version:
             return version
         
-        logger.error(f"No version specified for nodos on {platform_arch.key()}")
-    else:
-        logger.error(f"Missing nodos version configuration for {platform_arch.key()}")
+        # Check for 'version' key as default
+        version = nodos_config.get("version")
+        if version:
+            return version
+        
+        logger.error(f"No version specified for nodos on {platform_arch.key()} in configuration: {nodos_config}")
+        exit(1)
     
+    logger.error(f"Unexpected nodos configuration type: {type(nodos_config)}")
     exit(1)
 
 def get_nodos_version_major_minor(version):
@@ -700,23 +716,31 @@ def get_bundled_packages(bundle_info, bundles, platform_arch : PlatformArch):
     # Process packages with flat platform-arch structure
     packages_map = OrderedDict()
     for package_name, package in bundled_packages.items():
-        # Check if version is specified for this platform-arch
-        version = package.get(platform_arch.key())
-        # Optional type field
-        package_type = package.get("type")
-
-        if version:
-            # Version explicitly specified
-            pkg_data = {
+        # Handle scalar version (e.g., nos.animation: 0.3.2.b928)
+        if isinstance(package, str):
+            packages_map[package_name] = {
                 'name': package_name,
-                'version': version,
-                'type': package_type
+                'version': package,
             }
-            # Add or update the package in the map
-            packages_map[package_name] = pkg_data
-        else:
-            # No version specified for this platform-arch, skip
-            logger.warning(f"Package {package_name} not available for {platform_arch.key()}, skipping")
+            continue
+
+        # Handle dictionary-based configuration
+        if isinstance(package, dict):
+            # Check for platform-specific version override, fallback to 'version'
+            version = package.get(platform_arch.key())
+            if version is None:
+                version = package.get("version")
+
+            package_type = package.get("type")
+
+            if version:
+                packages_map[package_name] = {
+                    'name': package_name,
+                    'version': version,
+                    'type': package_type
+                }
+            else:
+                logger.warning(f"Package {package_name} has no version specified for {platform_arch.key()}, skipping")
     
     return packages_map
 

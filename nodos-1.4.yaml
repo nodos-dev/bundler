@@ -1,4 +1,6 @@
 bundles:
+- name: minimal
+  version: 0
   nodos: 1.4
   bundled_packages:
     nos.transfer: 0.1.0

@@ -203,7 +203,7 @@ bundles:
     nos.sys.mediaio:
       x86_64-windows: 0.5.0.b756
       x86_64-linux: 0.5.0.b756
-    nos.aja: 2.13.0.b866
+    nos.aja: 2.13.1.b869
     nos.app.gsplat:
       version: 0.1.2
       type: sample

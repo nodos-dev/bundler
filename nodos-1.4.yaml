@@ -55,3 +55,4 @@ bundles:
     nos.track: 3.0
     nos.display: 1.0
     nos.ndi: 2.2
+    nos.sys.lino: 2.0

@@ -56,3 +56,22 @@ bundles:
     nos.display: 1.0
     nos.ndi: 2.2
     nos.sys.lino: 2.0
+
+- name: virtual-studio
+  version: 0
+  includes:
+  - broadcast
+  bundled_packages:
+    zd.cyclorama: 2.0
+    zd.lens: 2.0
+    zd.macros: 2.0
+    zd.mediaplayer: 2.0
+    zd.mediarecorder: 2.0
+    zd.ndi: 2.0
+    zd.qrtools: 2.0
+    zd.realitykeyer: 2.0
+    zd.track: 2.0
+    zd.traxis: 2.0
+    zd.utilities: 2.0
+    zd.xrtools: 2.0
+    nos.sys.ffmpeg.deps: 7.1.0

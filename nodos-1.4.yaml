@@ -57,7 +57,7 @@ bundles:
     nos.ndi: 2.2
     nos.sys.lino: 2.0
 
-- name: virtual_studio
+- name: vs
   version: 0
   includes:
   - broadcast

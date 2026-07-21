@@ -19,7 +19,7 @@ on:
       bundle_keyword:
         description: 'Bundle Keyword'
         required: true
-        default: "broadcast"
+        default: "vs"
         type: string
       bundle_version:
         description: 'Bundle Version'

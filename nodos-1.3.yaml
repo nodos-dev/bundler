@@ -240,7 +240,7 @@ bundles:
     nos.app.gsplat:
       version: 0.1.2
       type: sample
-    nos.cinemeta: 0.1.0.b9
+    nos.cinemeta: 0.2.0.b15
     nos.math: 1.11.0.b1241
     nos.graphics: 0.6.0.b1281
     nos.filters: 1.8.1.b1281

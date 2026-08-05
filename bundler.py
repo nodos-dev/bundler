@@ -637,16 +637,41 @@ def _lookup_old_version(version_map, version_map_casefold, name):
         return old_version
     return version_map_casefold.get(name.casefold())
 
-def download_nodos(bundle_info, nodos_version):
+def create_bundle(bundle_info, bundles, nodos_version, platform_arch : PlatformArch):
+    """Brings Nodos and the bundled plugins into the workspace in one nosman call, which
+    also lists them in Profile.json. Samples are installed afterwards: they live outside
+    Module/ and do not belong in that list."""
     force_delete_folder(WORKSPACE_FOLDER)
-    logger.info("Reading Nodos version from bundle")
 
-    logger.info(f"Downloading Nodos version {nodos_version} using nosman")
-    # Download Nodos
-    result = run(["./nodos", "-w", WORKSPACE_FOLDER, "get", "--name", "nodos", "--version", nodos_version, "-y"], stdout=stdout, stderr=stderr, universal_newlines=True)
+    packages_map = get_bundled_packages(bundle_info, bundles, platform_arch)
+    samples = []
+    bundle_args = ["./nodos", "bundle", "--package", f"nodos:{nodos_version}"]
+    for package in packages_map.values():
+        if package.get("type") == "sample":
+            samples.append(package)
+            continue
+        bundle_args += ["--package", f"{package['name']}:{package['version']}"]
+    bundle_args += ["--without-deps", "--clean", "-y", "--out", WORKSPACE_FOLDER]
+
+    logger.info(f"Bundling Nodos {nodos_version} with {len(packages_map) - len(samples)} package(s)")
+    result = run(bundle_args, stdout=stdout, stderr=stderr, universal_newlines=True)
     if result.returncode != 0:
-        logger.error(f"nosman get returned with {result.returncode}")
+        logger.error(f"nosman bundle returned with {result.returncode}")
         exit(result.returncode)
+
+    if samples:
+        absolute_workspace = os.path.abspath(WORKSPACE_FOLDER)
+        os.makedirs(f"{WORKSPACE_FOLDER}/Samples/", exist_ok=True)
+        for package in samples:
+            package_name = package["name"]
+            package_version = package["version"]
+            logger.info(f"Downloading sample {package_name} version {package_version} using nosman")
+            out_dir = f"{absolute_workspace}/Samples/{package_name}"
+            result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
+            if result.returncode != 0:
+                logger.error(f"nosman install returned with {result.returncode}")
+                exit(result.returncode)
+            rename_package_prefix_folder(out_dir, package_version, resolve_package_version(package_name, package_version))
 
 def normalize_bundled_packages(bundled_packages):
     if bundled_packages is None:
@@ -743,63 +768,6 @@ def get_bundled_packages(bundle_info, bundles, platform_arch : PlatformArch):
                 logger.warning(f"Package {package_name} has no version specified for {platform_arch.key()}, skipping")
     
     return packages_map
-
-def download_packages(bundle_info, bundles, nodos_version, platform_arch : PlatformArch):
-    logger.info("Deleting old modules")
-    force_delete_folder(f"{WORKSPACE_FOLDER}/Module/")
-    force_delete_folder(f"{WORKSPACE_FOLDER}/Samples/")
-    os.makedirs(f"{WORKSPACE_FOLDER}/Module/", exist_ok=True)
-    os.makedirs(f"{WORKSPACE_FOLDER}/Samples/", exist_ok=True)
-    logger.info("Collecting module information from bundle")
-    result = run(["./nodos", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True)
-    if result.returncode != 0:
-        logger.error(f"nosman rescan returned with {result.returncode}")
-        exit(result.returncode)
-    
-    packages_map = get_bundled_packages(bundle_info, bundles, platform_arch)
-
-    downloading_packages_str = ""
-    for package in packages_map.keys():
-        downloading_packages_str += f"{package} "
-    logger.info(f"Downloading packages: {downloading_packages_str}")
-    
-    absolute_workspace = os.path.abspath(WORKSPACE_FOLDER)
-
-    included_packages = []
-    for package in packages_map.values():
-        package_name = package["name"]
-        package_version = package["version"]
-        package_type = package.get("type")
-        logger.info(f"Downloading package {package_name} version {package_version} using nosman")
-        out_dir = f"{absolute_workspace}/Module/{package_name}"
-        if package_type == "sample":
-            out_dir = f"{absolute_workspace}/Samples/{package_name}"
-        result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
-        if result.returncode != 0:
-            logger.error(f"nosman install returned with {result.returncode}")
-            exit(result.returncode)
-        resolved_version = resolve_package_version(package_name, package_version)
-        rename_package_prefix_folder(out_dir, package_version, resolved_version)
-        incl = {"name": package_name, "version": resolved_version, "type": package_type}
-        included_packages.append(incl)
-    # Write included modules to Profile.json
-    engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
-    profile_json_path = f"{absolute_workspace}/Engine/{engine_version}/Config/Profile.json"
-    profile = {}
-    loaded_plugins_key = "loaded_plugins"
-    major, minor = get_nodos_version_major_minor(nodos_version)
-    # If version lower than 1.4.0 use loaded_modules key
-    if int(major) < 1 or (int(major) == 1 and int(minor) < 4):
-        loaded_plugins_key = "loaded_modules"
-    if loaded_plugins_key not in profile:
-        profile[loaded_plugins_key] = []
-    included_plugins = []
-    for package in included_packages:
-        if "type" not in package or package["type"] != "sample":
-            included_plugins.append({"name": package["name"], "version": package["version"]})
-    profile[loaded_plugins_key].extend(included_plugins)
-    with open(f"{profile_json_path}", "w") as f:
-        json.dump(profile, f, indent=2)
 
 def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : PlatformArch):
     logger.info("Packaging Nodos")
@@ -1014,15 +982,10 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False)
     
-    parser.add_argument('--download-nodos',
+    parser.add_argument('--bundle',
                          action='store_true',
                         default=False,
-                        help="Download Nodos using nosman")
-
-    parser.add_argument('--download-packages',
-                         action='store_true',
-                        default=False,
-                        help="Download modules using nosman")
+                        help="Bring Nodos and the bundled packages into the workspace using nosman")
 
     parser.add_argument('--skip-dependency-check',
                         action='store_true',
@@ -1071,17 +1034,11 @@ if __name__ == "__main__":
         logger.error(f"Failed to read bundle info for key {args.bundle_key}")
         exit(1)
 
-    if args.download_nodos:
+    if args.bundle:
         if bundle_info is None or nodos_version is None:
-            logger.error("Bundle key and version required for --download-nodos")
+            logger.error("Bundle key and version required for --bundle")
             exit(1)
-        download_nodos(bundle_info, nodos_version)
-
-    if args.download_packages:
-        if bundle_info is None or nodos_version is None:
-            logger.error("Bundle key and version required for --download-packages")
-            exit(1)
-        download_packages(bundle_info, bundles, nodos_version, platform_arch)
+        create_bundle(bundle_info, bundles, nodos_version, platform_arch)
         if not args.skip_dependency_check:
             check_dependencies()
 

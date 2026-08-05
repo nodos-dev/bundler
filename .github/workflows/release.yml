@@ -123,15 +123,10 @@ jobs:
             chmod +x ./nodos
           fi
         working-directory: ./bundler-${{ github.ref_name }}
-      - name: Download Nodos
-        id: create_installer
+      - name: Bundle Nodos
+        id: create_bundle
         run: |
-          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --download-nodos
-        working-directory: ./bundler-${{ github.ref_name }}/
-      - name: Download Packages
-        id: download_packages
-        run: |
-          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --download-packages
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --bundle
         working-directory: ./bundler-${{ github.ref_name }}/
       - name: Create Package
         id: create_package

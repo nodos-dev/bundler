@@ -400,7 +400,7 @@ def get_semver_from_full_version(version):
 
 def resolve_package_version(package_name, package_version):
     logger.info(f"Resolving package {package_name} version {package_version} using nosman info")
-    result = run(["./nodos", "-w", WORKSPACE_FOLDER, "info", package_name, package_version, "--relaxed"],
+    result = run(["nosman", "-w", WORKSPACE_FOLDER, "info", package_name, package_version, "--relaxed"],
                  capture_output=True, text=True, env=os.environ.copy())
     if result.returncode != 0:
         logger.error(f"nosman info returned with {result.returncode}: {result.stderr}")
@@ -645,7 +645,7 @@ def create_bundle(bundle_info, bundles, nodos_version, platform_arch : PlatformA
 
     packages_map = get_bundled_packages(bundle_info, bundles, platform_arch)
     samples = []
-    bundle_args = ["./nodos", "bundle", "--package", f"nodos:{nodos_version}"]
+    bundle_args = ["nosman", "bundle", "--package", f"nodos:{nodos_version}"]
     for package in packages_map.values():
         if package.get("type") == "sample":
             samples.append(package)
@@ -667,7 +667,7 @@ def create_bundle(bundle_info, bundles, nodos_version, platform_arch : PlatformA
             package_version = package["version"]
             logger.info(f"Downloading sample {package_name} version {package_version} using nosman")
             out_dir = f"{absolute_workspace}/Samples/{package_name}"
-            result = run(["./nodos", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
+            result = run(["nosman", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
             if result.returncode != 0:
                 logger.error(f"nosman install returned with {result.returncode}")
                 exit(result.returncode)
@@ -915,7 +915,7 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
         # Use nosman to publish Nodos:
         logger.info("Running nosman publish")
         logger.info(f"Publishing bundle version {bundle_publish_version}")
-        nosman_args = [f"./nodos", "-w", WORKSPACE_FOLDER, "publish", "--path", path,
+        nosman_args = ["nosman", "-w", WORKSPACE_FOLDER, "publish", "--path", path,
                        "--name", package_name, "--version", f"{bundle_major}.{bundle_minor}.{bundle_version}", "--version-suffix", f".b{build_number}",
                        "--type", "nodos"]
         if dry_run_release:

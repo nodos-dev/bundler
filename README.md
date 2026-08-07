@@ -7,7 +7,7 @@ Nodos Bundler is a tool to bundle a nodos version with modules and release it as
 Requirements:
 
 - Python 3.7+
-- [`nodos` CLI tool](https://github.com/nodos-dev/nodos)
+- [`nosman`](https://crates.io/crates/nosman) on PATH: `cargo install nosman`
 
 Environment variables:
 

@@ -139,7 +139,7 @@ bundles:
     nos.sys.decklink: 
       x86_64-windows: 2.4.b193
     nos.decklink: 
-      x86_64-windows: 1.4.b193
+      x86_64-windows: 1.4.1.b195
 
 - name: ai
   version: 0

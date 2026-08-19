@@ -111,7 +111,11 @@ bundles:
     nos.str:
       x86_64-windows: 0.4.0.b1281
     nos.mediaio:
-      x86_64-windows: 2.12.0.b757
+      x86_64-windows: 2.13.1.b761
+    nos.decklink:
+      x86_64-windows: 1.4.2.b197
+    nos.sys.decklink:
+      x86_64-windows: 2.4.0.b193
     nos.math:
       x86_64-windows: 1.11.0.b1241
     nos.track:
@@ -136,10 +140,6 @@ bundles:
       x86_64-windows: 3.2.0.b1227
     nos.rive:
       x86_64-windows: 0.3.0.b34
-    nos.sys.decklink: 
-      x86_64-windows: 2.4.b193
-    nos.decklink: 
-      x86_64-windows: 1.4.1.b195
 
 - name: ai
   version: 0

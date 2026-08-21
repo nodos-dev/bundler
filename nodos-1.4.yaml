@@ -24,6 +24,7 @@ bundles:
     nos.filters: 3.0
     nos.math: 2.0
     nos.utilities: 4.0
+    nos.filesystem: 1.0
     nos.mediaio: 4.0
     nos.flow: 1.0
     nos.compositing: 1.0

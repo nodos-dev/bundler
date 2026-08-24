@@ -18,7 +18,7 @@ bundles:
   - minimal
   bundled_packages:
     nos.sys.shaderc: 2.1
-    nos.sys.vulkan: 8.0
+    nos.sys.vulkan: 8.0.1
     nos.audio: 1.0
     nos.sys.settings: 3.0
     nos.filters: 3.0
@@ -39,7 +39,7 @@ bundles:
     nos.rive:
       x86_64-windows: 1.0
       x86_64-linux: 0.3
-    nos.sync: 11.1
+    nos.sync: 12.0
     nos.sample.dxapp:
       version: 1.1
       type: sample
@@ -51,8 +51,8 @@ bundles:
   nodos: 1.4
   bundled_packages:
     nos.aja: 4.0
-    nos.sys.decklink: 4.0
-    nos.decklink: 3.0
+    nos.sys.decklink: 4.1
+    nos.decklink: 3.1
     nos.track: 3.0
     nos.display: 1.0
     nos.ndi: 2.2

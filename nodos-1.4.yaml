@@ -69,7 +69,6 @@ bundles:
     zd.macros: 2.0
     zd.mediaplayer: 2.0
     zd.mediarecorder: 2.0
-    zd.ndi: 2.0
     zd.qrtools: 2.0
     zd.realitykeyer: 2.0
     zd.track: 2.0

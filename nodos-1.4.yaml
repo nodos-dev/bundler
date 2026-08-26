@@ -57,7 +57,7 @@ bundles:
     nos.display: 1.0
     nos.ndi: 2.2
     nos.sys.lino: 2.0
-    nos.cef: 1.1
+    nos.cef: 1.2
 
 - name: vs
   version: 0

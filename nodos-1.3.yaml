@@ -105,7 +105,7 @@ bundles:
     nos.filesystem:
       x86_64-windows: 0.1.0.b1282
     nos.filters:
-      x86_64-windows: 1.8.1.b1281
+      x86_64-windows: 1.9.0.b1328
     nos.graphics:
       x86_64-windows: 0.6.0.b1281
     nos.str:

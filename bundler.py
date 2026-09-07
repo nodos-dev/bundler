@@ -309,42 +309,75 @@ def is_version_compatible(bundled_ver, required_ver):
         return False
     return bundled_ver >= required_ver
 
-def check_dependencies():
-    """Check that all bundled packages have their dependencies satisfied.
+def read_module_manifests():
+    """Read the package manifests under Module/.
 
-    Reads .noscfg files from downloaded modules and verifies that each
-    dependency is present in the bundle with a version >= the required minimum.
+    Returns one (path, name, version, dependencies) entry per package on disk.
+    That is what actually landed in the workspace, which is not always what the
+    bundle asked for.
     """
     module_dir = os.path.join(WORKSPACE_FOLDER, "Module")
     if not os.path.isdir(module_dir):
         logger.error(f"Module directory not found: {module_dir}")
         exit(1)
 
-    # Build map of bundled package versions: {name: version_tuple}
-    bundled_versions = {}
-    noscfg_files = glob.glob(os.path.join(module_dir, "*", "*", "*.noscfg"))
-    noscfg_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nosplugin"))
-    noscfg_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nossys"))
+    manifest_files = glob.glob(os.path.join(module_dir, "*", "*", "*.noscfg"))
+    manifest_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nosplugin"))
+    manifest_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nossys"))
 
-    package_configs = []
-    for noscfg_path in noscfg_files:
+    manifests = []
+    for manifest_path in manifest_files:
         try:
-            with open(noscfg_path, "r") as f:
+            with open(manifest_path, "r") as f:
                 config = json.load(f)
         except (json.JSONDecodeError, OSError) as e:
-            logger.warning(f"Failed to read {noscfg_path}: {e}")
+            logger.warning(f"Failed to read {manifest_path}: {e}")
             continue
 
         info = config.get("info", {})
         pkg_id = info.get("id", {})
-        pkg_name = pkg_id.get("name")
-        pkg_version = pkg_id.get("version")
+        manifests.append((manifest_path, pkg_id.get("name"), pkg_id.get("version"),
+                          info.get("dependencies", [])))
+
+    return manifests
+
+def check_bundled_packages_installed(packages_map):
+    """Check that every package the bundle asked for is in the workspace.
+
+    A package can end up listed in the profile without its files being
+    downloaded. The dependency check below only looks at what is on disk, so it
+    does not notice a missing package that nothing else depends on. The bundle
+    then ships without it and only breaks on a machine with no internet to fetch
+    it at startup.
+    """
+    installed = {package_name for _, package_name, _, _ in read_module_manifests() if package_name}
+
+    expected = [package["name"] for package in packages_map.values()
+                if package.get("type") != "sample"]
+    missing = [package_name for package_name in expected if package_name not in installed]
+
+    if missing:
+        logger.error("Bundled packages missing from the workspace:")
+        for package_name in missing:
+            logger.error(f"  - {package_name}")
+        exit(1)
+
+    logger.info(f"All {len(expected)} bundled packages are in the workspace")
+
+def check_dependencies():
+    """Check that all bundled packages have their dependencies satisfied.
+
+    Reads the manifests of the downloaded packages and verifies that each
+    dependency is present in the bundle with a version >= the required minimum.
+    """
+    # Build map of bundled package versions: {name: version_tuple}
+    bundled_versions = {}
+    package_configs = []
+    for manifest_path, pkg_name, pkg_version, deps in read_module_manifests():
         if pkg_name and pkg_version:
             bundled_versions[pkg_name] = parse_version_tuple(pkg_version)
-
-        deps = info.get("dependencies", [])
         if deps:
-            package_configs.append((noscfg_path, pkg_name, pkg_version, deps))
+            package_configs.append((manifest_path, pkg_name, pkg_version, deps))
 
     if not bundled_versions:
         logger.warning("No bundled packages found, skipping dependency check")
@@ -658,6 +691,8 @@ def create_bundle(bundle_info, bundles, nodos_version, platform_arch : PlatformA
     if result.returncode != 0:
         logger.error(f"nosman bundle returned with {result.returncode}")
         exit(result.returncode)
+
+    check_bundled_packages_installed(packages_map)
 
     if samples:
         absolute_workspace = os.path.abspath(WORKSPACE_FOLDER)

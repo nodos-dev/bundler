@@ -42,6 +42,7 @@ Bundles are configured using YAML files. Each Nodos version has its own YAML fil
 - `nodos-1.2.yaml` - Bundles for Nodos 1.2
 - `nodos-1.3.yaml` - Bundles for Nodos 1.3
 - `nodos-1.4.yaml` - Bundles for Nodos 1.4
+- `nodos-1.5.yaml` - Bundles for Nodos 1.5
 
 ### Bundle Structure
 

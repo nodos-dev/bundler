@@ -1,0 +1,76 @@
+bundles:
+- name: minimal
+  version: 0
+  nodos: 1.5
+  bundled_packages:
+    nos.transfer: 1.0.0
+    nos.sys.variables: 4.0.0
+    nos.reflect: 4.0.0
+  engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
+  plugin_index_urls:
+  - url: https://store.nodos.dev/api/v1/index
+    name: nodos
+    is_active: true
+
+- name: standard
+  version: 0
+  includes:
+  - minimal
+  bundled_packages:
+    nos.sys.shaderc: 3.0
+    nos.sys.vulkan: 9.0
+    nos.audio: 2.0
+    nos.sys.settings: 4.0
+    nos.filters: 4.0
+    nos.math: 3.0
+    nos.utilities: 5.0
+    nos.filesystem: 2.0
+    nos.mediaio: 5.0
+    nos.flow: 2.0
+    nos.compositing: 2.0
+    nos.imageprocessing: 2.0
+    nos.resource: 2.0
+    nos.webcam: 4.0
+    nos.sys.animation: 4.0
+    nos.animation: 2.0
+    nos.webrtc: 3.0
+    nos.str: 2.0
+    nos.sys.device: 3.0
+    nos.rive: 2.0
+    nos.sync: 13.0
+    nos.sample.dxapp:
+      version: 1.1
+      type: sample
+
+- name: broadcast
+  version: 0
+  includes:
+  - standard
+  nodos: 1.5
+  bundled_packages:
+    nos.aja: 5.0
+    nos.sys.decklink: 5.0
+    nos.decklink: 4.0
+    nos.track: 4.0
+    nos.display: 2.0
+    nos.ndi: 3.0
+    nos.sys.lino: 3.0
+    nos.cef: 2.0
+
+- name: vs
+  version: 0
+  includes:
+  - broadcast
+  bundled_packages:
+    zd.cyclorama: 3.0
+    zd.lens: 3.0
+    zd.macros: 3.0
+    zd.mediaplayer: 3.0
+    zd.mediarecorder: 3.0
+    zd.qrtools: 3.0
+    zd.realitykeyer: 3.0
+    zd.track: 3.0
+    zd.traxis: 3.0
+    zd.utilities: 3.0
+    zd.xrtools: 3.0
+    nos.sys.ffmpeg.deps: 7.1.0

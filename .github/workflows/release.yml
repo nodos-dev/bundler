@@ -34,6 +34,7 @@ on:
         options:
           - Windows
           - Linux
+          - macOS
       previous_release_tag:
         description: 'Previous Release Tag'
         required: false
@@ -91,10 +92,10 @@ jobs:
       - name: Setup Environment Variables
         shell: bash
         run: |
-          if [ "${{ runner.os }}" == "Linux" ]; then
-            echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
-          else
+          if [ "${{ runner.os }}" == "Windows" ]; then
             echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}\\Bundler" >> $GITHUB_ENV
+          else
+            echo "DIST_TARGET_DIR=${NOS_BUILD_DIR}/Bundler" >> $GITHUB_ENV
           fi
       - name: Update Git Credentials
         continue-on-error: true
@@ -132,7 +133,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "${{ env.DIST_TARGET_DIR }}/${{ needs.set-build-number.outputs.build_number }}"
-          copy ./Artifacts/Nodos-*.zip ${{ env.DIST_TARGET_DIR }}/${{ needs.set-build-number.outputs.build_number }}
+          copy ./Artifacts/Nodos-* ${{ env.DIST_TARGET_DIR }}/${{ needs.set-build-number.outputs.build_number }}
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Create Release
         id: release_nos_main_repo

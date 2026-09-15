@@ -30,18 +30,19 @@ bundles:
     nos.compositing: 1.0
     nos.imageprocessing: 1.0
     nos.resource: 1.0
-    nos.webcam: 3.0
+    nos.webcam:
+      x86_64-windows: 3.0
     nos.sys.animation: 3.0
     nos.animation: 1.0
-    nos.webrtc: 2.0
+    nos.webrtc:
+      x86_64-windows: 2.0
     nos.str: 1.0
     nos.sys.device: 2.0
     nos.rive:
       x86_64-windows: 1.0
-      x86_64-linux: 0.3
     nos.sync: 12.0
     nos.sample.dxapp:
-      version: 1.1
+      x86_64-windows: 1.1
       type: sample
 
 - name: broadcast
@@ -50,14 +51,19 @@ bundles:
   - standard
   nodos: 1.4
   bundled_packages:
-    nos.aja: 4.0
+    nos.aja:
+      x86_64-windows: 4.0
+      x86_64-linux: 4.0
     nos.sys.decklink: 4.1
     nos.decklink: 3.1
     nos.track: 3.0
-    nos.display: 1.0
-    nos.ndi: 2.2
+    nos.display:
+      x86_64-windows: 1.0
+    nos.ndi:
+      x86_64-windows: 2.2
     nos.sys.lino: 2.0
-    nos.cef: 1.2
+    nos.cef:
+      x86_64-windows: 1.2
 
 - name: vs
   version: 0

@@ -113,7 +113,16 @@ jobs:
       - name: Install Python Dependencies
         shell: bash
         run: |
-          pip install -r requirements.txt
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            pip install -r requirements.txt
+          else
+            # The system Python on Linux and macOS refuses packages outside a venv
+            # (PEP 668). The venv also puts a "python" command on the PATH of the
+            # steps below, which plain Ubuntu does not have.
+            python3 -m venv .venv
+            .venv/bin/pip install -r requirements.txt
+            echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          fi
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Install Nosman
         shell: bash

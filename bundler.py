@@ -24,15 +24,17 @@ class PlatformArch:
     def key(self) -> str:
         return f"{self.arch}-{self.os_name}"
     
+    # A zip entry has no room for the executable bit, which the engine binaries need,
+    # so everywhere but Windows gets a tarball. Same rule as nosman.
     def compressed_file_extension(self) -> str:
-        if self.os_name == "linux":
-            return ".tar.gz"
-        return ".zip"
+        if self.os_name == "windows":
+            return ".zip"
+        return ".tar.gz"
     
     def compression_type(self) -> str:
-        if self.os_name == "linux":
-            return "gztar"
-        return "zip"
+        if self.os_name == "windows":
+            return "zip"
+        return "gztar"
 
 class BundlesYamlLoader(yaml.SafeLoader):
     pass
@@ -80,6 +82,10 @@ def get_cur_platform_arch() -> PlatformArch:
         arch = "x86_64"
     elif arch == "arm64":
         arch = "aarch64"
+
+    # Python calls macOS "darwin"; nosman, the store and the bundle files say "macos".
+    if os_name == "darwin":
+        os_name = "macos"
     
     return PlatformArch(f"{arch}-{os_name}")
 

@@ -69,6 +69,9 @@ bundles:
   version: 0
   includes:
   - broadcast
+  # The Zero Density plugins and nos.sys.ffmpeg.deps exist for Windows only.
+  nodos:
+    x86_64-windows: 1.5
   bundled_packages:
     zd.cyclorama: 3.0
     zd.lens: 3.0

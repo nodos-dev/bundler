@@ -863,7 +863,7 @@ def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : Pla
         f"{WORKSPACE_FOLDER}"
     )
 
-def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_prev_tag, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
+def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_prev_version, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
     short_name = bundle_info.get("short_name")
     if short_name is None:
         logger.info("Missing short name in bundle info, choosing short name as bundle key")
@@ -890,8 +890,11 @@ def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_p
     resolved_modules = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") != "sample" )
     resolved_samples = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") == "sample" )
 
-    previous_tag = gh_release_prev_tag
-    if not previous_tag:
+    # The previous release is given without a platform, so the same value
+    # serves every platform of a run.
+    if gh_release_prev_version:
+        previous_tag = f"v{gh_release_prev_version}-{platform_arch.key()}"
+    else:
         previous_tag = find_latest_bundle_release_tag(releases, nodos_version, short_name, platform_arch, bundle_version)
     previous_release_info = fetch_github_release_info(release_repo, previous_tag)
     previous_release_notes = previous_release_info.get("body", "") if previous_release_info else ""
@@ -1016,10 +1019,10 @@ if __name__ == "__main__":
                         default='',
                         help="The branch to create the release on. If empty, the current branch will be used.")
 
-    parser.add_argument('--gh-release-prev-tag',
+    parser.add_argument('--gh-release-prev-version',
                         action='store',
                         default='',
-                        help="The tag of the previous release to compare against. If empty, the latest release is used.")
+                        help="The previous release to compare against, as a bundle release version like 1.3-broadcast-v4-b4711. The tag for the current platform is derived from it. If empty, the latest release is used.")
 
     parser.add_argument('--dry-run-release',
                         action='store_true',
@@ -1099,4 +1102,4 @@ if __name__ == "__main__":
         if bundle_info is None or nodos_version is None or args.bundle_key is None:
             logger.error("Bundle key and version required for --gh-release")
             exit(1)
-        create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.gh_release_prev_tag, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch)
+        create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.gh_release_prev_version, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch)

@@ -41,15 +41,14 @@ on:
         required: true
         default: true
         type: boolean
-      previous_release_tag:
-        description: 'Previous Release Tag (names one platform, so pick one platform above)'
+      previous_release_version:
+        description: 'Previous Release Version (e.g. 1.3-broadcast-v4-b4711)'
         required: false
 
 env:
   GH_USERNAME: "nodos-bot"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   GIT_EMAIL: "bot@nodos.dev"
-  PREVIOUS_RELEASE_TAG: ${{ github.event.inputs.previous_release_tag }}
   NODOS_STORE_ACCESS_TOKEN: ${{ secrets.NODOS_STORE_ACCESS_TOKEN }}
 
 # TODO: Support parallel runs
@@ -169,5 +168,5 @@ jobs:
         id: release_nos_main_repo
         shell: pwsh
         run: |
-          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" --gh-release-prev-tag="${{ github.event.inputs.previous_release_tag }}"
+          python ./bundler.py --version="${{ github.event.inputs.version}}" --bundle-key="${{ github.event.inputs.bundle_keyword}}" --bundle-version="${{ github.event.inputs.bundle_version}}" --gh-release --gh-release-repo="https://github.com/nodos-dev/bundler" --gh-release-target-branch="${{ github.ref_name }}" --gh-release-prev-version="${{ github.event.inputs.previous_release_version }}"
         working-directory: ./bundler-${{ github.ref_name }}/

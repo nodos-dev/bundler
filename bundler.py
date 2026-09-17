@@ -815,6 +815,12 @@ def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : Pla
     force_delete_folder(ARTIFACTS_FOLDER)
     # Preserve the workspace index and its cache policy; use the assembling CLI.
     run(["nosman", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True, check=True)
+    # An engine shipped without the nosman runtime library finds modules by
+    # scanning Module/ only, so a bundle around one must keep later installs
+    # out of nosman's shared cache.
+    runtime_folder = f"{WORKSPACE_FOLDER}/Toolchain/nosman"
+    if not any(os.path.exists(f"{runtime_folder}/{name}") for name in ("nosman.dll", "libnosman.so", "libnosman.dylib")):
+        run(["nosman", "-w", WORKSPACE_FOLDER, "uncache"], stdout=stdout, stderr=stderr, universal_newlines=True, check=True)
     force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
     engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
     engine_folder = f"{WORKSPACE_FOLDER}/Engine/{engine_version}"

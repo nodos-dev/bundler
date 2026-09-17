@@ -26,17 +26,23 @@ on:
         description: 'Bundle Version'
         required: false
         type: string
-      target_platform:
-        description: 'Target Platform'
+      windows:
+        description: 'Bundle for Windows'
         required: true
-        default: 'Windows'
-        type: choice
-        options:
-          - Windows
-          - Linux
-          - macOS
+        default: true
+        type: boolean
+      linux:
+        description: 'Bundle for Linux'
+        required: true
+        default: true
+        type: boolean
+      macos:
+        description: 'Bundle for macOS (Apple Silicon)'
+        required: true
+        default: true
+        type: boolean
       previous_release_tag:
-        description: 'Previous Release Tag'
+        description: 'Previous Release Tag (names one platform, so pick one platform above)'
         required: false
 
 env:
@@ -70,23 +76,38 @@ jobs:
     name: Prepare Strategy
     runs-on: [self-hosted, bundler]
     outputs:
-      runner-tags: ${{ steps.prepare-step.outputs.runner-tags }}
+      runner-list: ${{ steps.prepare-step.outputs.runner-list }}
     steps:
-      - name: Prepare Runner Tags
+      - name: Prepare Runner List
         id: prepare-step
         shell: bash
         run: |
-          runner_tags="['self-hosted', 'bundler', '${{ inputs.target_platform }}']"
-          echo Runner Tags: $runner_tags
-          echo "runner-tags=$runner_tags" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          # One label set per selected platform. The OS label is the one GitHub
+          # gives every runner, so it is the last entry and names the job.
+          runner_list="["
+          if [ "${{ inputs.windows }}" == "true" ]; then runner_list+='["self-hosted","bundler","Windows"],'; fi
+          if [ "${{ inputs.linux }}" == "true" ]; then runner_list+='["self-hosted","bundler","Linux"],'; fi
+          if [ "${{ inputs.macos }}" == "true" ]; then runner_list+='["self-hosted","bundler","macOS"],'; fi
+          runner_list="${runner_list%,}]"
+          if [ "$runner_list" == "[]" ]; then
+            echo "No platform selected, so there is nothing to bundle"
+            exit 1
+          fi
+          echo Runners: $runner_list
+          echo "runner-list=$runner_list" >> $GITHUB_OUTPUT
 
   bundle:
-    name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }})
+    strategy:
+      matrix:
+        runner: ${{ fromJson(needs.prepare-strategy.outputs.runner-list) }}
+      fail-fast: false
+    name: Bundle Nodos (${{ github.event.inputs.version }} - ${{ github.event.inputs.bundle_keyword }}) (${{ matrix.runner[2] }})
     permissions:
       contents: write  # Required for creating releases
     env:
         BUILD_NUMBER: ${{ needs.set-build-number.outputs.build_number }}
-    runs-on: ${{ fromJson(needs.prepare-strategy.outputs.runner-tags) }}
+    runs-on: ${{ matrix.runner }}
     needs: [prepare-strategy, set-build-number]
     steps:
       - name: Setup Environment Variables

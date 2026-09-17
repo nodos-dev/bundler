@@ -813,8 +813,8 @@ def get_bundled_packages(bundle_info, bundles, platform_arch : PlatformArch):
 def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : PlatformArch):
     logger.info("Packaging Nodos")
     force_delete_folder(ARTIFACTS_FOLDER)
-    force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman")
-    run([f"{WORKSPACE_FOLDER}/nodos", "-w", WORKSPACE_FOLDER, "init"], stdout=stdout, stderr=stderr, universal_newlines=True)
+    # Preserve the workspace index and its cache policy; use the assembling CLI.
+    run(["nosman", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True, check=True)
     force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
     engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
     engine_folder = f"{WORKSPACE_FOLDER}/Engine/{engine_version}"

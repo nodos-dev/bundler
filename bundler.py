@@ -1,11 +1,9 @@
 import argparse
-from subprocess import CompletedProcess, call, run, CalledProcessError
+from subprocess import run, CalledProcessError
 from sys import stderr, stdout
 from loguru import logger
 import os
-import shutil
 import yaml
-import glob
 import platform
 import json
 import re
@@ -15,6 +13,8 @@ from collections import OrderedDict
 WORKSPACE_FOLDER = "./workspace"
 ARTIFACTS_FOLDER = "./Artifacts/"
 
+SUPPORTED_PLATFORM_KEYS = ("x86_64-windows", "x86_64-linux", "aarch64-linux", "aarch64-macos")
+
 class PlatformArch:
     def __init__(self, arch_os_key: str):
         parts = arch_os_key.split("-")
@@ -23,23 +23,21 @@ class PlatformArch:
 
     def key(self) -> str:
         return f"{self.arch}-{self.os_name}"
-    
-    # A zip entry has no room for the executable bit, which the engine binaries need,
-    # so everywhere but Windows gets a tarball. Same rule as nosman.
-    def compressed_file_extension(self) -> str:
-        if self.os_name == "windows":
-            return ".zip"
-        return ".tar.gz"
-    
-    def compression_type(self) -> str:
-        if self.os_name == "windows":
-            return "zip"
-        return "gztar"
 
 class BundlesYamlLoader(yaml.SafeLoader):
     pass
 
 def _remove_implicit_resolver(loader_cls, tag_to_remove):
+    # yaml_implicit_resolvers belongs to yaml.resolver.Resolver, a mixin shared by
+    # every loader and dumper, not just this loader. Without its own copy here,
+    # mutating it below edits that one shared dict in place: it would disable
+    # int/float parsing for every yaml.safe_load() in the process, and on the way
+    # out it would let the dumper stop quoting a version string that reads like a
+    # number (e.g. "5.0"), which then loads back as a float instead of a string.
+    if "yaml_implicit_resolvers" not in loader_cls.__dict__:
+        loader_cls.yaml_implicit_resolvers = {
+            ch: list(resolvers) for ch, resolvers in loader_cls.yaml_implicit_resolvers.items()
+        }
     for ch, resolvers in list(loader_cls.yaml_implicit_resolvers.items()):
         loader_cls.yaml_implicit_resolvers[ch] = [
             resolver for resolver in resolvers if resolver[0] != tag_to_remove
@@ -59,10 +57,28 @@ def load_bundles_data(path):
         exit(1)
     return bundles_data
 
+def is_cwd_or_an_ancestor(path):
+    """True if path resolves to the current directory or one of its parents. Guards
+    force_delete_folder: a wrong or empty --out-dir must never delete the directory the
+    bundler is running from, or something above it."""
+    target = os.path.abspath(path)
+    current = os.path.abspath(".")
+    while True:
+        if current == target:
+            return True
+        parent = os.path.dirname(current)
+        if parent == current:
+            return False
+        current = parent
+
 def force_delete_folder(folder_path):
     """Forcefully deletes a folder, handling permission issues."""
     if not os.path.exists(folder_path):
         return
+    if is_cwd_or_an_ancestor(folder_path):
+        logger.error(f"Refusing to delete {folder_path}: it is the current directory or "
+                     f"one of its parents")
+        exit(1)
 
     try:
         if os.name == "nt":  # Windows
@@ -70,7 +86,8 @@ def force_delete_folder(folder_path):
         else:  # Linux/macOS
             run(["rm", "-rf", folder_path], check=True)
     except CalledProcessError as e:
-        print(f"Error deleting {folder_path}: {e}", file=stderr)
+        logger.error(f"Error deleting {folder_path}: {e}")
+        exit(1)
 
 def get_cur_platform_arch() -> PlatformArch:
     """Get the platform-arch key (x86_64-windows, x86_64-linux, aarch64-linux, etc.)"""
@@ -86,24 +103,27 @@ def get_cur_platform_arch() -> PlatformArch:
     # Python calls macOS "darwin"; nosman, the store and the bundle files say "macos".
     if os_name == "darwin":
         os_name = "macos"
-    
-    return PlatformArch(f"{arch}-{os_name}")
 
-def getenv(var_name, fail_on_missing=True):
-    val = os.getenv(var_name)
-    if val is None:
-        logger.error(f"Environment variable {var_name} is not set!")
-        if fail_on_missing:
+    key = f"{arch}-{os_name}"
+    if key not in SUPPORTED_PLATFORM_KEYS:
+        logger.error(f"Unsupported host platform: {key}. The bundler runs on one of: "
+                     f"{', '.join(SUPPORTED_PLATFORM_KEYS)}")
+        exit(1)
+    return PlatformArch(key)
+
+def parse_platform_keys(platforms_arg):
+    """The requested --platforms as PlatformArch objects, in the order given, or the host
+    platform when nothing was given. Exits 1 naming the first key that is not one of the
+    four supported platform ids."""
+    if not platforms_arg:
+        return [get_cur_platform_arch()]
+    keys = [key.strip() for key in platforms_arg.split(",") if key.strip()]
+    for key in keys:
+        if key not in SUPPORTED_PLATFORM_KEYS:
+            logger.error(f"Unsupported platform: {key}. Supported platforms are: "
+                         f"{', '.join(SUPPORTED_PLATFORM_KEYS)}")
             exit(1)
-        else:
-            return None
-    return val
-
-def run_dry_runnable(args, dry_run):
-    if dry_run:
-        logger.info("Dry run: %s" % " ".join(args))
-        return CompletedProcess(args, 0, "", "")
-    return run(args, capture_output=True, text=True, env=os.environ.copy())
+    return [PlatformArch(key) for key in keys]
 
 def get_build_number():
     build_number = os.getenv('BUILD_NUMBER')
@@ -245,44 +265,16 @@ def get_inheritable_value(bundle_info, key, bundles):
 
 
 
-def get_nodos_version(bundle_info, bundles, platform_arch: PlatformArch):
-    """Get the nodos version for a bundle.
-
-    Reads version from bundle_info['nodos'].
-    Supports:
-    - Scalar: nodos: 1.4
-    - Dict with version key: nodos: {version: 1.4}
-    - Dict with platform keys: nodos: {x86_64-windows: 1.4}
-    
-    Args:
-        bundle_info: Bundle configuration dict
-        bundles: All bundles dict  
-        platform_arch: PlatformArch
-    """
-    
-    # Check if nodos dict has version info
+def find_nodos_version(bundle_info, bundles, platform_arch : PlatformArch):
+    """The Nodos version a bundle asks for on one platform, or None when it asks for
+    none there. A bundle with no Nodos version on a platform is not published for it."""
     nodos_config = get_inheritable_value(bundle_info, "nodos", bundles)
     if not nodos_config:
-        logger.error(f"Missing nodos version configuration for {platform_arch.key()}")
-        exit(1)
-
+        return None
     if isinstance(nodos_config, str):
         return nodos_config
-
     if isinstance(nodos_config, dict):
-        # Check if platform-specific version is provided
-        version = nodos_config.get(platform_arch.key())
-        if version:
-            return version
-        
-        # Check for 'version' key as default
-        version = nodos_config.get("version")
-        if version:
-            return version
-        
-        logger.error(f"No version specified for nodos on {platform_arch.key()} in configuration: {nodos_config}")
-        exit(1)
-    
+        return nodos_config.get(platform_arch.key()) or nodos_config.get("version")
     logger.error(f"Unexpected nodos configuration type: {type(nodos_config)}")
     exit(1)
 
@@ -299,269 +291,136 @@ def get_nodos_version_major_minor(version):
     minor = version_parts[1]
     return major, minor
 
-def parse_version_tuple(version_str):
-    """Parse a version string into a tuple of integers for comparison.
+NODOS_PACKAGE_NAME = "nodos"
 
-    Handles formats like "6.0.0", "3.1", "2.7.0.b789" (build suffix stripped).
-    """
-    # Strip build suffix (e.g., ".b789")
-    version_str = re.sub(r'\.b\d+$', '', version_str)
-    parts = version_str.split(".")
-    return tuple(int(p) for p in parts)
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
-def is_version_compatible(bundled_ver, required_ver):
-    """Check semver compatibility: major must match, then minor.patch must be >=."""
-    if bundled_ver[0] != required_ver[0]:
-        return False
-    return bundled_ver >= required_ver
+# A release with no platform group applies to every target platform.
+ANY_PLATFORM = "any"
 
-def read_module_manifests():
-    """Read the package manifests under Module/.
+# `nosman list --store` prints a "Nodos Store versions" header, then one indented
+# "  <version>" line per release, each optionally followed by a "(<platform>)" group
+# and whatever else it knows about the release. Only the first two groups are read;
+# a release with no platform group matches ANY_PLATFORM. The version must start with
+# a digit so the header line itself is never mistaken for a release.
+STORE_RELEASE_LINE = re.compile(r"^\s*(\d\S*)(?:\s+\(([0-9a-z_]+-[a-z]+)\))?")
 
-    Returns one (path, name, version, dependencies) entry per package on disk.
-    That is what actually landed in the workspace, which is not always what the
-    bundle asked for.
-    """
-    module_dir = os.path.join(WORKSPACE_FOLDER, "Module")
-    if not os.path.isdir(module_dir):
-        logger.error(f"Module directory not found: {module_dir}")
-        exit(1)
+_store_releases_cache = {}
 
-    manifest_files = glob.glob(os.path.join(module_dir, "*", "*", "*.noscfg"))
-    manifest_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nosplugin"))
-    manifest_files += glob.glob(os.path.join(module_dir, "*", "*", "*.nossys"))
-
-    manifests = []
-    for manifest_path in manifest_files:
-        try:
-            with open(manifest_path, "r") as f:
-                config = json.load(f)
-        except (json.JSONDecodeError, OSError) as e:
-            logger.warning(f"Failed to read {manifest_path}: {e}")
-            continue
-
-        info = config.get("info", {})
-        pkg_id = info.get("id", {})
-        manifests.append((manifest_path, pkg_id.get("name"), pkg_id.get("version"),
-                          info.get("dependencies", [])))
-
-    return manifests
-
-def check_bundled_packages_installed(packages_map):
-    """Check that every package the bundle asked for is in the workspace.
-
-    A package can end up listed in the profile without its files being
-    downloaded. The dependency check below only looks at what is on disk, so it
-    does not notice a missing package that nothing else depends on. The bundle
-    then ships without it and only breaks on a machine with no internet to fetch
-    it at startup.
-    """
-    installed = {package_name for _, package_name, _, _ in read_module_manifests() if package_name}
-
-    expected = [package["name"] for package in packages_map.values()
-                if package.get("type") != "sample"]
-    missing = [package_name for package_name in expected if package_name not in installed]
-
-    if missing:
-        logger.error("Bundled packages missing from the workspace:")
-        for package_name in missing:
-            logger.error(f"  - {package_name}")
-        exit(1)
-
-    logger.info(f"All {len(expected)} bundled packages are in the workspace")
-
-def check_dependencies():
-    """Check that all bundled packages have their dependencies satisfied.
-
-    Reads the manifests of the downloaded packages and verifies that each
-    dependency is present in the bundle with a version >= the required minimum.
-    """
-    # Build map of bundled package versions: {name: version_tuple}
-    bundled_versions = {}
-    package_configs = []
-    for manifest_path, pkg_name, pkg_version, deps in read_module_manifests():
-        if pkg_name and pkg_version:
-            bundled_versions[pkg_name] = parse_version_tuple(pkg_version)
-        if deps:
-            package_configs.append((manifest_path, pkg_name, pkg_version, deps))
-
-    if not bundled_versions:
-        logger.warning("No bundled packages found, skipping dependency check")
+def ensure_workspace():
+    """A nosman workspace for the store calls to run in. Nothing is installed into it;
+    it only gives nosman somewhere to keep its index and credentials."""
+    if os.path.exists(f"{WORKSPACE_FOLDER}/.nosman/index"):
         return
-
-    logger.info(f"Checking dependencies for {len(package_configs)} packages with dependencies")
-
-    errors = []
-    for noscfg_path, pkg_name, pkg_version, deps in package_configs:
-        for dep in deps:
-            dep_name = dep.get("name")
-            dep_min_version = dep.get("version")
-            if not dep_name or not dep_min_version:
-                continue
-
-            if dep_name not in bundled_versions:
-                errors.append(
-                    f"{pkg_name} ({pkg_version}) requires {dep_name} >= {dep_min_version}, "
-                    f"but {dep_name} is not in the bundle"
-                )
-                continue
-
-            bundled_ver = bundled_versions[dep_name]
-            required_ver = parse_version_tuple(dep_min_version)
-            if not is_version_compatible(bundled_ver, required_ver):
-                bundled_ver_str = ".".join(str(p) for p in bundled_ver)
-                errors.append(
-                    f"{pkg_name} ({pkg_version}) requires {dep_name} ~{dep_min_version}, "
-                    f"but bundle has {dep_name} {bundled_ver_str}"
-                )
-
-    if errors:
-        logger.error("Unsatisfied dependencies found:")
-        for error in errors:
-            logger.error(f"  - {error}")
-        exit(1)
-
-    logger.info("All dependencies satisfied")
-
-def get_semver_from_full_version(version):
-    if version is None:
-        logger.error("Missing version info. Make sure to set VERSION")
-        exit(1)
-    version_parts = version.split(".")
-    if len(version_parts) < 3:
-        logger.error(f"Invalid version format: {version}")
-        exit(1)
-    # First 3 parts are major, minor, patch
-    major = version_parts[0]
-    minor = version_parts[1]
-    patch = version_parts[2]
-    return major, minor, patch
-
-def resolve_package_version(package_name, package_version):
-    logger.info(f"Resolving package {package_name} version {package_version} using nosman info")
-    result = run(["nosman", "-w", WORKSPACE_FOLDER, "info", package_name, package_version, "--relaxed"],
-                 capture_output=True, text=True, env=os.environ.copy())
+    os.makedirs(WORKSPACE_FOLDER, exist_ok=True)
+    result = run(["nosman", "-w", WORKSPACE_FOLDER, "init", "--allow-nested"],
+                 stdout=stdout, stderr=stderr, universal_newlines=True)
     if result.returncode != 0:
-        logger.error(f"nosman info returned with {result.returncode}: {result.stderr}")
+        logger.error(f"nosman init returned with {result.returncode}")
         exit(result.returncode)
-    try:
-        info = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        logger.error(f"Failed to parse nosman info output for {package_name} {package_version}: {exc}")
-        exit(1)
-    resolved_version = info.get("info", {}).get("id", {}).get("version")
-    if not resolved_version:
-        logger.error(f"Failed to resolve version for {package_name} {package_version}")
-        exit(1)
-    if resolved_version != package_version:
-        logger.info(f"Resolved {package_name} {package_version} -> {resolved_version}")
-    return resolved_version
 
-def resolve_package_versions(packages):
-    resolved = OrderedDict()
-    for pkg_name, pkg_data in packages.items():
-        resolved_version = resolve_package_version(pkg_name, pkg_data["version"])
-        resolved[pkg_name] = {"name": pkg_name, "version": resolved_version, "type": pkg_data.get("type")}
-    return resolved
-
-def rename_package_prefix_folder(base_dir, requested_version, resolved_version):
-    if requested_version == resolved_version:
-        return
-    old_path = os.path.join(base_dir, requested_version)
-    new_path = os.path.join(base_dir, resolved_version)
-    if not os.path.isdir(old_path):
-        logger.warning(f"Expected package folder not found: {old_path}")
-        return
-    if os.path.exists(new_path):
-        logger.warning(f"Resolved package folder already exists: {new_path}")
-        return
-    shutil.move(old_path, new_path)
-
-def read_profile_plugins(workspace_folder, nodos_version):
-    engine_version = resolve_nodos_engine_version(workspace_folder, nodos_version)
-    profile_json_path = f"{os.path.abspath(workspace_folder)}/Engine/{engine_version}/Config/Profile.json"
-    if not os.path.exists(profile_json_path):
-        return []
-    with open(profile_json_path, "r") as f:
-        profile = json.load(f)
-    loaded_plugins = profile.get("loaded_plugins")
-    if loaded_plugins is None:
-        loaded_plugins = profile.get("loaded_modules")
-    if loaded_plugins is None:
-        return []
-    return loaded_plugins
-
-def resolve_nodos_engine_version(workspace_folder, nodos_version):
-    engine_root = os.path.join(workspace_folder, "Engine")
-    exact_path = os.path.join(engine_root, nodos_version)
-    if os.path.isdir(exact_path):
-        return nodos_version
-    if not os.path.isdir(engine_root):
-        logger.error(f"Nodos Engine folder not found: {engine_root}")
-        exit(1)
-    candidates = []
-    prefix = f"{nodos_version}."
-    for name in os.listdir(engine_root):
-        full_path = os.path.join(engine_root, name)
-        if os.path.isdir(full_path) and name.startswith(prefix):
-            candidates.append(name)
-    if len(candidates) == 1:
-        logger.info(f"Resolved Nodos Engine version {nodos_version} to {candidates[0]}")
-        return candidates[0]
-    if len(candidates) > 1:
-        logger.error(f"Multiple Nodos Engine versions match {nodos_version}: {', '.join(candidates)}")
-    else:
-        logger.error(f"No Nodos Engine version matches {nodos_version} under {engine_root}")
-    exit(1)
-
-def get_release_artifacts(dir, platform_arch : PlatformArch):
-    files = glob.glob(f"{dir}/*{platform_arch.compressed_file_extension()}")
-    return files
-
-def list_github_releases(gh_release_repo):
-    ghargs = ["gh", "release", "list", "--limit", "200", "--json", "tagName,createdAt"]
-    if gh_release_repo:
-        ghargs.extend(["--repo", gh_release_repo])
-    result = run(ghargs, capture_output=True, text=True, env=os.environ.copy())
+def list_store_releases(package_name):
+    """Every release of a package on the store, as (version, platform) pairs. A
+    release with no platform group is paired with ANY_PLATFORM."""
+    if package_name in _store_releases_cache:
+        return _store_releases_cache[package_name]
+    ensure_workspace()
+    logger.info(f"Listing {package_name} releases on the store")
+    result = run(["nosman", "-w", WORKSPACE_FOLDER, "list", "--store", "-p", package_name],
+                 capture_output=True, text=True)
     if result.returncode != 0:
-        logger.warning(f"Failed to list GitHub releases: {result.stderr.strip()}")
-        return []
-    try:
-        releases = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        logger.warning(f"Failed to parse GitHub release list: {exc}")
-        return []
+        logger.error(f"nosman list returned with {result.returncode}: {result.stderr}")
+        exit(result.returncode)
+    releases = []
+    for line in result.stdout.splitlines():
+        match = STORE_RELEASE_LINE.match(ANSI_ESCAPE.sub("", line))
+        if match is not None:
+            release_platform = match.group(2) if match.group(2) is not None else ANY_PLATFORM
+            releases.append((match.group(1), release_platform))
+    if len(releases) == 0:
+        # nosman warns on stderr and exits 0 when the store or auth call fails, so a
+        # failed listing looks just like a package with no releases. Treat finding
+        # nothing as a failure instead of silently resolving no version anywhere.
+        logger.error(f"nosman list returned no releases for {package_name}")
+        logger.error(f"stdout: {result.stdout}")
+        logger.error(f"stderr: {result.stderr}")
+        exit(1)
+    _store_releases_cache[package_name] = releases
     return releases
 
-def _matches_nodos_major_minor(tag, major, minor):
-    prefix = f"v{major}.{minor}"
-    if not tag.startswith(prefix):
-        return False
-    if len(tag) == len(prefix):
-        return True
-    return tag[len(prefix)] in [".", "-"]
+def _parse_store_version(version_str):
+    """Split a store version or version prefix into its numeric parts and an
+    optional build number, matching nosman's SemVer parsing (index.rs:168-174): a
+    fourth part, written "bNNN" or as a plain integer, is the build number, so
+    "1.2.3.4" and "1.2.3.b4" name the same version. Raises ValueError if a numeric
+    part is not an integer.
+    """
+    parts = version_str.split(".")
+    if len(parts) > 4:
+        raise ValueError(f"{version_str} has more than four parts")
+    build_number = None
+    if len(parts) > 3:
+        build_part = parts[3][1:] if parts[3].startswith("b") else parts[3]
+        build_number = int(build_part)
+        parts = parts[:3]
+    return tuple(int(p) for p in parts), build_number
 
-def _matches_bundle_release_tag(tag, major, minor, short_name, platform_arch : PlatformArch, bundle_version=None):
-    platform_suffix = f"-{platform_arch.key()}"
-    if not _matches_nodos_major_minor(tag, major, minor):
-        return False
-    if not tag.endswith(platform_suffix):
-        return False
-    tag_without_platform = tag[:-len(platform_suffix)]
-    if tag_without_platform.endswith(f"-{short_name}"):
-        return bundle_version is None or bundle_version == 1
-    if bundle_version is None:
-        return f"-{short_name}-v" in tag_without_platform
-    return f"-{short_name}-v{bundle_version}-" in tag_without_platform
+def version_sort_key(version):
+    """Orders store versions oldest first. The build number separates two releases
+    that share a semantic version."""
+    numeric_parts, build_number = _parse_store_version(version)
+    return (numeric_parts, build_number if build_number is not None else 0)
 
-def find_matching_bundle_releases(releases, nodos_version, short_name, platform_arch : PlatformArch, bundle_version=None):
-    major, minor = get_nodos_version_major_minor(nodos_version)
-    matching_releases = [
-        release for release in releases
-        if _matches_bundle_release_tag(release.get("tagName", ""), major, minor, short_name, platform_arch, bundle_version)
-    ]
-    matching_releases.sort(key=lambda release: release.get("createdAt", ""), reverse=True)
-    return matching_releases
+def version_matches_prefix(version, prefix):
+    """True if version matches prefix the way nosman's SemVer::matches_prefix does:
+    major must match, and each further part the prefix carries (minor, patch, build)
+    must equal version's. A prefix that carries a build number is an exact pin: it
+    matches only that build, not every build sharing the same major.minor.patch.
+    """
+    version_parts, version_build = _parse_store_version(version)
+    prefix_parts, prefix_build = _parse_store_version(prefix)
+    if version_parts[:len(prefix_parts)] != prefix_parts:
+        return False
+    if prefix_build is not None and version_build != prefix_build:
+        return False
+    return True
+
+def version_prefixes_agree(a, b):
+    """True when two version prefixes can name the same release: every part they both
+    write is equal. "1.5" agrees with "1.5.0" and "1.5.0.b4711"; "1.5" and "1.6" do
+    not, nor do "1.5.0.b1" and "1.5.0.b2". Raises ValueError on an unparseable part."""
+    a_parts, a_build = _parse_store_version(a)
+    b_parts, b_build = _parse_store_version(b)
+    common = min(len(a_parts), len(b_parts))
+    if a_parts[:common] != b_parts[:common]:
+        return False
+    if a_build is not None and b_build is not None and a_build != b_build:
+        return False
+    return True
+
+def resolve_package_version(package_name, version_prefix, platform_arch : PlatformArch):
+    """The newest release of a package matching a version prefix on one platform, or
+    None when that platform has none."""
+    try:
+        _parse_store_version(version_prefix)
+    except ValueError:
+        logger.error(f"Cannot parse version prefix for {package_name}: {version_prefix}")
+        exit(1)
+    candidates = []
+    for version, release_platform in list_store_releases(package_name):
+        if release_platform != ANY_PLATFORM and release_platform != platform_arch.key():
+            continue
+        try:
+            if version_matches_prefix(version, version_prefix):
+                candidates.append(version)
+        except ValueError:
+            logger.warning(f"Skipping {package_name} release with an unparseable version: {version}")
+    if len(candidates) == 0:
+        return None
+    resolved = max(candidates, key=version_sort_key)
+    if resolved != version_prefix:
+        logger.info(f"Resolved {package_name} {version_prefix} -> {resolved} for {platform_arch.key()}")
+    return resolved
 
 def get_bundle_version(bundle_info):
     bundle_version = bundle_info.get("version")
@@ -570,98 +429,433 @@ def get_bundle_version(bundle_info):
         exit(1)
     return normalize_bundle_version(bundle_version)
 
-def get_bundle_release_version(nodos_version, short_name, bundle_version):
-    major, minor = get_nodos_version_major_minor(nodos_version)
-    return f"{major}.{minor}-{short_name}-v{bundle_version}"
-
-def get_bundle_release_name(nodos_version, short_name, bundle_version, build_number, platform_arch : PlatformArch):
-    bundle_release_version = get_bundle_release_version(nodos_version, short_name, bundle_version)
-    return f"{bundle_release_version}-b{build_number}-{platform_arch.key()}"
-
 def get_bundle_publish_version(nodos_version, bundle_version, build_number):
     major, minor = get_nodos_version_major_minor(nodos_version)
     return f"{major}.{minor}.{bundle_version}.b{build_number}"
 
-def find_latest_bundle_release_tag(releases, nodos_version, short_name, platform_arch : PlatformArch, bundle_version=None):
-    matching_releases = find_matching_bundle_releases(releases, nodos_version, short_name, platform_arch, bundle_version)
-    if len(matching_releases) == 0:
-        return ""
-    tag = matching_releases[0].get("tagName", "")
-    if tag:
-        logger.info(f"Found matching release tag: {tag}")
-    return tag
+BUNDLE_MANIFEST_SCHEMA_VERSION = 1
 
-def fetch_github_release_info(gh_release_repo, release_tag):
-    if not release_tag:
-        return {}
-    ghargs = ["gh", "release", "view"]
-    if release_tag:
-        ghargs.append(release_tag)
-    ghargs.extend(["--json", "body,name,url,tagName"])
-    if gh_release_repo:
-        ghargs.extend(["--repo", gh_release_repo])
-    result = run(ghargs, capture_output=True, text=True, env=os.environ.copy())
-    if result.returncode != 0:
-        logger.warning(f"Failed to fetch GitHub release info: {result.stderr.strip()}")
-        return {}
-    try:
-        payload = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        logger.warning(f"Failed to parse GitHub release info: {exc}")
-        return {}
-    return payload
+def get_bundle_package_name(bundle_info):
+    package_name = bundle_info.get("package_name")
+    if package_name is not None:
+        return package_name
+    short_name = bundle_info.get("short_name")
+    if short_name is None:
+        short_name = bundle_info.get("name")
+    return f"nodos.bundle.{short_name}"
 
-def _parse_name_version_line(line):
-    match = re.match(r"(.+?)\s*[:\-]\s*(.+)$", line)
-    if match is None:
-        match = re.match(r"(.+?)\s+([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", line)
-        if match is None:
-            return None, None
-        return match.group(1).strip(), match.group(2).strip()
-    name = match.group(1).strip()
-    version_part = match.group(2).strip()
-    version_match = re.match(
-        r"([0-9A-Za-z][0-9A-Za-z\.\-+_]*)(?:\s*<-\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*))?(?:\s*\([^)]+\))?$",
-        version_part,
-    )
-    if version_match is None:
-        return None, None
-    return name, version_match.group(1).strip()
+def bundle_chain(bundle_info, bundles):
+    """Every bundle a bundle needs, each before the bundles that include it, ending with
+    the bundle itself. This is the order the manifests are published in."""
+    chain = []
+    visited = set()
+    in_progress_names = []
+    in_progress = set()
 
-def parse_release_notes_versions(release_notes_text):
-    versions = {"engine": None, "modules": {}, "samples": {}}
-    if not release_notes_text:
-        return versions
-    section = None
-    for line in release_notes_text.splitlines():
-        stripped = line.strip()
-        if not stripped:
+    def visit(info):
+        identity = (info.get("name"), get_bundle_version(info))
+        if identity in visited:
+            return
+        if identity in in_progress:
+            cycle = in_progress_names + [info.get("name")]
+            logger.error(f"Include cycle: {' -> '.join(cycle)}")
+            exit(1)
+        in_progress.add(identity)
+        in_progress_names.append(info.get("name"))
+        for include_ref in info.get("includes", []):
+            included = resolve_included_bundle_info(include_ref, bundles, get_bundle_version(info))
+            if included is None:
+                logger.error(f"Included bundle {format_include_ref(include_ref)} not found in bundles")
+                exit(1)
+            visit(included)
+        in_progress_names.pop()
+        in_progress.discard(identity)
+        visited.add(identity)
+        chain.append(info)
+
+    visit(bundle_info)
+
+    # Two entries with one package name would publish two versions of it and pin
+    # whichever came last, whatever the includer asked for.
+    by_package_name = {}
+    for info in chain:
+        package_name = get_bundle_package_name(info)
+        if package_name in by_package_name:
+            logger.error(
+                f"{bundle_info.get('name')} would publish {package_name} at two bundle "
+                f"versions: {get_bundle_version(by_package_name[package_name])} and "
+                f"{get_bundle_version(info)}. Make its includes agree on one.")
+            exit(1)
+        by_package_name[package_name] = info
+    return chain
+
+# The folder patterns a manifest groups its packages under, in the order they are
+# written. {name} and {version} are filled in per package by whoever installs it.
+MODULE_PATTERN = "Module/{name}/{version}"
+SAMPLE_PATTERN = "Samples/{name}"
+PACKAGE_PATTERNS = (MODULE_PATTERN, SAMPLE_PATTERN)
+
+def package_pattern(package):
+    if package.get("type") == "sample":
+        return SAMPLE_PATTERN
+    return MODULE_PATTERN
+
+def member_path(pattern, name, version):
+    return pattern.replace("{name}", name).replace("{version}", version)
+
+def check_nodos_pin(bundle_info, bundles, platform_arch : PlatformArch, nodos_version):
+    """A bundle that includes another one takes its Nodos release from an include-less
+    base in its chain: its own pin if it has one, or whichever base resolves first
+    otherwise. Two different include-less bases disagreeing, or an own pin disagreeing
+    with a base, would put two Nodos releases in the expansion, which the store refuses,
+    so say so before anything is published, whether or not this bundle pins one itself."""
+    own_pin = bundle_info.get("nodos") is not None
+    for included in bundle_chain(bundle_info, bundles)[:-1]:
+        if len(included.get("includes", [])) > 0:
             continue
-        lower = stripped.lower()
-        if lower.startswith("###"):
-            if "engine" in lower:
-                section = "engine"
-            elif "modules" in lower or "plugins" in lower:
-                section = "modules"
-            elif "samples" in lower:
-                section = "samples"
+        base_version = find_nodos_version(included, bundles, platform_arch)
+        if base_version is None:
+            # This base has no Nodos version on this platform at all, so it says
+            # nothing about whether the pin is right; keep checking the other bases.
+            continue
+        try:
+            agree = version_prefixes_agree(base_version, nodos_version)
+        except ValueError:
+            logger.error(f"Cannot parse a Nodos version of {bundle_info.get('name')} or "
+                         f"{included.get('name')}: {nodos_version}, {base_version}")
+            exit(1)
+        if not agree:
+            if own_pin:
+                logger.error(
+                    f"{bundle_info.get('name')} pins Nodos {nodos_version} but takes "
+                    f"{base_version} from {included.get('name')}. Move the pin to "
+                    f"{included.get('name')} or drop it.")
             else:
-                section = None
+                logger.error(
+                    f"{bundle_info.get('name')} would take two different Nodos versions "
+                    f"from its includes: {nodos_version} and {base_version} from "
+                    f"{included.get('name')}. Pin one Nodos version on "
+                    f"{bundle_info.get('name')} or make its includes agree.")
+            exit(1)
+
+def check_no_conflicting_packages(bundle_info, bundles, platform_arch : PlatformArch):
+    """A bundle's expanded member set is its own bundled packages plus every bundle it
+    includes, however deeply. A package pinned at two different versions somewhere in
+    that set would collide on the same Module/<name>/<version> path, or leave two
+    versions installed side by side, so refuse it before anything is written."""
+    resolved_by_name = {}
+    for info in bundle_chain(bundle_info, bundles):
+        for package in get_own_bundled_packages(info, platform_arch).values():
+            resolved = resolve_package_version(package["name"], package["version"], platform_arch)
+            if resolved is None:
+                continue
+            owner = info.get("name")
+            if package["name"] not in resolved_by_name:
+                resolved_by_name[package["name"]] = (owner, resolved)
+                continue
+            prev_owner, prev_version = resolved_by_name[package["name"]]
+            if prev_version != resolved:
+                logger.error(
+                    f"{bundle_info.get('name')} would install two versions of "
+                    f"{package['name']}: {prev_version} from {prev_owner} and "
+                    f"{resolved} from {owner}.")
+                exit(1)
+
+def build_bundle_manifest(bundle_info, bundles, platform_arch : PlatformArch, published_versions):
+    """The manifest for one bundle on one platform, or None when the bundle has no Nodos
+    version there. published_versions holds the version this run publishes for each
+    bundle, keyed by package name."""
+    nodos_version = find_nodos_version(bundle_info, bundles, platform_arch)
+    if nodos_version is None:
+        return None
+
+    # Plain dicts: yaml.safe_dump cannot represent an OrderedDict, and dicts keep
+    # insertion order, which is the order the keys are written in.
+    manifest = {"schema_version": BUNDLE_MANIFEST_SCHEMA_VERSION}
+    include_refs = bundle_info.get("includes", [])
+    if len(include_refs) == 0:
+        resolved = resolve_package_version(NODOS_PACKAGE_NAME, nodos_version, platform_arch)
+        if resolved is None:
+            logger.error(f"No {NODOS_PACKAGE_NAME} release matches {nodos_version} on {platform_arch.key()}")
+            exit(1)
+        manifest["nodos"] = resolved
+    else:
+        check_nodos_pin(bundle_info, bundles, platform_arch, nodos_version)
+        includes = {}
+        for include_ref in include_refs:
+            included = resolve_included_bundle_info(include_ref, bundles, get_bundle_version(bundle_info))
+            if included is None:
+                logger.error(f"Included bundle {format_include_ref(include_ref)} not found in bundles")
+                exit(1)
+            package_name = get_bundle_package_name(included)
+            if package_name not in published_versions:
+                logger.error(f"{package_name} has no version published in this run")
+                exit(1)
+            if package_name in includes:
+                logger.error(f"{bundle_info.get('name')} includes {included.get('name')} twice")
+                exit(1)
+            includes[package_name] = published_versions[package_name]
+        manifest["includes"] = includes
+
+    groups = dict((pattern, {}) for pattern in PACKAGE_PATTERNS)
+    for package in get_own_bundled_packages(bundle_info, platform_arch).values():
+        resolved = resolve_package_version(package["name"], package["version"], platform_arch)
+        if resolved is None:
+            logger.error(f"No {package['name']} release matches {package['version']} on {platform_arch.key()}")
+            exit(1)
+        groups[package_pattern(package)][package["name"]] = resolved
+    packages = dict((pattern, versions) for pattern, versions in groups.items() if len(versions) > 0)
+    if len(packages) > 0:
+        manifest["packages"] = packages
+
+    check_no_conflicting_packages(bundle_info, bundles, platform_arch)
+
+    return manifest
+
+def build_manifests(bundle_info, bundles, platform_arch : PlatformArch, build_number):
+    """Every manifest this run publishes for one platform, each bundle after the bundles
+    it includes. Returns (package name, version, manifest) triples."""
+    published_versions = {}
+    manifests = []
+    for info in bundle_chain(bundle_info, bundles):
+        nodos_version = find_nodos_version(info, bundles, platform_arch)
+        if nodos_version is None:
+            logger.info(f"{info.get('name')} has no Nodos version for {platform_arch.key()}, leaving the platform out")
             continue
-        if section is None:
+        manifest = build_bundle_manifest(info, bundles, platform_arch, published_versions)
+        if manifest is None:
             continue
-        entry = stripped[1:].strip() if stripped[0] in "-*+" else stripped
-        if section == "engine":
-            match = re.search(r"(?:version|engine)\s*[:\-]?\s*([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", entry, re.IGNORECASE)
-            if match is None:
-                match = re.match(r"^([0-9A-Za-z][0-9A-Za-z\.\-+_]*?)$", entry)
-            if match is not None:
-                versions["engine"] = match.group(1)
+        package_name = get_bundle_package_name(info)
+        version = get_bundle_publish_version(nodos_version, get_bundle_version(info), build_number)
+        published_versions[package_name] = version
+        manifests.append((package_name, version, manifest))
+    return manifests
+
+def platforms_to_publish(bundle_info, bundles, platform_archs, build_number):
+    """Every selected platform the requested bundle can actually be built for, paired with
+    its manifests and Nodos version, in the order given. A platform the bundle itself has
+    no Nodos release for is left out entirely: the bundles it includes do not publish there
+    either, even though they might have a release of their own on that platform."""
+    package_name = get_bundle_package_name(bundle_info)
+    result = []
+    for platform_arch in platform_archs:
+        nodos_version = find_nodos_version(bundle_info, bundles, platform_arch)
+        if nodos_version is None:
+            logger.info(f"{package_name} has no Nodos version for {platform_arch.key()}, skipping the platform")
+            continue
+        logger.info(f"Bundling {package_name} for {platform_arch.key()}")
+        manifests = build_manifests(bundle_info, bundles, platform_arch, build_number)
+        if len(manifests) == 0:
+            logger.info(f"Nothing to publish for {platform_arch.key()}")
+            continue
+        result.append((platform_arch, manifests, nodos_version))
+    return result
+
+def lookup_nodos_version(to_publish, host_platform_arch):
+    """The Nodos version the previous-release lookup runs on: the host platform's when
+    the bundle publishes there, otherwise the first published platform's. A bundle the
+    host does not target still has a Nodos line to look the previous release up on."""
+    for platform_arch, _manifests, nodos_version in to_publish:
+        if platform_arch.key() == host_platform_arch.key():
+            return nodos_version
+    return to_publish[0][2]
+
+def write_manifest(manifest, path):
+    # os.makedirs("", exist_ok=True) raises even with exist_ok=True, so a bare
+    # filename with no directory part needs no makedirs call at all.
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    with open(path, "w") as f:
+        yaml.safe_dump(manifest, f, sort_keys=False, default_flow_style=False)
+
+def manifest_file_path(out_dir, package_name, platform_arch : PlatformArch):
+    return os.path.join(out_dir, platform_arch.key(), package_name, "bundle.yaml")
+
+def release_notes_file_path(out_dir, platform_arch : PlatformArch):
+    return os.path.join(out_dir, f"release-notes-{platform_arch.key()}.md")
+
+def publish_manifest(package_name, version, manifest_path, platform_arch : PlatformArch, dry_run,
+                     changelog=None):
+    """Publishes one manifest as a bundle release. nosman refuses a real upload until the
+    store client knows the Bundle type, so only a dry run gets through today."""
+    nosman_args = ["nosman", "-w", WORKSPACE_FOLDER, "publish",
+                   "--type", "bundle",
+                   "--path", os.path.abspath(manifest_path),
+                   "--name", package_name,
+                   "--version", version,
+                   "--target-platform", platform_arch.key(),
+                   "--no-tag", "--no-fetch-tags"]
+    if changelog is not None:
+        nosman_args += ["--changelog", changelog]
+    if dry_run:
+        nosman_args.append("--dry-run")
+    logger.info(f"Publishing {package_name} {version} for {platform_arch.key()}")
+    result = run(nosman_args, stdout=stdout, stderr=stderr, universal_newlines=True)
+    if result.returncode != 0:
+        logger.error(f"nosman publish of {package_name} {version} for "
+                     f"{platform_arch.key()} returned with {result.returncode}")
+        exit(result.returncode)
+
+def publish_manifests(manifests, out_dir, platform_arch : PlatformArch, dry_run, changelog_for=None):
+    """Writes and publishes each manifest in the order given, which puts a bundle after
+    every bundle it includes. changelog_for's own release notes, if written for this
+    platform, go along as its changelog so nosman never falls back to the bundler repo's
+    git log; the bundles it includes publish with no changelog, since the notes describe
+    the requested bundle, not them."""
+    changelog = None
+    if changelog_for is not None:
+        notes_path = release_notes_file_path(out_dir, platform_arch)
+        if os.path.exists(notes_path):
+            with open(notes_path, "r") as f:
+                changelog = f.read()
+    for package_name, version, manifest in manifests:
+        path = manifest_file_path(out_dir, package_name, platform_arch)
+        write_manifest(manifest, path)
+        entry_changelog = changelog if package_name == changelog_for else None
+        publish_manifest(package_name, version, path, platform_arch, dry_run, entry_changelog)
+
+def read_store_bundle_members(package_name, version):
+    """What a published bundle holds, as name -> version. nosman info expands a bundle
+    for the platform it runs on. Call this only when a previous version really exists;
+    a first publish has nothing to read and skips the call entirely."""
+    ensure_workspace()
+    result = run(["nosman", "-w", WORKSPACE_FOLDER, "info", package_name, version],
+                 capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.error(f"nosman info for {package_name} {version} returned with "
+                     f"{result.returncode}: {result.stderr}")
+        exit(1)
+    try:
+        info = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        logger.error(f"Could not parse nosman info output for {package_name} {version}: {exc}")
+        exit(1)
+    return OrderedDict((member["name"], member["version"]) for member in info.get("members", []))
+
+def previous_bundle_version(package_name, nodos_version, given_version):
+    """The bundle release the notes compare against. given_version=None means look up the
+    newest release on this Nodos line, and a nosman failure while doing that is an error,
+    the same as read_store_bundle_members: it says nothing about whether a previous release
+    exists, only that the question could not be answered. An explicit empty string is the
+    only way to say there is no previous release, for a bundle's first ever publish. Read
+    before anything is published, so the run's own release never answers."""
+    if given_version is not None:
+        return given_version
+    major, minor = get_nodos_version_major_minor(nodos_version)
+    result = run(["nosman", "-w", WORKSPACE_FOLDER, "info", package_name, f"{major}.{minor}"],
+                 capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.error(f"nosman info for {package_name} on the {major}.{minor} line "
+                     f"returned with {result.returncode}: {result.stderr}")
+        exit(1)
+    try:
+        return json.loads(result.stdout).get("version", "")
+    except json.JSONDecodeError as exc:
+        logger.error(f"Could not parse nosman info output for {package_name}: {exc}")
+        exit(1)
+
+def manifest_members(manifest):
+    """A manifest's members as {name, version, path} rows in install order: the engine
+    at the root, then the included bundles at the root, then each packages group with
+    its pattern filled in."""
+    members = []
+    if "nodos" in manifest:
+        members.append({"name": NODOS_PACKAGE_NAME, "version": manifest["nodos"], "path": ""})
+    for name, version in manifest.get("includes", {}).items():
+        members.append({"name": name, "version": version, "path": ""})
+    for pattern, packages in manifest.get("packages", {}).items():
+        for name, version in packages.items():
+            members.append({"name": name, "version": version,
+                            "path": member_path(pattern, name, version)})
+    return members
+
+def expand_manifest_members(package_name, manifests):
+    """Every package a bundle installs, with the members of the bundles it includes folded
+    in, in the order they appear."""
+    by_name = dict((name, manifest) for name, _version, manifest in manifests)
+    expanded = []
+    for member in manifest_members(by_name[package_name]):
+        if member["name"] in by_name:
+            expanded.extend(expand_manifest_members(member["name"], manifests))
         else:
-            name, version = _parse_name_version_line(entry)
-            if name and version:
-                versions[section][name] = version
-    return versions
+            expanded.append(member)
+    return expanded
+
+def direct_manifest_includes(package_name, manifests):
+    """The bundles this one includes directly, as (name, version) pairs, in the order
+    they appear in its own manifest. A bundle nested two levels deep is named only
+    under the bundle that includes it directly, not here."""
+    by_name = dict((name, manifest) for name, _version, manifest in manifests)
+    return list(by_name[package_name].get("includes", {}).items())
+
+def format_release_notes(package_name, version, previous_version, platform_arch : PlatformArch,
+                         members, previous_members, includes=()):
+    engine = []
+    modules = []
+    samples = []
+    for member in members:
+        if member["name"] == NODOS_PACKAGE_NAME:
+            engine.append(member)
+        elif member["path"].startswith("Samples/"):
+            samples.append(member)
+        else:
+            modules.append(member)
+
+    previous_casefold = dict((name.casefold(), member_version)
+                             for name, member_version in previous_members.items())
+
+    def change(member):
+        old_version = _lookup_old_version(previous_members, previous_casefold, member["name"])
+        return _format_version_change(member["version"], old_version)
+
+    notes = f"## {package_name} {version} ({platform_arch.key()})\n\n"
+    if len(engine) > 0:
+        notes += "### Engine\n"
+        for member in engine:
+            notes += f"- Version: {change(member)}\n"
+        notes += "\n"
+    notes += f"### Modules ({len(modules)})\n"
+    for member in modules:
+        notes += f"- {member['name']}: {change(member)}\n"
+    if len(samples) > 0:
+        notes += f"\n### Samples ({len(samples)})\n"
+        for member in samples:
+            notes += f"- {member['name']}: {change(member)}\n"
+    if len(includes) > 0:
+        notes += "\n### Includes\n"
+        for name, include_version in includes:
+            notes += f"- {name}: {include_version}\n"
+
+    if platform_arch.key() == get_cur_platform_arch().key():
+        current_names = set(member["name"] for member in members)
+        removed = [name for name in previous_members if name not in current_names]
+        if len(removed) > 0:
+            notes += f"\n### Removed ({len(removed)})\n"
+            for name in removed:
+                notes += f"- {name}: {previous_members[name]}\n"
+    # else: nosman info only expands a bundle for the platform it runs on, so a
+    # previous release read while writing notes for another platform can't be
+    # trusted to say what that platform actually had, and removals are left out
+    # rather than guessed at.
+
+    if previous_version:
+        notes += f"\n### Previous Release\n- {package_name} {previous_version}\n"
+    else:
+        notes += "\n### Previous Release\n- First publish\n"
+    return notes
+
+def write_release_notes(text, path):
+    # os.makedirs("", exist_ok=True) raises even with exist_ok=True, so a bare
+    # filename with no directory part needs no makedirs call at all.
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    logger.info(f"Release notes written to {path}")
+    for line in text.splitlines():
+        logger.info(line)
 
 def _format_version_change(new_version, old_version):
     if old_version:
@@ -675,44 +869,6 @@ def _lookup_old_version(version_map, version_map_casefold, name):
     if old_version:
         return old_version
     return version_map_casefold.get(name.casefold())
-
-def create_bundle(bundle_info, bundles, nodos_version, platform_arch : PlatformArch):
-    """Brings Nodos and the bundled plugins into the workspace in one nosman call, which
-    also lists them in Profile.json. Samples are installed afterwards: they live outside
-    Module/ and do not belong in that list."""
-    force_delete_folder(WORKSPACE_FOLDER)
-
-    packages_map = get_bundled_packages(bundle_info, bundles, platform_arch)
-    samples = []
-    bundle_args = ["nosman", "bundle", "--package", f"nodos:{nodos_version}"]
-    for package in packages_map.values():
-        if package.get("type") == "sample":
-            samples.append(package)
-            continue
-        bundle_args += ["--package", f"{package['name']}:{package['version']}"]
-    bundle_args += ["--without-deps", "--clean", "-y", "--out", WORKSPACE_FOLDER]
-
-    logger.info(f"Bundling Nodos {nodos_version} with {len(packages_map) - len(samples)} package(s)")
-    result = run(bundle_args, stdout=stdout, stderr=stderr, universal_newlines=True)
-    if result.returncode != 0:
-        logger.error(f"nosman bundle returned with {result.returncode}")
-        exit(result.returncode)
-
-    check_bundled_packages_installed(packages_map)
-
-    if samples:
-        absolute_workspace = os.path.abspath(WORKSPACE_FOLDER)
-        os.makedirs(f"{WORKSPACE_FOLDER}/Samples/", exist_ok=True)
-        for package in samples:
-            package_name = package["name"]
-            package_version = package["version"]
-            logger.info(f"Downloading sample {package_name} version {package_version} using nosman")
-            out_dir = f"{absolute_workspace}/Samples/{package_name}"
-            result = run(["nosman", "-w", WORKSPACE_FOLDER, "install", package_name, package_version, "--out-dir", out_dir, "--prefix", package_version, "--without-deps"], stdout=stdout, stderr=stderr, universal_newlines=True)
-            if result.returncode != 0:
-                logger.error(f"nosman install returned with {result.returncode}")
-                exit(result.returncode)
-            rename_package_prefix_folder(out_dir, package_version, resolve_package_version(package_name, package_version))
 
 def normalize_bundled_packages(bundled_packages):
     if bundled_packages is None:
@@ -731,375 +887,132 @@ def normalize_bundled_packages(bundled_packages):
     logger.error(f"Unsupported bundled_packages type: {type(bundled_packages)}")
     exit(1)
 
-def get_bundled_packages(bundle_info, bundles, platform_arch : PlatformArch):
-    """Get bundled packages for a bundle using flat platform-arch keys.
-    
-    Packages use map keys like:
-    nos.reflect:
-      x86_64-windows: 1.7.13
-      x86_64-linux: 1.6.5
-    
-    Versions can be less specific (e.g., "1.7" instead of "1.7.13.b1112").
-    
-    Args:
-        bundle_info: Bundle configuration dict
-        bundles: All bundles dict
-        platform_arch: PlatformArch
-    """
-    
-    bundled_packages = OrderedDict()
-    requested_bundle_version = get_bundle_version(bundle_info)
-    if "includes" in bundle_info:
-        queue = list(bundle_info["includes"])
-        resolved_include_refs = []
-        visited = set()
-        while len(queue) > 0:
-            include_ref = queue.pop(0)
-            conf = resolve_included_bundle_info(include_ref, bundles, requested_bundle_version)
-            if conf is None:
-                logger.error(f"Depending bundle {format_include_ref(include_ref)} not found in bundles")
-                exit(1)
-            bundle_identity = (conf.get("name"), get_bundle_version(conf))
-            if bundle_identity in visited:
-                continue
-            visited.add(bundle_identity)
-            resolved_include_refs.append({"name": conf.get("name"), "version": get_bundle_version(conf)})
-            queue.extend(conf.get("includes", []))
-        logger.info(f"Adding modules from: {' '.join(format_include_ref(include_ref) for include_ref in resolved_include_refs)}")
-        for include_ref in reversed(resolved_include_refs):
-            conf = resolve_included_bundle_info(include_ref, bundles, requested_bundle_version)
-            if conf is None:
-                logger.error(f"Include bundle {format_include_ref(include_ref)} not found in bundles")
-                exit(1)
-            others = normalize_bundled_packages(conf.get("bundled_packages", {}))
-            for package_name, package_data in others.items():
-                bundled_packages[package_name] = package_data
-
-    local_packages = normalize_bundled_packages(bundle_info.get("bundled_packages", {}))
-    for package_name, package_data in local_packages.items():
-        bundled_packages[package_name] = package_data
-
-    # Process packages with flat platform-arch structure
-    packages_map = OrderedDict()
-    for package_name, package in bundled_packages.items():
-        # Handle scalar version (e.g., nos.animation: 0.3.2.b928)
+def get_own_bundled_packages(bundle_info, platform_arch : PlatformArch):
+    """The packages a bundle adds itself, for one platform. Packages an included bundle
+    brings are not here: they travel in that bundle's own manifest."""
+    packages = OrderedDict()
+    for package_name, package in normalize_bundled_packages(bundle_info.get("bundled_packages", {})).items():
         if isinstance(package, str):
-            packages_map[package_name] = {
-                'name': package_name,
-                'version': package,
-            }
+            packages[package_name] = {"name": package_name, "version": package, "type": None}
             continue
-
-        # Handle dictionary-based configuration
-        if isinstance(package, dict):
-            # Check for platform-specific version override, fallback to 'version'
-            version = package.get(platform_arch.key())
-            if version is None:
-                version = package.get("version")
-
-            package_type = package.get("type")
-
-            if version:
-                packages_map[package_name] = {
-                    'name': package_name,
-                    'version': version,
-                    'type': package_type
-                }
-            else:
-                logger.warning(f"Package {package_name} has no version specified for {platform_arch.key()}, skipping")
-    
-    return packages_map
-
-def package(bundle_key, bundle_info, nodos_version, bundles, platform_arch : PlatformArch):
-    logger.info("Packaging Nodos")
-    force_delete_folder(ARTIFACTS_FOLDER)
-    # Preserve the workspace index and its cache policy; use the assembling CLI.
-    run(["nosman", "-w", WORKSPACE_FOLDER, "rescan"], stdout=stdout, stderr=stderr, universal_newlines=True, check=True)
-    # An engine shipped without the nosman runtime library finds modules by
-    # scanning Module/ only, so a bundle around one must keep later installs
-    # out of nosman's shared cache.
-    runtime_folder = f"{WORKSPACE_FOLDER}/Toolchain/nosman"
-    if not any(os.path.exists(f"{runtime_folder}/{name}") for name in ("nosman.dll", "libnosman.so", "libnosman.dylib")):
-        run(["nosman", "-w", WORKSPACE_FOLDER, "uncache"], stdout=stdout, stderr=stderr, universal_newlines=True, check=True)
-    force_delete_folder(f"{WORKSPACE_FOLDER}/.nosman/remote")
-    engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
-    engine_folder = f"{WORKSPACE_FOLDER}/Engine/{engine_version}"
-    engine_settings_path = f"{engine_folder}/Config/Defaults/EngineSettings.json"
-    if not os.path.exists(engine_settings_path):
-        engine_settings_path = f"{engine_folder}/Config/EngineSettings.json"
-        if not os.path.exists(engine_settings_path):
-            logger.error(f"Engine settings file not found in both {engine_folder}/Config and {engine_folder}/Config/Defaults")
+        if not isinstance(package, dict):
+            logger.error(f"Unsupported entry for package {package_name}: {type(package)}")
             exit(1)
-    with open(engine_settings_path, "r") as f:
-        engine_settings = json.load(f)
-        major, minor = get_nodos_version_major_minor(nodos_version)
-        use_plugins_keys = int(major) > 1 or (int(major) == 1 and int(minor) >= 4)
-        index_urls_key = "plugin_index_urls" if use_plugins_keys else "module_index_urls"
-        engine_index_urls_key = "remote_plugins" if use_plugins_keys else "remote_modules"
-
-        module_index_urls = get_inheritable_value(bundle_info, index_urls_key, bundles)
-        engine_index_url = get_inheritable_value(bundle_info, "engine_index_url", bundles)
-        if module_index_urls is None:
-            logger.error(f"Missing {index_urls_key} in bundle or included bundles")
-            exit(1)
-        if engine_index_url is None:
-            logger.error("Missing engine_index_url in bundle or included bundles")
-            exit(1)
-        engine_settings[engine_index_urls_key] = module_index_urls
-        engine_settings["engine_index_url"] = engine_index_url
-
-    with open(engine_settings_path, "w") as f:
-        json.dump(engine_settings, f, indent=2)
-
-    short_name = bundle_info.get("short_name")
-    if short_name is None:
-        short_name = bundle_key
-    bundle_version = get_bundle_version(bundle_info)
-    artifact_name = get_bundle_release_name(nodos_version, short_name, bundle_version, get_build_number(), platform_arch)
-    # Zip everything under workspace_folder
-    shutil.make_archive(
-        f"{ARTIFACTS_FOLDER}/Nodos-{artifact_name}",
-        platform_arch.compression_type(),
-        f"{WORKSPACE_FOLDER}"
-    )
-
-def create_nodos_release(gh_release_repo, gh_release_target_branch, gh_release_prev_version, dry_run_release, skip_nosman_publish, bundle_info, nodos_version, bundle_key, bundles, platform_arch : PlatformArch):
-    short_name = bundle_info.get("short_name")
-    if short_name is None:
-        logger.info("Missing short name in bundle info, choosing short name as bundle key")
-        short_name = bundle_key
-    release_repo, target_branch = gh_release_repo, gh_release_target_branch
-    artifacts = get_release_artifacts(ARTIFACTS_FOLDER, platform_arch)
-    if len(artifacts) == 0:
-        logger.error("No artifacts found to release")
-        exit(1)
-    for path in artifacts:
-        logger.info(f"Release artifact: {path}")
-    engine_version = resolve_nodos_engine_version(WORKSPACE_FOLDER, nodos_version)
-    build_number = get_build_number()
-    releases = list_github_releases(release_repo)
-    bundle_version = get_bundle_version(bundle_info)
-    bundle_major, bundle_minor = get_nodos_version_major_minor(nodos_version)
-    bundle_release_name = get_bundle_release_name(nodos_version, short_name, bundle_version, build_number, platform_arch)
-    tag = f"v{bundle_release_name}"
-    title = f"{tag}"
-
-    bundled_packages = get_bundled_packages(bundle_info, bundles, platform_arch)
-    resolved_packages = resolve_package_versions(bundled_packages)
-
-    resolved_modules = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") != "sample" )
-    resolved_samples = OrderedDict((name, data) for name, data in resolved_packages.items() if data.get("type") == "sample" )
-
-    # The previous release is given without a platform, so the same value
-    # serves every platform of a run.
-    if gh_release_prev_version:
-        previous_tag = f"v{gh_release_prev_version}-{platform_arch.key()}"
-    else:
-        previous_tag = find_latest_bundle_release_tag(releases, nodos_version, short_name, platform_arch, bundle_version)
-    previous_release_info = fetch_github_release_info(release_repo, previous_tag)
-    previous_release_notes = previous_release_info.get("body", "") if previous_release_info else ""
-    previous_versions = parse_release_notes_versions(previous_release_notes)
-    previous_modules = previous_versions.get("modules", {})
-    previous_modules_casefold = {name.casefold(): version for name, version in previous_modules.items()}
-    previous_samples = previous_versions.get("samples", {})
-    previous_samples_casefold = {name.casefold(): version for name, version in previous_samples.items()}
-
-    # Create release notes with version changes
-    release_notes = f"## Nodos {engine_version}\n\n"
-    release_notes += f"### Engine\n"
-    release_notes += f"- Version: {_format_version_change(engine_version, previous_versions.get('engine'))}\n\n"
-    release_notes += f"### Modules ({len(resolved_modules)})\n"
-    for pkg_name, pkg_data in resolved_modules.items():
-        old_version = _lookup_old_version(previous_modules, previous_modules_casefold, pkg_name)
-        release_notes += f"- {pkg_name}: {_format_version_change(pkg_data['version'], old_version)}\n"
-
-    if len(resolved_samples) > 0:
-        release_notes += f"\n### Samples ({len(resolved_samples)})\n"
-    for pkg_name, pkg_data in resolved_samples.items():
-        old_version = _lookup_old_version(previous_samples, previous_samples_casefold, pkg_name)
-        release_notes += f"- {pkg_name}: {_format_version_change(pkg_data['version'], old_version)}\n"
-
-    if previous_release_info:
-        previous_title = previous_release_info.get("name") or previous_release_info.get("tagName") or previous_tag
-        previous_url = previous_release_info.get("url")
-        if not previous_url and release_repo and previous_tag:
-            previous_url = f"https://github.com/{release_repo}/releases/tag/{previous_tag}"
-        if previous_title and previous_url:
-            release_notes += "\n### Previous Release\n"
-            release_notes += f"- [{previous_title}]({previous_url})\n"
-
-    ghargs = ["gh", "release", "create", tag, *artifacts, "--notes", f"{release_notes}", "--title", title]
-    if target_branch != "":
-        logger.info(f"GitHub Release: Using target branch {target_branch}")
-        ghargs.extend(["--target", target_branch])
-    else:
-        logger.info("GitHub Release: Using default branch")
-    if release_repo != "":
-        logger.info(f"GitHub Release: Using repo {release_repo}")
-        ghargs.extend(["--repo", release_repo])
-    else:
-        logger.info("GitHub Release: The repo inside the current directory will be used with '--generate-notes' option")
-        ghargs.extend(["--generate-notes"])
-    logger.info(f"GitHub Release: Pushing release artifacts to repo {release_repo}")
-    result = run_dry_runnable(ghargs, dry_run_release)
-    if result.returncode != 0:
-        logger.error(f"GitHub CLI returned with error {result.stderr} and code {result.returncode}")
-        exit(result.returncode)
-    logger.info("GitHub release successful")
-    if skip_nosman_publish:
-        return
-
-    bundle_publish_version = get_bundle_publish_version(nodos_version, bundle_version, build_number)
-    nodos_zip_prefix = f"Nodos-{bundle_release_name}"
-
-    artifacts_abspath = [os.path.abspath(path) for path in artifacts]
-    package_name = bundle_info.get("package_name")
-    if package_name is None:
-        logger.warning(f"Missing package name in bundle info, setting it to 'nodos.bundle.{short_name}'")
-        package_name = f"nodos.bundle.{short_name}"
-
-    for path in artifacts_abspath:
-        file_name = os.path.basename(path)
-        if not file_name.startswith(nodos_zip_prefix):
+        version = package.get(platform_arch.key())
+        if version is None:
+            version = package.get("version")
+        if version is None:
+            logger.info(f"{package_name} has no version for {platform_arch.key()}, leaving it out")
             continue
-        # Use nosman to publish Nodos:
-        logger.info("Running nosman publish")
-        logger.info(f"Publishing bundle version {bundle_publish_version}")
-        nosman_args = ["nosman", "-w", WORKSPACE_FOLDER, "publish", "--path", path,
-                       "--name", package_name, "--version", f"{bundle_major}.{bundle_minor}.{bundle_version}", "--version-suffix", f".b{build_number}",
-                       "--type", "nodos"]
-        if dry_run_release:
-            nosman_args.append("--dry-run")
-        logger.info(f"Running nosman publish with args: {nosman_args}")
-        result = run(nosman_args, stdout=stdout, stderr=stderr, universal_newlines=True)
-        if result.returncode != 0:
-            logger.error(f"nosman publish returned with {result.returncode}")
-            exit(result.returncode)
+        packages[package_name] = {"name": package_name, "version": version,
+                                  "type": package.get("type")}
+    return packages
 
 if __name__ == "__main__":
     logger.remove()
     logger.add(stdout, format="<green>[Distribute Nodos]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 
     parser = argparse.ArgumentParser(
-        description="Create distribution packages for Nodos")
+        description="Publish Nodos bundle manifests to the Nodos Store")
     parser.add_argument("--version",
-                         help="The nodos version (1.2, 1.3, 1.4, etc.)",
+                        help="The nodos version (1.4, 1.5, etc.)",
                         action="store",
                         required=False)
     parser.add_argument("--bundle-key",
-                         help="The key of the bundle to package",
+                        help="The key of the bundle to publish",
                         action="store",
                         required=False)
     parser.add_argument("--bundle-version",
-                         help="The bundle version to select when multiple entries share the same bundle name",
+                        help="The bundle version to select when multiple entries share the same bundle name",
                         action="store",
                         required=False)
     parser.add_argument("--bundles-yaml-path",
-                         help="The path to the bundles YAML file",
+                        help="The path to the bundles YAML file",
                         action="store",
                         required=False)
-    # TODO: Add option to release for another platform
-    #parser.add_argument("--target-platform",
-    #                     help="The target platform (linux, windows, etc.)",
-    #                    action="store",
-    #                    required=False)
-
-    parser.add_argument('--gh-release',
-                        action='store_true',
+    parser.add_argument("--platforms",
+                        help="Comma separated target platforms to publish for, "
+                             "for example x86_64-windows,x86_64-linux,aarch64-macos. "
+                             "Defaults to the platform this runs on.",
+                        action="store",
+                        default="")
+    parser.add_argument("--out-dir",
+                        help="Where the manifests and release notes are written",
+                        action="store",
+                        default=ARTIFACTS_FOLDER)
+    parser.add_argument("--previous-version",
+                        help="The bundle release the notes compare against, as a published "
+                             "version like 1.5.0.b4711. If not given, the newest release on "
+                             "the same Nodos line is used, and nosman failing to find one is "
+                             "an error. Pass an empty string to say this is the first publish.",
+                        action="store",
+                        default=None)
+    parser.add_argument("--dry-run",
+                        action="store_true",
                         default=False,
-                        help="Create a GitHub release with the installer executables")
-
-    parser.add_argument('--gh-release-repo',
-                        action='store',
-                        default='',
-                        help="The repo of the release. If empty, the repo of the current directory will be used with '--generate-notes' option of the GitHub CLI.")
-
-    parser.add_argument('--gh-release-target-branch',
-                        action='store',
-                        default='',
-                        help="The branch to create the release on. If empty, the current branch will be used.")
-
-    parser.add_argument('--gh-release-prev-version',
-                        action='store',
-                        default='',
-                        help="The previous release to compare against, as a bundle release version like 1.3-broadcast-v4-b4711. The tag for the current platform is derived from it. If empty, the latest release is used.")
-
-    parser.add_argument('--dry-run-release',
-                        action='store_true',
-                        default=False)
-    
-    parser.add_argument('--skip-nosman-publish',
-                        action='store_true',
-                        default=False)
-    
-    parser.add_argument('--bundle',
-                         action='store_true',
-                        default=False,
-                        help="Bring Nodos and the bundled packages into the workspace using nosman")
-
-    parser.add_argument('--skip-dependency-check',
-                        action='store_true',
-                        default=False,
-                        help="Skip checking that all bundled packages have their dependencies satisfied")
-
-    parser.add_argument('--pack',
-                        action='store_true',
-                        default=False,
-                        help="Create a zip file for the bundle")
+                        help="Ask nosman what it would publish instead of publishing")
 
     args = parser.parse_args()
 
-    bundle_info = None
-    platform_arch = get_cur_platform_arch()
-    logger.info(f"Using platform-arch key: {platform_arch.key()}") 
+    # Fail on a host nosman has no release for before reading or publishing anything.
+    host_platform_arch = get_cur_platform_arch()
 
     if args.bundles_yaml_path:
-        # Load YAML file
         bundles_data = load_bundles_data(args.bundles_yaml_path)
     elif args.version:
-        # Auto-detect YAML file based on version
         yaml_path = f"nodos-{args.version}.yaml"
         if not os.path.exists(yaml_path):
             logger.error(f"Bundle file {yaml_path} not found")
             exit(1)
         bundles_data = load_bundles_data(yaml_path)
-        
     else:
         logger.error("Either --version or --bundles-yaml-path must be specified")
         exit(1)
+
     bundles = bundles_data.get("bundles")
-
-    if args.bundle_key:
-        bundle_info = get_bundle_info(args.bundle_key, bundles, args.bundle_version)
-
-    nodos_version = None
-    if bundle_info:
-        nodos_version = get_nodos_version(bundle_info, bundles, platform_arch)
-
     if bundles is None:
         logger.error("Failed to read bundles. Missing 'bundles' key")
         exit(1)
-
-    if args.bundle_key and bundle_info is None:
+    if not args.bundle_key:
+        logger.error("--bundle-key is required")
+        exit(1)
+    bundle_info = get_bundle_info(args.bundle_key, bundles, args.bundle_version)
+    if bundle_info is None:
         logger.error(f"Failed to read bundle info for key {args.bundle_key}")
         exit(1)
 
-    if args.bundle:
-        if bundle_info is None or nodos_version is None:
-            logger.error("Bundle key and version required for --bundle")
-            exit(1)
-        create_bundle(bundle_info, bundles, nodos_version, platform_arch)
-        if not args.skip_dependency_check:
-            check_dependencies()
+    platform_archs = parse_platform_keys(args.platforms)
 
-    if args.pack:
-        if bundle_info is None or nodos_version is None or args.bundle_key is None:
-            logger.error("Bundle key and version required for --pack")
-            exit(1)
-        package(args.bundle_key, bundle_info, nodos_version, bundles, platform_arch)
+    build_number = get_build_number()
+    package_name = get_bundle_package_name(bundle_info)
+    force_delete_folder(args.out_dir)
+    os.makedirs(args.out_dir, exist_ok=True)
+    ensure_workspace()
 
-    if args.gh_release:
-        if bundle_info is None or nodos_version is None or args.bundle_key is None:
-            logger.error("Bundle key and version required for --gh-release")
-            exit(1)
-        create_nodos_release(args.gh_release_repo, args.gh_release_target_branch, args.gh_release_prev_version, args.dry_run_release, args.skip_nosman_publish, bundle_info, nodos_version, args.bundle_key, bundles, platform_arch)
+    # Resolve and build every selected platform's manifests first, before anything is
+    # published: a later platform's release notes must never compare against the
+    # release this run just published for an earlier one.
+    to_publish = platforms_to_publish(bundle_info, bundles, platform_archs, build_number)
+    if len(to_publish) == 0:
+        requested = ", ".join(platform_arch.key() for platform_arch in platform_archs)
+        logger.error(f"Nothing was published for {package_name}: no release on any of {requested}")
+        exit(1)
+
+    # nosman info only ever answers for the platform it runs on, so the previous release
+    # and its members are looked up once for the whole run, not once per target platform.
+    host_nodos_version = lookup_nodos_version(to_publish, host_platform_arch)
+    previous_version = previous_bundle_version(package_name, host_nodos_version, args.previous_version)
+    previous_members = read_store_bundle_members(package_name, previous_version) if previous_version else OrderedDict()
+
+    for platform_arch, manifests, _nodos_version in to_publish:
+        version = next(v for name, v, _m in manifests if name == package_name)
+        notes = format_release_notes(
+            package_name, version, previous_version, platform_arch,
+            expand_manifest_members(package_name, manifests),
+            previous_members,
+            direct_manifest_includes(package_name, manifests))
+        write_release_notes(notes, release_notes_file_path(args.out_dir, platform_arch))
+
+    for platform_arch, manifests, _nodos_version in to_publish:
+        publish_manifests(manifests, args.out_dir, platform_arch, args.dry_run,
+                          changelog_for=package_name)

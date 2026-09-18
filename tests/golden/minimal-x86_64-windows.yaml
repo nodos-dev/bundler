@@ -1,0 +1,7 @@
+schema_version: 1
+nodos: 1.5.0.b4711
+packages:
+  Module/{name}/{version}:
+    nos.transfer: 1.0.0.b4711
+    nos.sys.variables: 4.0.0.b4711
+    nos.reflect: 4.0.0.b4711

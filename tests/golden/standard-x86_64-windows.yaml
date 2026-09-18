@@ -1,0 +1,28 @@
+schema_version: 1
+includes:
+  nodos.bundle.minimal: 1.5.0.b4711
+packages:
+  Module/{name}/{version}:
+    nos.sys.shaderc: 3.0.0.b4711
+    nos.sys.vulkan: 9.0.0.b4711
+    nos.audio: 2.0.0.b4711
+    nos.sys.settings: 4.0.0.b4711
+    nos.filters: 4.0.0.b4711
+    nos.math: 3.0.0.b4711
+    nos.utilities: 5.0.0.b4711
+    nos.filesystem: 2.0.0.b4711
+    nos.mediaio: 5.0.0.b4711
+    nos.flow: 2.0.0.b4711
+    nos.compositing: 2.0.0.b4711
+    nos.imageprocessing: 2.0.0.b4711
+    nos.resource: 2.0.0.b4711
+    nos.webcam: 4.0.0.b4711
+    nos.sys.animation: 4.0.0.b4711
+    nos.animation: 2.0.0.b4711
+    nos.webrtc: 3.0.0.b4711
+    nos.str: 2.0.0.b4711
+    nos.sys.device: 3.0.0.b4711
+    nos.rive: 2.0.0.b4711
+    nos.sync: 13.0.0.b4711
+  Samples/{name}:
+    nos.sample.dxapp: 1.1.0.b4711

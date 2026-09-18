@@ -1,0 +1,13 @@
+schema_version: 1
+includes:
+  nodos.bundle.standard: 1.5.0.b4711
+packages:
+  Module/{name}/{version}:
+    nos.aja: 5.0.0.b4711
+    nos.sys.decklink: 5.0.0.b4711
+    nos.decklink: 4.0.0.b4711
+    nos.track: 4.0.0.b4711
+    nos.display: 2.0.0.b4711
+    nos.ndi: 3.0.0.b4711
+    nos.sys.lino: 3.0.0.b4711
+    nos.cef: 2.0.0.b4711

@@ -86,8 +86,8 @@ jobs:
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Install Nosman
         shell: bash
-        # Pin the published crate so bundle releases use the verified CLI.
-        run: cargo install nosman --version 0.24.2 --locked
+        # Use the latest published nosman so bundle builds exercise new releases.
+        run: cargo install nosman
         working-directory: ./bundler-${{ github.ref_name }}
       - name: Select Platforms
         id: platforms

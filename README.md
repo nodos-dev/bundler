@@ -12,9 +12,12 @@ Requirements:
 - Python 3.7+
 - [`nosman`](https://crates.io/crates/nosman) 0.23.0 or later on PATH:
   `cargo install nosman --version 0.23.0` (the first release that can publish
-  a bundle and list its members). 0.23.0 is not on crates.io yet, so the
-  install, and the workflow step that runs it, fail until it is.
+  a bundle and list its members).
 - `NODOS_STORE_ACCESS_TOKEN` for the store account that owns the bundle packages
+
+The release workflow installs nosman with the Rust 1.93.1 toolchain pinned in
+`rust-toolchain.toml`. Run the install command from this repository so rustup
+selects that compiler instead of the machine's default.
 
 Environment variables:
 
@@ -40,10 +43,8 @@ run leaves the notes for every platform and the manifests up to the failure.
 A rerun gets a new build number and publishes new versions; it never
 overwrites the versions a failed run left behind.
 
-Real bundle uploads are refused by nosman until a `nodos-store-client` release
-that knows the Bundle package type ships. Until then `--dry-run` is the only
-route that runs end to end, and the release workflow's `dry_run` input
-defaults to true for the same reason.
+The release workflow's `dry_run` input defaults to true so a run can be
+reviewed before publishing. Set it to false to publish the manifests.
 
 ## Command line
 

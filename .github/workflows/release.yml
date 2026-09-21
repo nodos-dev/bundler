@@ -88,9 +88,9 @@ jobs:
         shell: bash
         # TODO: Fetch the executable from https://store.nodos.dev/download/{platform}
         # once that route is live, and drop the Rust toolchain from this runner.
-        # 0.23.0 is the first release that can publish a bundle and list its members;
-        # it is not published yet, so this step fails until it is -- correctly.
+        # 0.23.0 is the first release that can publish a bundle and list its members.
         run: cargo install nosman --version 0.23.0
+        working-directory: ./bundler-${{ github.ref_name }}
       - name: Select Platforms
         id: platforms
         shell: bash

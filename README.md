@@ -10,9 +10,8 @@ manifest per target platform and publishes each one with `nosman`.
 Requirements:
 
 - Python 3.7+
-- [`nosman`](https://crates.io/crates/nosman) 0.23.0 or later on PATH:
-  `cargo install nosman --version 0.23.0` (the first release that can publish
-  a bundle and list its members).
+- [`nosman`](https://crates.io/crates/nosman) 0.24.2 on PATH:
+  `cargo install nosman --version 0.24.2 --locked`.
 - `NODOS_STORE_ACCESS_TOKEN` for the store account that owns the bundle packages
 
 The release workflow installs nosman with the Rust 1.93.1 toolchain pinned in

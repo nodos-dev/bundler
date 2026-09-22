@@ -493,12 +493,13 @@ def bundle_chain(bundle_info, bundles):
 # written. {name} and {version} are filled in per package by whoever installs it.
 MODULE_PATTERN = "Module/{name}/{version}"
 SAMPLE_PATTERN = "Samples/{name}"
-PACKAGE_PATTERNS = (MODULE_PATTERN, SAMPLE_PATTERN)
+APP_PATTERN = "Apps/{name}"
+PACKAGE_PATTERNS = (MODULE_PATTERN, SAMPLE_PATTERN, APP_PATTERN)
+
+PATTERN_BY_TYPE = {"sample": SAMPLE_PATTERN, "app": APP_PATTERN}
 
 def package_pattern(package):
-    if package.get("type") == "sample":
-        return SAMPLE_PATTERN
-    return MODULE_PATTERN
+    return PATTERN_BY_TYPE.get(package.get("type"), MODULE_PATTERN)
 
 def member_path(pattern, name, version):
     return pattern.replace("{name}", name).replace("{version}", version)

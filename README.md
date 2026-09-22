@@ -112,8 +112,9 @@ to say, `nodos`, `includes` and `packages`:
 - `packages` groups packages by the folder pattern they land in, `{name}` and
   `{version}` standing for the package's own. A plugin or subsystem goes under
   `Module/{name}/{version}`; a package marked `type: sample` goes under
-  `Samples/{name}`. The groups are written in that order, packages in the order
-  the YAML lists them, and a group with no packages is left out.
+  `Samples/{name}`, and one marked `type: app` under `Apps/{name}`. The groups
+  are written in that order, packages in the order the YAML lists them, and a
+  group with no packages is left out.
 - A package with no version for a platform is absent from that platform's
   manifest: give it a version only for the platforms it declares. A package that
   does declare a version for a platform but has no matching release there is an

@@ -255,6 +255,32 @@ def test_a_sample_lands_under_samples(bundles_1_5, resolved):
     assert "nos.sample.dxapp" not in manifest["packages"]["Module/{name}/{version}"]
 
 
+def test_an_app_lands_under_apps(resolved):
+    bundles = [
+        {"name": "base", "version": 0, "nodos": "1.5",
+         "bundled_packages": OrderedDict([
+             ("nos.reflect", "4.0"),
+             ("nos.app.electronode", {"version": "1.0", "type": "app"}),
+         ])},
+    ]
+    manifest = manifest_for("base", bundles, "x86_64-windows")
+    assert manifest["packages"]["Apps/{name}"] == {"nos.app.electronode": "1.0.0.b4711"}
+    assert "nos.app.electronode" not in manifest["packages"]["Module/{name}/{version}"]
+
+
+def test_the_groups_are_written_module_then_samples_then_apps(resolved):
+    bundles = [
+        {"name": "base", "version": 0, "nodos": "1.5",
+         "bundled_packages": OrderedDict([
+             ("nos.app.electronode", {"version": "1.0", "type": "app"}),
+             ("nos.sample.dxapp", {"version": "1.1", "type": "sample"}),
+             ("nos.reflect", "4.0"),
+         ])},
+    ]
+    manifest = manifest_for("base", bundles, "x86_64-windows")
+    assert list(manifest["packages"]) == ["Module/{name}/{version}", "Samples/{name}", "Apps/{name}"]
+
+
 def test_a_bundle_with_samples_writes_the_module_group_then_the_samples_group(bundles_1_5, resolved):
     manifest = manifest_for("standard", bundles_1_5, "x86_64-windows")
     assert list(manifest["packages"]) == ["Module/{name}/{version}", "Samples/{name}"]

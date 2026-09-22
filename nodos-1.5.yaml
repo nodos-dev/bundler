@@ -85,3 +85,6 @@ bundles:
     zd.utilities: 3.0
     zd.xrtools: 3.0
     nos.sys.ffmpeg.deps: 7.1.0
+    nos.app.electronode:
+      version: 1.0
+      type: app

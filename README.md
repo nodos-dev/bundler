@@ -42,9 +42,6 @@ run leaves the notes for every platform and the manifests up to the failure.
 A rerun gets a new build number and publishes new versions; it never
 overwrites the versions a failed run left behind.
 
-The release workflow's `dry_run` input defaults to true so a run can be
-reviewed before publishing. Set it to false to publish the manifests.
-
 ## Command line
 
 - `--version` / `--bundles-yaml-path` — which YAML to read
@@ -61,7 +58,7 @@ reviewed before publishing. Set it to false to publish the manifests.
   `previous_release_version` input passes a version through and the
   `first_publish` input passes the empty string; a bundle that is not on the
   store yet fails at the lookup unless one of them is set.
-- `--dry-run` — ask nosman what it would publish instead of publishing
+- `--dry-run` — dry run
 
 ## Bundle versioning
 

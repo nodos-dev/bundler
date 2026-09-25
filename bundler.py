@@ -951,7 +951,7 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run",
                         action="store_true",
                         default=False,
-                        help="Ask nosman what it would publish instead of publishing")
+                        help="Dry run")
 
     args = parser.parse_args()
 

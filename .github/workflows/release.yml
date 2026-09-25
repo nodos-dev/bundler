@@ -49,9 +49,9 @@ on:
         default: false
         type: boolean
       dry_run:
-        description: 'Ask nosman what it would publish instead of publishing'
+        description: 'Dry run'
         required: true
-        default: true
+        default: false
         type: boolean
 
 env:

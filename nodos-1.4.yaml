@@ -24,7 +24,7 @@ bundles:
     nos.filters: 3.0
     nos.math: 2.0
     nos.utilities: 4.0
-    nos.filesystem: 1.0
+    nos.filesystem: 1.1
     nos.mediaio: 4.0
     nos.flow: 1.0
     nos.compositing: 1.0
@@ -56,7 +56,7 @@ bundles:
       x86_64-linux: 4.0
     nos.sys.decklink: 4.1
     nos.decklink: 3.1
-    nos.track: 3.0
+    nos.track: 3.1
     nos.display:
       x86_64-windows: 1.0
     nos.ndi:

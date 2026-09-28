@@ -929,6 +929,16 @@ def test_main_publishes_every_bundle_for_every_platform_as_a_dry_run(tmp_path, m
     assert windows_notes.startswith("## nodos.bundle.standard")
     assert "### Previous Release\n- First publish" in windows_notes
     assert (artifacts / "release-notes-x86_64-linux.md").exists()
+    releases = json.loads((artifacts / "releases.json").read_text())
+    assert releases == {
+        "package": "nodos.bundle.standard",
+        "releases": [
+            {"platform": "x86_64-windows", "version": "1.5.0.b9500",
+             "name": "1.5-standard-v0-b9500-x86_64-windows"},
+            {"platform": "x86_64-linux", "version": "1.5.0.b9500",
+             "name": "1.5-standard-v0-b9500-x86_64-linux"},
+        ],
+    }
 
 
 def test_a_bundle_with_no_nodos_release_is_skipped_for_that_platform(bundles_1_5, resolved):

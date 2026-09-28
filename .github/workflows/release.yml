@@ -68,6 +68,9 @@ jobs:
     runs-on: [self-hosted, bundler, Windows]
     permissions:
       contents: read
+    outputs:
+      build_number: ${{ steps.build-number.outputs.build_number }}
+      matrix: ${{ steps.published.outputs.matrix }}
     steps:
       - name: Set Build Number
         id: build-number
@@ -147,3 +150,95 @@ jobs:
         with:
           name: bundle-manifests-${{ steps.build-number.outputs.build_number }}
           path: ./bundler-${{ github.ref_name }}/Artifacts/
+      - name: List Published Releases
+        id: published
+        # A dry run publishes nothing, so there is no bundle on the store to archive.
+        if: inputs.dry_run == false
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import json, os
+          # An archive can only be built on a runner of its own platform.
+          runner_labels = {
+              "x86_64-windows": ["Windows", "X64"],
+              "x86_64-linux": ["Linux", "X64"],
+              "aarch64-linux": ["Linux", "ARM64"],
+              "aarch64-macos": ["macOS", "ARM64"],
+          }
+          with open("Artifacts/releases.json") as f:
+              published = json.load(f)
+          include = [dict(release, package=published["package"],
+                          runner=["self-hosted", "bundler", *runner_labels[release["platform"]]])
+                     for release in published["releases"]]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={json.dumps({'include': include})}\n")
+          EOF
+        working-directory: ./bundler-${{ github.ref_name }}
+
+  archive:
+    name: Archive and Release (${{ matrix.platform }})
+    needs: release
+    if: needs.release.outputs.matrix != ''
+    strategy:
+      matrix: ${{ fromJson(needs.release.outputs.matrix) }}
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write # Required for creating releases
+    env:
+      GH_TOKEN: ${{ secrets.CI_TOKEN }}
+      PACKAGE: ${{ matrix.package }}
+      VERSION: ${{ matrix.version }}
+      RELEASE_NAME: ${{ matrix.name }}
+      PLATFORM: ${{ matrix.platform }}
+      BUILD_NUMBER: ${{ needs.release.outputs.build_number }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          repository: nodos-dev/bundler
+          ref: ${{ github.ref }}
+          path: ./bundler-${{ github.ref_name }}
+          fetch-depth: 01
+      - name: Install Nosman
+        shell: bash
+        run: cargo install nosman
+        working-directory: ./bundler-${{ github.ref_name }}
+      - name: Download Release Notes
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle-manifests-${{ needs.release.outputs.build_number }}
+          path: ./bundler-${{ github.ref_name }}/Manifests/
+      - name: Build Archive
+        id: archive
+        # Built from the bundle just published, so the archive holds exactly what the
+        # store has.
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf Artifacts
+          mkdir Artifacts
+          nosman bundle --bundle "$PACKAGE:$VERSION" --out "Artifacts/Nodos-$RELEASE_NAME" --archive --clean -y
+          if [ "${{ runner.os }}" == "Windows" ]; then extension=zip; else extension=tar.gz; fi
+          echo "path=Artifacts/Nodos-$RELEASE_NAME.$extension" >> $GITHUB_OUTPUT
+        working-directory: ./bundler-${{ github.ref_name }}
+      - name: Copy Archive to Distribution Machine
+        shell: pwsh
+        env:
+          ARCHIVE_PATH: ${{ steps.archive.outputs.path }}
+        run: |
+          $target = Join-Path $env:NOS_BUILD_DIR "Bundler" $env:BUILD_NUMBER
+          New-Item -ItemType Directory -Force -Path $target
+          Copy-Item $env:ARCHIVE_PATH $target
+        working-directory: ./bundler-${{ github.ref_name }}
+      - name: Create Release
+        shell: bash
+        env:
+          ARCHIVE_PATH: ${{ steps.archive.outputs.path }}
+        run: |
+          gh release create "v$RELEASE_NAME" "$ARCHIVE_PATH" \
+            --title "v$RELEASE_NAME" \
+            --notes-file "Manifests/release-notes-$PLATFORM.md" \
+            --target "${{ github.ref_name }}" \
+            --repo nodos-dev/bundler
+        working-directory: ./bundler-${{ github.ref_name }}

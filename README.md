@@ -48,7 +48,8 @@ overwrites the versions a failed run left behind.
 - `--bundle-key` — the bundle to publish
 - `--bundle-version` — which entry to take when several share a name
 - `--platforms` — comma separated target platforms; the host platform by default
-- `--out-dir` — where the manifests and release notes are written (`./Artifacts`).
+- `--out-dir` — where the manifests, release notes and `releases.json` are
+  written (`./Artifacts`).
   Emptied first if it already exists; refused if it resolves to the current
   directory or one of its parents.
 - `--previous-version` — the bundle release the notes compare against. If not
@@ -182,6 +183,19 @@ packages removed since the previous release; for every other platform, the
 previous side of the comparison is still the runner's own expansion, so
 removals cannot be told apart from packages that were never there, and the
 notes leave the Removed section out rather than guess.
+
+## Archives and GitHub releases
+
+After publishing, the bundler writes `releases.json` to `--out-dir`,
+listing the requested bundle's published version and release name for each
+platform. The release workflow then runs one job per listed platform on a
+runner of that platform, since `nosman bundle` only builds for the host. Each
+job builds the bundle from the store with
+`nosman bundle --bundle <package>:<version> --archive`, copies the archive to
+`$NOS_BUILD_DIR/Bundler/<build number>`, and creates a GitHub release tagged
+`v<release name>`, such as `v1.5-vs-v0-b4711-x86_64-windows`, with the
+archive attached and that platform's release notes as its body. The archive
+is a `.zip` on Windows and a `.tar.gz` elsewhere. A dry run skips these jobs.
 
 ## Tests
 

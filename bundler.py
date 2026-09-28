@@ -435,14 +435,23 @@ def get_bundle_publish_version(nodos_version, bundle_version, build_number):
 
 BUNDLE_MANIFEST_SCHEMA_VERSION = 1
 
+def get_bundle_short_name(bundle_info):
+    short_name = bundle_info.get("short_name")
+    if short_name is None:
+        short_name = bundle_info.get("name")
+    return short_name
+
 def get_bundle_package_name(bundle_info):
     package_name = bundle_info.get("package_name")
     if package_name is not None:
         return package_name
-    short_name = bundle_info.get("short_name")
-    if short_name is None:
-        short_name = bundle_info.get("name")
-    return f"nodos.bundle.{short_name}"
+    return f"nodos.bundle.{get_bundle_short_name(bundle_info)}"
+
+def get_bundle_release_name(nodos_version, short_name, bundle_version, build_number, platform_arch : PlatformArch):
+    """The name of a bundle's GitHub release and archive on one platform, such as
+    1.5-vs-v0-b4711-x86_64-windows. The tag is this name with a leading "v"."""
+    major, minor = get_nodos_version_major_minor(nodos_version)
+    return f"{major}.{minor}-{short_name}-v{bundle_version}-b{build_number}-{platform_arch.key()}"
 
 def bundle_chain(bundle_info, bundles):
     """Every bundle a bundle needs, each before the bundles that include it, ending with
@@ -675,6 +684,27 @@ def manifest_file_path(out_dir, package_name, platform_arch : PlatformArch):
 
 def release_notes_file_path(out_dir, platform_arch : PlatformArch):
     return os.path.join(out_dir, f"release-notes-{platform_arch.key()}.md")
+
+def releases_file_path(out_dir):
+    return os.path.join(out_dir, "releases.json")
+
+def write_releases(bundle_info, to_publish, build_number, path):
+    """Lists what this run published for the requested bundle, one entry per platform,
+    so the release workflow knows which platforms to build an archive and a GitHub
+    release for, and under which version and name."""
+    package_name = get_bundle_package_name(bundle_info)
+    bundle_version = get_bundle_version(bundle_info)
+    releases = []
+    for platform_arch, manifests, nodos_version in to_publish:
+        releases.append({
+            "platform": platform_arch.key(),
+            "version": next(v for name, v, _m in manifests if name == package_name),
+            "name": get_bundle_release_name(nodos_version, get_bundle_short_name(bundle_info),
+                                            bundle_version, build_number, platform_arch),
+        })
+    with open(path, "w") as f:
+        json.dump({"package": package_name, "releases": releases}, f, indent=2)
+    logger.info(f"Published releases listed in {path}")
 
 def publish_manifest(package_name, version, manifest_path, platform_arch : PlatformArch, dry_run,
                      changelog=None):
@@ -1017,3 +1047,5 @@ if __name__ == "__main__":
     for platform_arch, manifests, _nodos_version in to_publish:
         publish_manifests(manifests, args.out_dir, platform_arch, args.dry_run,
                           changelog_for=package_name)
+
+    write_releases(bundle_info, to_publish, build_number, releases_file_path(args.out_dir))

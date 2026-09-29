@@ -29,7 +29,7 @@ bundles:
     nos.flow: 1.0
     nos.compositing: 1.0
     nos.imageprocessing: 1.0
-    nos.resource: 1.0
+    nos.resource: 1.1
     nos.webcam:
       x86_64-windows: 3.0
     nos.sys.animation: 3.0

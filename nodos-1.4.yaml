@@ -25,11 +25,11 @@ bundles:
     nos.math: 2.0
     nos.utilities: 4.0
     nos.filesystem: 1.1
-    nos.mediaio: 4.0
+    nos.mediaio: 4.1
     nos.flow: 1.0
     nos.compositing: 1.0
     nos.imageprocessing: 1.0
-    nos.resource: 1.1
+    nos.resource: 1.2
     nos.webcam:
       x86_64-windows: 3.0
     nos.sys.animation: 3.0
@@ -52,15 +52,15 @@ bundles:
   nodos: 1.4
   bundled_packages:
     nos.aja:
-      x86_64-windows: 4.0
-      x86_64-linux: 4.0
+      x86_64-windows: 4.1
+      x86_64-linux: 4.1
     nos.sys.decklink: 4.2
     nos.decklink: 3.2
     nos.track: 3.1
     nos.display:
       x86_64-windows: 1.0
     nos.ndi:
-      x86_64-windows: 2.2
+      x86_64-windows: 2.3
     nos.sys.lino: 2.0
     nos.cef:
       x86_64-windows: 1.2
@@ -76,7 +76,7 @@ bundles:
     zd.cyclorama: 2.0
     zd.lens: 2.0
     zd.macros: 2.0
-    zd.mediaplayer: 2.1
+    zd.mediaplayer: 2.2
     zd.mediarecorder: 2.0
     zd.qrtools: 2.0
     zd.realitykeyer: 2.0

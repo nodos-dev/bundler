@@ -5,7 +5,7 @@ bundles:
   bundled_packages:
     nos.transfer: 0.1.0
     nos.sys.variables: 3.0.0
-    nos.reflect: 3.1
+    nos.reflect: 3.2
   engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
   plugin_index_urls:
   - url: https://store.nodos.dev/api/v1/index

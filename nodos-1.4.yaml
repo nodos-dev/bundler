@@ -26,7 +26,7 @@ bundles:
     nos.utilities: 4.0
     nos.filesystem: 1.1
     nos.mediaio: 4.1
-    nos.flow: 1.0
+    nos.flow: 1.1
     nos.compositing: 1.0
     nos.imageprocessing: 1.0
     nos.resource: 1.2

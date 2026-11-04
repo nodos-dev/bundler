@@ -55,7 +55,7 @@ bundles:
       x86_64-windows: 4.4
       x86_64-linux: 4.4
     nos.sys.decklink: 4.2
-    nos.decklink: 3.2
+    nos.decklink: 3.3
     nos.track: 3.1
     nos.display:
       x86_64-windows: 1.0

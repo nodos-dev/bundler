@@ -17,7 +17,7 @@ bundles:
   includes:
   - minimal
   bundled_packages:
-    nos.sys.shaderc: 2.1
+    nos.sys.shaderc: 2.2
     nos.sys.vulkan: 8.0
     nos.audio: 1.1
     nos.sys.settings: 3.0

@@ -18,7 +18,7 @@ bundles:
   - minimal
   bundled_packages:
     nos.sys.shaderc: 2.2
-    nos.sys.vulkan: 8.0
+    nos.sys.vulkan: 8.1
     nos.audio: 1.1
     nos.sys.settings: 3.0
     nos.filters: 3.0
@@ -37,7 +37,7 @@ bundles:
     nos.webrtc:
       x86_64-windows: 2.0
     nos.str: 1.0
-    nos.sys.device: 2.0
+    nos.sys.device: 2.1
     nos.rive:
       x86_64-windows: 1.0
     nos.sync: 12.0

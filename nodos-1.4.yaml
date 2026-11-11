@@ -3,9 +3,9 @@ bundles:
   version: 0
   nodos: 1.4
   bundled_packages:
-    nos.transfer: 0.1.0
+    nos.transfer: 0.2
     nos.sys.variables: 3.0.0
-    nos.reflect: 3.2
+    nos.reflect: 3.3
   engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
   plugin_index_urls:
   - url: https://store.nodos.dev/api/v1/index
@@ -19,7 +19,7 @@ bundles:
   bundled_packages:
     nos.sys.shaderc: 2.2
     nos.sys.vulkan: 8.1
-    nos.audio: 1.1
+    nos.audio: 1.2
     nos.sys.settings: 3.0
     nos.filters: 3.0
     nos.math: 2.0
@@ -76,7 +76,7 @@ bundles:
     zd.cyclorama: 2.0
     zd.lens: 2.0
     zd.macros: 2.0
-    zd.mediaplayer: 2.5
+    zd.mediaplayer: 2.6
     zd.mediarecorder: 2.0
     zd.qrtools: 2.0
     zd.realitykeyer: 2.2

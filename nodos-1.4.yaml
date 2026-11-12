@@ -3,7 +3,7 @@ bundles:
   version: 0
   nodos: 1.4
   bundled_packages:
-    nos.transfer: 0.2
+    nos.transfer: 0.3
     nos.sys.variables: 3.0.0
     nos.reflect: 3.3
   engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine

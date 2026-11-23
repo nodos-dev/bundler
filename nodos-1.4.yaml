@@ -3,7 +3,7 @@ bundles:
   version: 0
   nodos: 1.4
   bundled_packages:
-    nos.transfer: 0.3
+    nos.transfer: 2.0
     nos.sys.variables: 3.0
     nos.reflect: 3.3
   engine_index_url: https://store.nodos.dev/api/v1/index/nodos.engine
@@ -18,7 +18,7 @@ bundles:
   - minimal
   bundled_packages:
     nos.sys.shaderc: 2.2
-    nos.sys.vulkan: 8.2
+    nos.sys.vulkan: 8.3
     nos.audio: 1.2
     nos.sys.settings: 3.0
     nos.filters: 3.0

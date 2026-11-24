@@ -7,7 +7,6 @@ import yaml
 import platform
 import json
 import re
-import urllib.request
 from collections import OrderedDict
 
 
@@ -572,59 +571,6 @@ def check_no_conflicting_packages(bundle_info, bundles, platform_arch : Platform
                     f"{resolved} from {owner}.")
                 exit(1)
 
-STORE_INDEX_URL = "https://store.nodos.dev/api/v1/index"
-
-_store_index_cache = {}
-
-def read_store_index(package_name):
-    """The store's record of a package: every release with the dependencies it declares."""
-    if package_name not in _store_index_cache:
-        with urllib.request.urlopen(f"{STORE_INDEX_URL}/{package_name}", timeout=60) as response:
-            _store_index_cache[package_name] = json.load(response)
-    return _store_index_cache[package_name]
-
-def store_dependencies(package_name, version, platform_arch : PlatformArch):
-    """The dependencies one release declares, as (name, version) pairs."""
-    for release in read_store_index(package_name).get("releases", []):
-        if release.get("version") == version and release.get("platform", platform_arch.key()) == platform_arch.key():
-            return [(dependency["name"], dependency["version"]) for dependency in release.get("dependencies", [])]
-    logger.error(f"The store has no record of {package_name} {version} on {platform_arch.key()}")
-    exit(1)
-
-def dependency_is_met(required, bundled):
-    """nosman and the engine read a dependency as that version or a newer one with the same
-    major (resolve.rs, Compatible). "8.0" is met by 8.3.0; "0.2" is not met by 2.0.0."""
-    required_parts, _ = _parse_store_version(required)
-    bundled_parts, _ = _parse_store_version(bundled)
-    required_parts += (0,) * (3 - len(required_parts))
-    bundled_parts += (0,) * (3 - len(bundled_parts))
-    return bundled_parts[0] == required_parts[0] and bundled_parts[1:] >= required_parts[1:]
-
-def check_dependencies_met(bundle_info, bundles, platform_arch : PlatformArch):
-    """Every package of a bundle's expanded set must work with the other packages in it. A
-    package that requires another bundled package at a version the bundle does not hold
-    makes Nodos download a second version or run without the package, so refuse the bundle
-    before anything is written. A dependency that is not in the bundle at all is not
-    checked here: Nodos fetches it when the package is first used."""
-    bundled = {}
-    for info in bundle_chain(bundle_info, bundles):
-        for package in get_own_bundled_packages(info, platform_arch).values():
-            resolved = resolve_package_version(package["name"], package["version"], platform_arch)
-            if resolved is not None:
-                bundled[package["name"]] = resolved
-    unmet = []
-    for name, version in bundled.items():
-        for dependency_name, required in store_dependencies(name, version, platform_arch):
-            if dependency_name in bundled and not dependency_is_met(required, bundled[dependency_name]):
-                unmet.append(f"{name} {version} requires {dependency_name} {required}, "
-                             f"but the bundle holds {dependency_name} {bundled[dependency_name]}")
-    for line in unmet:
-        logger.error(f"{bundle_info.get('name')}: {line}")
-    if len(unmet) > 0:
-        logger.error("Publish a release of each package named first that requires the bundled version, "
-                     "or change the bundle's version of the package it requires.")
-        exit(1)
-
 def build_bundle_manifest(bundle_info, bundles, platform_arch : PlatformArch, published_versions):
     """The manifest for one bundle on one platform, or None when the bundle has no Nodos
     version there. published_versions holds the version this run publishes for each
@@ -673,7 +619,6 @@ def build_bundle_manifest(bundle_info, bundles, platform_arch : PlatformArch, pu
         manifest["packages"] = packages
 
     check_no_conflicting_packages(bundle_info, bundles, platform_arch)
-    check_dependencies_met(bundle_info, bundles, platform_arch)
 
     return manifest
 

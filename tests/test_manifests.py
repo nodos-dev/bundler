@@ -1,9 +1,12 @@
+import io
 import json
 import os
 import platform
 import runpy
+import re
 import subprocess
 import sys
+import urllib.request
 from collections import OrderedDict
 from subprocess import CalledProcessError, CompletedProcess
 
@@ -36,6 +39,33 @@ def clear_store_cache():
     bundler._store_releases_cache.clear()
     yield
     bundler._store_releases_cache.clear()
+
+
+# The function that reads a release's dependencies from the store, kept for the tests of it.
+STORE_DEPENDENCIES = bundler.store_dependencies
+
+
+@pytest.fixture(autouse=True)
+def no_declared_dependencies(monkeypatch):
+    # No test reaches the store: every release declares no dependency unless a test says otherwise.
+    monkeypatch.setattr(bundler, "store_dependencies", lambda name, version, platform_arch: [])
+
+
+def fake_store_index(url, timeout=None):
+    """Stands in for the store's index of one package: the releases of STORE_LISTINGS_BY_PACKAGE,
+    on every platform, with no dependencies."""
+    listing = STORE_LISTINGS_BY_PACKAGE.get(url.rsplit("/", 1)[-1], "")
+    versions = re.findall(r"^\s+(\d\S*)", listing, re.MULTILINE)
+    releases = [{"version": version, "dependencies": []} for version in versions]
+    return io.BytesIO(json.dumps({"releases": releases}).encode())
+
+
+@pytest.fixture(autouse=True)
+def no_store_requests(monkeypatch):
+    # A test that runs bundler.py as a script loads the module anew, so the store is faked where the
+    # request is made.
+    monkeypatch.setattr(urllib.request, "urlopen", fake_store_index)
+    bundler._store_index_cache.clear()
 
 
 @pytest.fixture(autouse=True)
@@ -1160,3 +1190,78 @@ def test_previous_versions_are_read_once_before_any_publish(tmp_path, monkeypatc
     # (args[-1] == "1.5.0.b4600"): two platforms must not double either of them.
     assert len(info_indexes) == 2
     assert max(info_indexes) < min(publish_indexes)
+
+
+def declared(dependencies):
+    """Fakes the store's dependency records: package name to (name, version) pairs."""
+    return lambda name, version, platform_arch: dependencies.get(name, [])
+
+
+def build_all(bundles, key="top"):
+    return bundler.build_manifests(bundler.get_bundle_info(key, bundles), bundles,
+                                   bundler.PlatformArch("x86_64-windows"), BUILD_NUMBER)
+
+
+@pytest.mark.parametrize("required, bundled, met", [
+    ("8.0", "8.3.0.b837", True),
+    ("8.3", "8.3.0.b837", True),
+    ("8.4", "8.3.0.b837", False),
+    ("0.2", "2.0.0.b28", False),
+    ("0.2", "0.3.0.b27", True),
+    ("2.0", "2.0.0.b28", True),
+    ("3.0.2", "3.0.1.b5", False),
+    ("3.0.2", "3.1.0", True),
+])
+def test_a_dependency_is_met_by_the_same_major_at_that_version_or_newer(required, bundled, met):
+    assert bundler.dependency_is_met(required, bundled) == met
+
+
+def test_a_package_that_requires_another_major_of_a_bundled_package_is_refused(resolved, monkeypatch):
+    # The audio plugin required nos.transfer 0.2 in a bundle that held nos.transfer 2.0.
+    monkeypatch.setattr(bundler, "store_dependencies", declared({"nos.audio": [("nos.transfer", "0.2")]}))
+    bundles = [{"name": "top", "version": 0, "nodos": "1.4",
+                "bundled_packages": {"nos.audio": "1.2", "nos.transfer": "2.0"}}]
+    with pytest.raises(SystemExit):
+        build_all(bundles)
+
+
+def test_a_requirement_on_a_package_of_an_included_bundle_is_checked(resolved, monkeypatch):
+    monkeypatch.setattr(bundler, "store_dependencies", declared({"nos.audio": [("nos.transfer", "0.2")]}))
+    bundles = [
+        {"name": "base", "version": 0, "nodos": "1.4", "bundled_packages": {"nos.transfer": "2.0"}},
+        {"name": "top", "version": 0, "includes": ["base"], "bundled_packages": {"nos.audio": "1.2"}},
+    ]
+    with pytest.raises(SystemExit):
+        build_all(bundles)
+
+
+def test_requirements_the_bundle_meets_are_accepted(resolved, monkeypatch):
+    monkeypatch.setattr(bundler, "store_dependencies", declared({
+        "nos.audio": [("nos.transfer", "2.0"), ("nos.sys.vulkan", "8.0")],
+        "nos.sys.vulkan": [("nos.transfer", "2.0")],
+    }))
+    bundles = [{"name": "top", "version": 0, "nodos": "1.4",
+                "bundled_packages": {"nos.audio": "1.2", "nos.transfer": "2.0", "nos.sys.vulkan": "8.3"}}]
+    assert len(build_all(bundles)) == 1
+
+
+def test_a_dependency_outside_the_bundle_is_not_checked(resolved, monkeypatch):
+    monkeypatch.setattr(bundler, "store_dependencies", declared({"nos.audio": [("nos.sync", "12.0")]}))
+    bundles = [{"name": "top", "version": 0, "nodos": "1.4", "bundled_packages": {"nos.audio": "1.2"}}]
+    assert len(build_all(bundles)) == 1
+
+
+def test_a_release_the_store_has_no_record_of_is_a_failure(monkeypatch):
+    monkeypatch.setattr(bundler, "read_store_index", lambda name: {"releases": [
+        {"version": "1.2.0.b51", "platform": "x86_64-linux", "dependencies": []}]})
+    with pytest.raises(SystemExit):
+        STORE_DEPENDENCIES("nos.audio", "1.2.0.b51", bundler.PlatformArch("x86_64-windows"))
+
+
+def test_dependencies_are_read_for_the_release_of_the_platform(monkeypatch):
+    monkeypatch.setattr(bundler, "read_store_index", lambda name: {"releases": [
+        {"version": "1.2.0.b51", "platform": "x86_64-linux", "dependencies": []},
+        {"version": "1.2.0.b51", "platform": "x86_64-windows",
+         "dependencies": [{"name": "nos.transfer", "version": "0.2"}]}]})
+    assert STORE_DEPENDENCIES("nos.audio", "1.2.0.b51", bundler.PlatformArch("x86_64-windows")) == [
+        ("nos.transfer", "0.2")]

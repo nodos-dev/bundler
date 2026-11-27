@@ -85,3 +85,9 @@ bundles:
     zd.utilities: 2.0
     zd.xrtools: 2.0
     nos.sys.ffmpeg.deps: 7.1.0
+    nos.sample.vulkanapp:
+      x86_64-windows: 1.0
+      type: sample
+    nos.sample.dxappadvanced:
+      x86_64-windows: 1.0
+      type: sample

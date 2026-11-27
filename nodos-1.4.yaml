@@ -42,7 +42,7 @@ bundles:
       x86_64-windows: 1.0
     nos.sync: 12.1
     nos.sample.dxapp:
-      x86_64-windows: 1.1
+      x86_64-windows: 1.2
       type: sample
 
 - name: broadcast
